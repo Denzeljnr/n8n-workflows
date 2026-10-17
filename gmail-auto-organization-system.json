@@ -1,0 +1,417 @@
+{
+  "name": "Email organizer",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "includeSpamTrash": false,
+          "labelIds": [
+            "INBOX"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        272
+      ],
+      "id": "579daab6-b891-4b25-9596-cd15a7a37df8",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=sender: {{ $json.headers.from }} \nsubject: {{ $json.headers.subject }}\nHere is the incoming email: {{ $json.html }}\n\n",
+        "options": {
+          "systemMessage": "=#Role\nYou are an AI text processor that cleans and improves the readbility of email content.\n\n#Task\nTake an incoming email and remove unnecessary HTML tags while preserving all the original content in a readble format\n\n#Instructions\n- Extract the email boday and remove all HTML tags.\n- Retain all text, links and essential formating (such as line  breaks and paragraph spacing)\n- Ensure the ouput is structured and easy to read\n- Do not remove or modify any part of the email content\n\n#Rules\n- Do not alter the meaning or wording of the email\n- Do not remove URLs, email addresses, or special characters.\n- Maintain line breaks to ensure readability"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        176,
+        272
+      ],
+      "id": "e368af7c-ee6f-412f-a721-247d42f60b37",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        512
+      ],
+      "id": "ec598b11-3cbd-42e2-8bf6-d149aa600163",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.output }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "=Alert",
+              "description": "=Urgent or time-sensitive messages, such as security alerts, account activity notifications, or warnings."
+            },
+            {
+              "category": "Promotion",
+              "description": "Marketing and advertising emails, including product offers, sales campaigns, discounts, and brand announcements."
+            },
+            {
+              "category": "Updates and News",
+              "description": "Informational emails about product updates, newsletters, blog posts, or industry-related news."
+            },
+            {
+              "category": "Financial",
+              "description": "Bank statements, invoices, receipts, payment confirmations, transaction alerts, and any money-related emails."
+            },
+            {
+              "category": "Work and Career",
+              "description": "Professional communication such as job applications, career updates, HR emails, work-related tasks, and LinkedIn notifications."
+            },
+            {
+              "category": "Personal",
+              "description": "Messages from friends, family, or acquaintances, usually personal conversations or casual exchanges."
+            },
+            {
+              "category": "Spam",
+              "description": "Unwanted, irrelevant, or suspicious messages including scams, phishing attempts, and bulk promotional content."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        208
+      ],
+      "id": "75f1b3e3-9fcb-4ec4-af13-5f09498ef63c",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        480
+      ],
+      "id": "8caf587e-28a0-4c63-8b26-08c2bdc8f0e1",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_6313713038042268729"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        976,
+        -160
+      ],
+      "id": "854bf574-7f26-4e81-822f-57f4449d0002",
+      "name": "Alert1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_3899220750577314453"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        -16
+      ],
+      "id": "8829ec45-8f48-406e-92b7-b045f015ac51",
+      "name": "Promotion1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_3612579351768673261"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        112
+      ],
+      "id": "e0fdf99e-ab75-4a2b-a913-81fc5d45ce6c",
+      "name": "Updates and sub1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_2639176123532517883"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1280,
+        288
+      ],
+      "id": "885e295e-2026-4221-869e-100eab2a330d",
+      "name": "Finance1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4347906803866467722"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        448
+      ],
+      "id": "69e156e1-2094-455b-b0ac-996c0e738c6e",
+      "name": "Work and career1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_7024427026161283107"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        608
+      ],
+      "id": "80464b6c-a749-4be9-bdda-801a014eba4c",
+      "name": "Personal1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4271559946727965273"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        720
+      ],
+      "id": "0cb795db-c8f5-4280-8c3a-08cd34ce85af",
+      "name": "Spam1",
+      "webhookId": "b80b2565-a9c3-4586-aaa8-44e2c810cb19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Alert1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Promotion1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Updates and sub1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finance1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Work and career1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Personal1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Spam1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6bd15bcf-42b1-4ef6-b30a-12ddeae2f8c9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "iKOh0OeMOY9Ra80R",
+  "tags": []
+}

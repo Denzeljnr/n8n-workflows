@@ -1,0 +1,722 @@
+{
+  "name": "University Recommendation System for Nigerian students",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cba5cced-f832-4bb4-bd46-fe0146345e0e",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        672
+      ],
+      "id": "19afe1f8-a1b6-4797-b661-38055ab9353a",
+      "name": "Webhook1",
+      "webhookId": "cba5cced-f832-4bb4-bd46-fe0146345e0e"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        1328
+      ],
+      "id": "3f21747a-aea0-4c76-8818-6603e479053f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE",
+          "mode": "list",
+          "cachedResultName": "uni info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 645692339,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE/edit#gid=645692339"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1040,
+        1328
+      ],
+      "id": "5912abe5-a7ae-4f32-9dc0-ae44f04ca971",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all(); \n\nlet universities = {};\nlet courses = [];\n\nrows.forEach((item, index) => {\n  const row = item.json;\n  const uniId = row[\"University ID\"];\n  \n  // Store university only once\n  if (!universities[uniId]) {\n    universities[uniId] = {\n      university_id: uniId,\n      university_name: row[\"University Name\"],\n      university_type: row[\"University Type\"],   // ✅ Added university type\n      location: row[\"Location\"],\n      year_established: row[\"Year Established\"],\n      fees: row[\"School Fees (₦)\"]\n    };\n  }\n\n  // Push course row\n  courses.push({\n    course_id: index + 1, // auto id\n    university_id: uniId,\n    course_name: row[\"Course\"],\n    jamb_cutoff: row[\"JAMB Cut-off Mark\"],\n    waec_requirements: row[\"WAEC Requirements\"]\n  });\n});\n\nreturn [\n  { json: { universities: Object.values(universities) } },\n  { json: { courses } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        1328
+      ],
+      "id": "5070a1bf-566d-45cd-b8c5-5a12947baecc",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "universities",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        1232
+      ],
+      "id": "215dc08f-2a91-4b88-a9cd-6ad3124148eb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "courses",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        1424
+      ],
+      "id": "8a6963f9-1648-41d5-957c-f00484452481",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "tableId": "universities",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "university_id",
+              "fieldValue": "={{ $json.university_id }}"
+            },
+            {
+              "fieldId": "university_name",
+              "fieldValue": "={{ $json.university_name }}"
+            },
+            {
+              "fieldId": "location",
+              "fieldValue": "={{ $json.location }}"
+            },
+            {
+              "fieldId": "year_established",
+              "fieldValue": "={{ $json.year_established }}"
+            },
+            {
+              "fieldId": "fees",
+              "fieldValue": "={{ $json.fees }}"
+            },
+            {
+              "fieldId": "university_type",
+              "fieldValue": "={{ $json.university_type }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        1232
+      ],
+      "id": "7238947b-2fb0-45c6-ac09-f31083c28f11",
+      "name": "uni",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AcaPxMoPn66ERXwI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "courses",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "course_id",
+              "fieldValue": "={{ $json.course_id }}"
+            },
+            {
+              "fieldId": "university_id",
+              "fieldValue": "={{ $json.university_id }}"
+            },
+            {
+              "fieldId": "course_name",
+              "fieldValue": "={{ $json.course_name }}"
+            },
+            {
+              "fieldId": "jamb_cutoff",
+              "fieldValue": "={{ $json.jamb_cutoff }}"
+            },
+            {
+              "fieldId": "waec_requirements",
+              "fieldValue": "={{ $json.waec_requirements }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        1424
+      ],
+      "id": "381dd3f6-9116-408f-8c33-8605c17a2a9f",
+      "name": "course",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AcaPxMoPn66ERXwI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        288,
+        672
+      ],
+      "id": "e4f02744-43f0-4096-ae2f-284cd2e6a301",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=STUDENT PROFILE:\n- JAMB Score: {{ $json.student.jambScore }}\n- Preferred Course: {{ $json.student.preferredCourse }}\n- Region Preference: {{ $json.student.region || 'No preference' }}\n- WAEC Credits: {{ $json.student.waec_analysis.credit_count }} subjects\n- Has English Credit: {{ $json.student.waec_analysis.has_english ? 'Yes' : 'No' }}\n- Has Maths Credit: {{ $json.student.waec_analysis.has_maths ? 'Yes' : 'No' }}\n\nSTUDENT'S PREFERRED UNIVERSITIES:\nFederal: {{ $json.student.preferredUniversities.federal }}\nState: {{ $json.student.preferredUniversities.state }}\nPrivate: {{ $json.student.preferredUniversities.private }}\n\nANALYSIS SUMMARY:\n{{ JSON.stringify($json.analysis, null, 2) }}\n\nTOP RECOMMENDED UNIVERSITIES (Student's preferred picks are marked with is_preferred: true):\n{{ JSON.stringify($json.universities.top_recommended, null, 2) }}\n\nALL ELIGIBLE UNIVERSITIES (Check for student's preferred picks):\n{{ JSON.stringify($json.universities.eligible, null, 2) }}\n\nMAYBE ELIGIBLE (Borderline - check if any are student's preferred):\n{{ JSON.stringify($json.universities.maybeEligible, null, 2) }}\n\nUNIVERSITIES BY TYPE (containing student preferences):\n{{ JSON.stringify($json.universities.by_type, null, 2) }}\n\nIMPORTANT INSTRUCTIONS:\n1. Look for universities where \"is_preferred: true\" - these are the student's top choices\n2. If any preferred universities are in the eligible or top_recommended lists, START with those\n3. If preferred universities are in maybeEligible, explain their chances clearly\n4. If preferred universities aren't in any list, explain why they don't qualify\n5. Format output as structured JSON with these exact keys:\n   - overview (string)\n   - top_recommended (array of objects)\n   - other_eligible (array of objects)\n   - borderline_options (array of objects)\n   - key_recommendations (array of strings)\n   - missing_requirements (array of strings)\n\nEach university object must have:\n{\n  \"university_name\": \"Full university name\",\n  \"university_type\": \"federal|state|private\",\n  \"jamb_cutoff\": number,\n  \"student_jamb_score\": {{ $json.student.jambScore }},\n  \"jamb_difference\": \"difference with + or - sign\",\n  \"fees\": \"formatted with ₦ symbol\",\n  \"location\": \"city, state\",\n  \"reason\": \"why recommended (mention if it's student's preferred choice)\"\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert Nigerian university admission counselor helping students find the best universities based on their qualifications.\n\nCRITICAL PRIORITIZATION RULE:\nIf the student has specified preferred universities (in preferredUniversities), you MUST:\n1. Check if they meet the requirements for those universities\n2. Place ANY eligible preferred universities at the TOP of recommendations\n3. Only after listing their preferred picks, add other eligible universities\n4. If they don't meet requirements for their picks, explain why clearly\n\nYour task:\nProvide a comprehensive, encouraging admission report with these sections:\n\n1. **Overview** (2-3 sentences)\n   - Acknowledge their preferred universities if specified\n   - Congratulate if they have good options or encourage if limited\n\n2. **🎯 Top 5 Recommended Universities**\n   PRIORITY ORDER:\n   - First: Student's preferred universities (if they're eligible)\n   - Then: Best matches from remaining universities (ensuring at least one Federal, one State, one Private if available)\n   \n   For each, include:\n   - ✅ University Name & Type (Federal/State/Private)\n   - 🎯 Mark if this was a STUDENT'S PREFERRED CHOICE\n   - 📊 JAMB Cut-off vs Student's Score (show the difference)\n   - 💰 School Fees per session\n   - 📍 Location\n   - ⭐ Why it's recommended\n\n3. **📋 Other Eligible Options** (if more than 5)\n   - List 5-10 more universities briefly\n   - Group by type if student has preferences\n   - Note any remaining preferred universities here\n\n4. **⚠️ Borderline Options** (if any)\n   - Universities where admission is possible but competitive\n   - Include preferred universities that are borderline\n   - What they'd need to improve chances\n\n5. **💡 Key Recommendations**\n   - Best value universities (good quality, affordable)\n   - Backup options\n   - If student's preferred picks aren't suitable, suggest better alternatives with explanation\n\n6. **❌ Missing Requirements** (if any)\n   - If student cannot attend their preferred universities, explain exactly why\n   - WAEC subjects they're missing\n   - How this affects their preferred choices\n\nFormatting rules:\n- Use emojis for visual clarity\n- Keep total response under 800 words\n- Be specific with numbers and fees\n- Use bullet points for lists\n- Be honest but encouraging\n- ALWAYS highlight when a university was specifically requested by the student\n- If preferred universities aren't eligible, be clear and compassionate about why\n- DO NOT make up information. Use ONLY the data provided."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        672
+      ],
+      "id": "cd4dd3cd-3ca6-4719-b7d0-0b916c4c32e8",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        896
+      ],
+      "id": "06c4c867-2d43-4493-809b-2306faaeb6d5",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"overview\": \"Your JAMB score of 220 for Engineering is quite impressive! While your preferred universities were not found as eligible for your chosen course based on the provided data, you have a wide array of excellent alternative options across federal, state, and private institutions that are a great fit for your qualifications.\",\n  \"top_recommended\": [\n    {\n      \"university_name\": \"University of Ibadan (UI)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 210,\n      \"student_jamb_score\": 220,\n      \"jamb_difference\": \"+10\",\n      \"fees\": \"₦65,000\",\n      \"location\": \"Ibadan, Oyo State\",\n      \"reason\": \"A highly reputable federal university with strong engineering programs. Your score is comfortably above their JAMB cut-off.\"\n    },\n    {\n      \"university_name\": \"Obafemi Awolowo University (OAU)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 210,\n      \"student_jamb_score\": 220,\n      \"jamb_difference\": \"+10\",\n      \"fees\": \"₦60,000\",\n      \"location\": \"Ile-Ife, Osun State\",\n      \"reason\": \"Another top-tier federal institution known for its excellent engineering faculty. Your JAMB score meets their requirements.\"\n    },\n    {\n      \"university_name\": \"University of Nigeria, Nsukka (UNN)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 190,\n      \"student_jamb_score\": 220,\n      \"jamb_difference\": \"+30\",\n      \"fees\": \"₦55,000\",\n      \"location\": \"Nsukka, Enugu State\",\n      \"reason\": \"A strong federal university with an excellent JAMB margin for your score, offering affordable quality education.\"\n    },\n    {\n      \"university_name\": \"Lagos State University (LASU)\",\n      \"university_type\": \"state\",\n      \"jamb_cutoff\": 180,\n      \"student_jamb_score\": 220,\n      \"jamb_difference\": \"+40\",\n      \"fees\": \"₦250,000\",\n      \"location\": \"Ojo, Lagos State\",\n      \"reason\": \"A leading state university in a vibrant city, offering solid engineering programs. Your score provides a comfortable margin for admission.\"\n    },\n    {\n      \"university_name\": \"Covenant University, Ota\",\n      \"university_type\": \"private\",\n      \"jamb_cutoff\": 190,\n      \"student_jamb_score\": 220,\n      \"jamb_difference\": \"+30\",\n      \"fees\": \"₦1,350,000\",\n      \"location\": \"Ota, Ogun State\",\n      \"reason\": \"A top private university known for its quality education and excellent facilities. Your JAMB score makes you highly competitive here.\"\n    }\n  ],\n  \"other_eligible\": [\n    {\n      \"university_name\": \"Ahmadu Bello University (ABU)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 180,\n      \"fees\": \"₦50,000\",\n      \"location\": \"Zaria, Kaduna State\",\n      \"reason\": \"A highly-rated federal university with diverse engineering specializations and very affordable fees.\"\n    },\n    {\n      \"university_name\": \"University of Benin (UNIBEN)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 180,\n      \"fees\": \"₦55,000\",\n      \"location\": \"Benin City, Edo State\",\n      \"reason\": \"A well-regarded federal university with robust engineering programs.\"\n    },\n    {\n      \"university_name\": \"University of Port Harcourt (UNIPORT)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 170,\n      \"fees\": \"₦60,000\",\n      \"location\": \"Port Harcourt, Rivers State\",\n      \"reason\": \"Offers various engineering courses with a good JAMB margin and is a respected federal institution.\"\n    },\n    {\n      \"university_name\": \"University of Ilorin (UNILORIN)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 190,\n      \"fees\": \"₦50,000\",\n      \"location\": \"Ilorin, Kwara State\",\n      \"reason\": \"A popular federal university known for its stable academic calendar and strong engineering faculty.\"\n    },\n    {\n      \"university_name\": \"Federal University of Technology, Akure (FUTA)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 190,\n      \"fees\": \"₦50,000\",\n      \"location\": \"Akure, Ondo State\",\n      \"reason\": \"A specialized federal university of technology, ideal for engineering aspirants.\"\n    },\n    {\n      \"university_name\": \"Rivers State University (RSU)\",\n      \"university_type\": \"state\",\n      \"jamb_cutoff\": 170,\n      \"fees\": \"₦200,000\",\n      \"location\": \"Port Harcourt, Rivers State\",\n      \"reason\": \"A strong state university with diverse engineering options, offering a good regional choice.\"\n    },\n    {\n      \"university_name\": \"Babcock University, Ilishan-Remo\",\n      \"university_type\": \"private\",\n      \"jamb_cutoff\": 170,\n      \"fees\": \"₦2,000,000\",\n      \"location\": \"Ilishan-Remo, Ogun State\",\n      \"reason\": \"A reputable private university providing a quality learning environment for engineering students.\"\n    }\n  ],\n  \"borderline_options\": [\n    {\n      \"university_name\": \"University of Lagos (UNILAG)\",\n      \"university_type\": \"federal\",\n      \"jamb_cutoff\": 230,\n      \"fees\": \"₦70,000\",\n      \"location\": \"Lagos State\",\n      \"reason\": \"Admission is possible but competitive as your JAMB score of 220 is slightly below their 230 cut-off. You would need an exceptional post-UTME score to improve your chances.\"\n    }\n  ],\n  \"key_recommendations\": [\n    \"💡 Best Value Universities: For excellent quality education at an affordable price, consider the University of Nigeria, Nsukka (UNN) or Ahmadu Bello University (ABU). Both are highly rated federal institutions with fees around ₦50,000 - ₦55,000 per session, and your JAMB score is well above their cut-offs.\",\n    \"💡 Backup Options: To ensure a very secure admission, you could also consider universities like the University of Maiduguri (UNIMAID) (Federal, cutoff 160, fees ₦40,000) or Kano State University of Science and Technology (KUST) (State, cutoff 150, fees ₦115,000). These provide solid engineering programs with high chances of admission given your score.\",\n    \"💡 Explore Further: While your preferred universities weren't found as eligible in our current data, the recommended alternatives offer robust engineering programs and excellent learning environments. It's advisable to visit their websites for comprehensive details.\"\n  ],\n  \"missing_requirements\": [\n    \"❌ Your preferred universities - Nnamdi Azikiwe University (Federal), Osun State University (State), and Joseph Ayo Babalola University (Private) - were not found among the eligible or borderline options for Engineering with your JAMB score of 220 in the provided data. This means that, based on our current information, their specific Engineering programs might have higher cut-off marks or additional departmental requirements not met. We recommend checking their official websites directly for the most precise and up-to-date admission criteria for Engineering.\"\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        896
+      ],
+      "id": "4024bf5b-ca3d-4d29-92cb-2bb1a2ac741f",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ======================\n// INPUTS\n// ======================\nconst waecNode = $('Waec').first().json; // fallback reference\nconst webhookData = $json; // this node’s input\n\n// Prefer webhookData, fallback to Waec node\nconst subjects = webhookData.subjects || waecNode.subjects || [];\nconst jambScore = parseInt(webhookData.jambScore) || parseInt(waecNode.jambScore) || 0;\nconst preferredCourse = webhookData.preferredCourse || waecNode.preferredCourse || \"\";\nconst region = webhookData.region || waecNode.region || \"\";\nconst preferredUniversities = webhookData.preferredUniversities || waecNode.preferredUniversities || {};\n\n// Universities data comes from input\nconst universities = $input.all();\n\n// ======================\n// WAEC GRADES\n// ======================\nconst gradeValues = {\n  'A1': 1, 'B2': 2, 'B3': 3, 'C4': 4, 'C5': 5, 'C6': 6,\n  'D7': 7, 'E8': 8, 'F9': 9\n};\n\n// Subjects with credits\nconst creditSubjects = (subjects || [])\n  .filter(s => (gradeValues[s.grade] || 10) <= 6)\n  .map(s => s.subject);\n\nconst hasEnglish = creditSubjects.some(s => s.toLowerCase().includes('english'));\nconst hasMaths = creditSubjects.some(s => s.toLowerCase().includes('math'));\nconst creditCount = creditSubjects.length;\n\n// Student profile\nconst studentData = {\n  subjects,\n  jambScore,\n  preferredCourse,\n  region,\n  preferredUniversities: {\n    federal: preferredUniversities.federal || [],\n    state: preferredUniversities.state || [],\n    private: preferredUniversities.private || []\n  },\n  waec_analysis: {\n    credit_subjects: creditSubjects,\n    credit_count: creditCount,\n    has_english: hasEnglish,\n    has_maths: hasMaths,\n    meets_minimum: hasEnglish && hasMaths && creditCount >= 5\n  }\n};\n\n// ======================\n// HELPERS\n// ======================\nfunction normalizeUniType(typeString) {\n  if (!typeString) return null;\n  const t = typeString.toString().toLowerCase();\n  if (t.includes('federal') || t.includes('fed')) return 'federal';\n  if (t.includes('state') || t.includes('st') || t.includes('lasu') || t.includes('rsu')) return 'state';\n  if (t.includes('private') || t.includes('ptv') || t.includes('poly') || t.includes('college')) return 'private';\n  // fallback: try to see if it contains any known university names that indicate federal\n  return null;\n}\n\nfunction getUniversityTypeFromName(universityName) {\n  const name = (universityName || \"\").toLowerCase();\n  if (name.includes('federal') || \n      ['university of ibadan', 'university of lagos', 'university of nigeria',\n       'obafemi awolowo', 'ahmadu bello', 'university of benin',\n       'university of ilorin'].some(fed => name.includes(fed))) {\n    return 'federal';\n  }\n  if (name.includes('state') || name.includes('lasu') || name.includes('rsu')) {\n    return 'state';\n  }\n  return 'private';\n}\n\nfunction checkWAECEligibility(waecRequirements, studentData) {\n  const required = (waecRequirements || \"\").toLowerCase();\n  const studentCreditSubjects = studentData.waec_analysis.credit_subjects.map(s => s.toLowerCase());\n  \n  if (!studentData.waec_analysis.has_english) return { eligible: false, missing: ['English Language'] };\n  if (!studentData.waec_analysis.has_maths) return { eligible: false, missing: ['Mathematics'] };\n  if (studentData.waec_analysis.credit_count < 5) return { eligible: false, missing: ['Need 5 credits total'] };\n  \n  const missing = [];\n  \n  if (required.includes('physics') && !studentCreditSubjects.some(s => s.includes('physic'))) {\n    missing.push('Physics');\n  }\n  if (required.includes('chemistry') && !studentCreditSubjects.some(s => s.includes('chemistry') || s.includes('chem'))) {\n    missing.push('Chemistry');\n  }\n  if (required.includes('biology') && !studentCreditSubjects.some(s => s.includes('biology') || s.includes('bio'))) {\n    missing.push('Biology');\n  }\n  if (required.includes('literature') && !studentCreditSubjects.some(s => s.includes('literature') || s.includes('lit'))) {\n    missing.push('Literature in English');\n  }\n  if (required.includes('government') && !studentCreditSubjects.some(s => s.includes('government') || s.includes('govt'))) {\n    missing.push('Government');\n  }\n  if (required.includes('economics') && !studentCreditSubjects.some(s => s.includes('economics') || s.includes('econ'))) {\n    missing.push('Economics');\n  }\n  \n  return {\n    eligible: missing.length === 0,\n    missing\n  };\n}\n\nfunction extractJAMBCutoff(cutoffString) {\n  if (!cutoffString) return 140;\n  const match = cutoffString.toString().match(/(\\d+)/);\n  return match ? parseInt(match[1]) : 140;\n}\n\nfunction extractFees(feesString) {\n  if (!feesString) return 0;\n  const cleaned = feesString.toString().replace(/,/g, '');\n  const match = cleaned.match(/(\\d+)/);\n  return match ? parseInt(match[1]) : 0;\n}\n\n// ======================\n// UNIVERSITY PROCESSING\n// ======================\nconst results = {\n  eligible: [],\n  maybeEligible: [],\n  notEligible: [],\n  recommended: [],\n  byType: {\n    federal: { eligible: [], maybeEligible: [] },\n    state: { eligible: [], maybeEligible: [] },\n    private: { eligible: [], maybeEligible: [] }\n  }\n};\n\nuniversities.forEach(item => {\n  const uni = item.json;\n\n  // Use the uni.university_type if available, otherwise normalize or infer from name\n  let uniType = normalizeUniType(uni.university_type) || getUniversityTypeFromName(uni.university_name);\n  if (!['federal','state','private'].includes(uniType)) uniType = 'private'; // safe default\n  \n  // Looser course matching: if preferredCourse empty allow all\n  if (preferredCourse && (!uni.course_name || !uni.course_name.toLowerCase().includes(preferredCourse.toLowerCase().split(' ')[0]))) {\n    return;\n  }\n  \n  const jambCutoff = extractJAMBCutoff(uni.jamb_cutoff);\n  const fees = extractFees(uni.fees);\n  const waecCheck = checkWAECEligibility(uni.waec_requirements || '', studentData);\n  \n  const jambDifference = jambScore - jambCutoff;\n  const isPreferred = studentData.preferredUniversities[uniType]?.includes(uni.university_name) || false;\n  const matchesRegion = !region || (uni.location?.toLowerCase().includes(region.toLowerCase()));\n  \n  const uniResult = {\n    ...uni,\n    university_type: uniType,\n    jamb_cutoff_numeric: jambCutoff,\n    fees_numeric: fees,\n    jamb_difference: jambDifference,\n    waec_eligible: waecCheck.eligible,\n    waec_missing_subjects: waecCheck.missing,\n    is_preferred: isPreferred,\n    matches_region: matchesRegion,\n    match_score: (\n      (jambDifference >= 0 ? 50 : 0) +\n      (waecCheck.eligible ? 30 : 0) +\n      (isPreferred ? 15 : 0) +\n      (matchesRegion ? 5 : 0)\n    )\n  };\n  \n  if (jambDifference >= 0 && waecCheck.eligible) {\n    results.eligible.push(uniResult);\n    results.byType[uniType].eligible.push(uniResult);\n    \n    if (jambDifference >= 20 || isPreferred) {\n      results.recommended.push(uniResult);\n    }\n  } else if (jambDifference >= -15 || waecCheck.eligible) {\n    results.maybeEligible.push(uniResult);\n    results.byType[uniType].maybeEligible.push(uniResult);\n  } else {\n    results.notEligible.push(uniResult);\n  }\n});\n\n// ======================\n// SORTING\n// ======================\nconst sortByScore = (a, b) => b.match_score - a.match_score;\nresults.eligible.sort(sortByScore);\nresults.maybeEligible.sort(sortByScore);\nresults.recommended.sort(sortByScore);\n\nObject.keys(results.byType).forEach(type => {\n  results.byType[type].eligible.sort(sortByScore);\n  results.byType[type].maybeEligible.sort(sortByScore);\n});\n\n// ======================\n// FINAL RETURN\n// ======================\nreturn [{\n  json: {\n    student: studentData,\n    analysis: {\n      total_eligible: results.eligible.length,\n      total_maybe: results.maybeEligible.length,\n      total_not_eligible: results.notEligible.length,\n      has_good_options: results.eligible.length > 0,\n      top_recommended_count: results.recommended.length,\n      by_type: {\n        federal: {\n          eligible_count: results.byType.federal.eligible.length,\n          maybe_count: results.byType.federal.maybeEligible.length\n        },\n        state: {\n          eligible_count: results.byType.state.eligible.length,\n          maybe_count: results.byType.state.maybeEligible.length\n        },\n        private: {\n          eligible_count: results.byType.private.eligible.length,\n          maybe_count: results.byType.private.maybeEligible.length\n        }\n      }\n    },\n    universities: {\n      top_recommended: results.recommended.slice(0, 5),\n      eligible: results.eligible.slice(0, 15),\n      maybeEligible: results.maybeEligible.slice(0, 10),\n      by_type: {\n        federal: {\n          eligible: results.byType.federal.eligible.slice(0, 5),\n          maybeEligible: results.byType.federal.maybeEligible.slice(0, 3)\n        },\n        state: {\n          eligible: results.byType.state.eligible.slice(0, 5),\n          maybeEligible: results.byType.state.maybeEligible.slice(0, 3)\n        },\n        private: {\n          eligible: results.byType.private.eligible.slice(0, 5),\n          maybeEligible: results.byType.private.maybeEligible.slice(0, 3)\n        }\n      }\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        672
+      ],
+      "id": "47e56d6d-6ecb-46d4-af07-167e641939ca",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get webhook body\nconst body = $input.first().json.body;\n\n// Extract fields\nconst subjects = body.subjects || [];\nconst jambScore = parseInt(body.jambScore) || 0;\nconst preferredCourse = body.preferredCourse || \"\";\nconst region = body.region || \"\";\nconst preferredUniversities = body.preferredUniversities || {};\n\n// Grade mapping\nconst gradeValues = {\n  'A1': 1, 'B2': 2, 'B3': 3, 'C4': 4, 'C5': 5, 'C6': 6,\n  'D7': 7, 'E8': 8, 'F9': 9\n};\n\n// Get credit subjects (grade <= 6)\nconst creditSubjects = subjects\n  .filter(s => (gradeValues[s.grade] || 10) <= 6)\n  .map(s => s.subject);\n\nconst hasEnglish = subjects.some(s => \n  (gradeValues[s.grade] || 10) <= 6 && s.subject.toLowerCase().includes(\"english\")\n);\n\nconst hasMaths = subjects.some(s => \n  (gradeValues[s.grade] || 10) <= 6 && s.subject.toLowerCase().includes(\"math\")\n);\n\n// Build output\nreturn [\n  {\n    json: {\n      subjects,\n      jambScore,\n      preferredCourse,\n      region,\n      preferredUniversities: {\n        federal: preferredUniversities.federal || [],\n        state: preferredUniversities.state || [],\n        private: preferredUniversities.private || []\n      },\n      waec_analysis: {\n        credit_subjects: creditSubjects,\n        credit_count: creditSubjects.length,\n        has_english: hasEnglish,\n        has_maths: hasMaths,\n        meets_minimum: hasEnglish && hasMaths && creditSubjects.length >= 5\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        672
+      ],
+      "id": "ee71f224-777e-407c-8800-8d3031315d5e",
+      "name": "Waec"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "courses_with_universities",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "course_name",
+              "condition": "ilike",
+              "keyValue": "=%{{ $('Waec').item.json.preferredCourse }}%"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        672
+      ],
+      "id": "acc5c2ba-9905-4da7-b40f-2e3fede3fab9",
+      "name": "universities",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AcaPxMoPn66ERXwI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the data from the previous node\nconst input = $json;  // This is the raw JSON from the last node\n\n// Build and normalize output to always match frontend schema\nreturn [\n  {\n    json: {\n      overview: input.overview || $input.first().json.output.overview,\n      top_recommended: input.top_recommended || $input.first().json.output.top_recommended,\n      other_eligible: input.other_eligible || $input.first().json.output.other_eligible,\n      borderline_options: input.borderline_options || $input.first().json.output.borderline_options,\n      key_recommendations: input.key_recommendations || $input.first().json.output.key_recommendations,\n      missing_requirements: input.missing_requirements || $input.first().json.output.missing_requirements\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        672
+      ],
+      "id": "704e47e4-837b-4b6b-8bf4-07a213e163b6",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE",
+          "mode": "list",
+          "cachedResultName": "uni info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 645692339,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yIde7CkKRe5sy1dUpyM7ZP7te9EdZaUKn-On4wPQXZE/edit#gid=645692339"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1072,
+        1696
+      ],
+      "id": "d703277f-8904-48db-a812-5c358119678e",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all(); \n\nlet universities = {};\nlet courses = [];\n\nrows.forEach((item, index) => {\n  const row = item.json;\n  const uniId = row[\"University ID\"];\n  \n  // Store university only once\n  if (!universities[uniId]) {\n    universities[uniId] = {\n      university_id: uniId,\n      university_name: row[\"University Name\"],\n      university_type: row[\"University Type\"],   // ✅ Added university type\n      location: row[\"Location\"],\n      year_established: row[\"Year Established\"],\n      fees: row[\"School Fees (₦)\"]\n    };\n  }\n\n  // Push course row\n  courses.push({\n    course_id: index + 1, // auto id\n    university_id: uniId,\n    course_name: row[\"Course\"],\n    jamb_cutoff: row[\"JAMB Cut-off Mark\"],\n    waec_requirements: row[\"WAEC Requirements\"]\n  });\n});\n\nreturn [\n  { json: { universities: Object.values(universities) } },\n  { json: { courses } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        1696
+      ],
+      "id": "d2376975-9876-422c-bcec-7fddd2f3a7a9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "universities",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1600
+      ],
+      "id": "5adae818-867a-48fb-958d-0955808f8f4e",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "courses",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1792
+      ],
+      "id": "02918190-530f-43f1-982b-a5be327d442f",
+      "name": "Split Out3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "universities",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "university_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.university_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "university_id",
+              "fieldValue": "={{ $json.university_id }}"
+            },
+            {
+              "fieldId": "university_name",
+              "fieldValue": "={{ $json.university_name }}"
+            },
+            {
+              "fieldId": "location",
+              "fieldValue": "={{ $json.location }}"
+            },
+            {
+              "fieldId": "year_established",
+              "fieldValue": "={{ $json.year_established }}"
+            },
+            {
+              "fieldId": "fees",
+              "fieldValue": "={{ $json.fees }}"
+            },
+            {
+              "fieldId": "university_type",
+              "fieldValue": "={{ $json.university_type }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        1600
+      ],
+      "id": "5ee8c93f-fab3-41da-8c2b-19657acf1e8f",
+      "name": "uni1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AcaPxMoPn66ERXwI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "courses",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "course_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.course_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "course_id",
+              "fieldValue": "={{ $json.course_id }}"
+            },
+            {
+              "fieldId": "university_id",
+              "fieldValue": "={{ $json.university_id }}"
+            },
+            {
+              "fieldId": "course_name",
+              "fieldValue": "={{ $json.course_name }}"
+            },
+            {
+              "fieldId": "jamb_cutoff",
+              "fieldValue": "={{ $json.jamb_cutoff }}"
+            },
+            {
+              "fieldId": "waec_requirements",
+              "fieldValue": "={{ $json.waec_requirements }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        1792
+      ],
+      "id": "7d57a100-fe00-4a9e-9f1e-dab729b1cf57",
+      "name": "course1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AcaPxMoPn66ERXwI",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Waec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "uni",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "course",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waec": {
+      "main": [
+        [
+          {
+            "node": "universities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "universities": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "uni1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out3": {
+      "main": [
+        [
+          {
+            "node": "course1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c1ccd055-4a8b-4b3c-abe9-42a02b4a62b2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "nWz8cN5GLPIe9Jvj",
+  "tags": []
+}

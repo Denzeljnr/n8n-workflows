@@ -1,0 +1,441 @@
+{
+  "name": "Business Health Dashboard & AI Co-Pilot",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        48
+      ],
+      "id": "d0be8510-3c6d-419b-b767-43a610d487d6",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg",
+          "mode": "list",
+          "cachedResultName": "Business-Health",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1027141196,
+          "mode": "list",
+          "cachedResultName": "Sales",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit#gid=1027141196"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        224,
+        -144
+      ],
+      "id": "9b6e24da-2de0-4d53-847f-337e23d80994",
+      "name": "Read Sales",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg",
+          "mode": "list",
+          "cachedResultName": "Business-Health",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1969759998,
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit#gid=1969759998"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        224,
+        48
+      ],
+      "id": "8082b32e-90ac-4b27-8952-e77440419992",
+      "name": "Read Leads",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg",
+          "mode": "list",
+          "cachedResultName": "Business-Health",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1574883851,
+          "mode": "list",
+          "cachedResultName": "Complaints",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cPelfqnuDmP6BAasa-r0pPsSHNat7t4T5daeNxpufrg/edit#gid=1574883851"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        224,
+        240
+      ],
+      "id": "d7b66229-88de-4225-b1ec-e24b22236716",
+      "name": "Read Complaints",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\n\nlet totalSales = 0;\nlet ordersCount = 0;\nconst productCounts = {};\nconst orders = [];\n\nfor (const r of rows) {\n  const rev = parseFloat((r.Total || r.Revenue || r.Amount || 0).toString().replace(/,/g,''));\n  totalSales += isNaN(rev) ? 0 : rev;\n  ordersCount += 1;\n\n  const product = (r.Product || r.product || 'Unknown').toString();\n  const qty = parseInt(r.Quantity || r.quantity || 1);\n  productCounts[product] = (productCounts[product] || 0) + (isNaN(qty) ? 1 : qty);\n\n  orders.push({\n    orderId: r['Order ID'] || '',\n    customer: r['Customer Name'] || '',\n    product,\n    quantity: qty,\n    price: parseFloat(r.Price || 0),\n    total: rev,\n    date: r.Date || r.date || ''\n  });\n}\n\n// find top product\nlet topProduct = null;\nlet topCount = 0;\nfor (const p of Object.keys(productCounts)) {\n  if (productCounts[p] > topCount) {\n    topCount = productCounts[p];\n    topProduct = p;\n  }\n}\n\n// structured final output\nreturn [{\n  json: {\n    totalSales: Number(totalSales.toFixed(2)),\n    ordersCount,\n    topProduct,\n    topProductUnits: topCount,\n    products: productCounts,\n    orders\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -144
+      ],
+      "id": "eb98c954-03d1-488e-b092-a3ca502856aa",
+      "name": "Sales Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\n\nfunction getDateInTZ(offsetHours) {\n  const now = new Date();\n  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);\n  return new Date(utc + (3600000 * offsetHours));\n}\nconst tzDate = getDateInTZ(1);\nconst yesterday = new Date(tzDate.getTime() - 24*60*60*1000);\nconst targetDay = yesterday.toISOString().slice(0,10);\n\nlet leadCount = 0;\nconst sources = {};\n\nfor (const r of rows) {const rows = items.map(i => i.json);\n\nlet totalLeads = 0;\nconst sourceCounts = {};\nconst statusCounts = {};\nconst leads = [];\n\nfor (const r of rows) {\n  totalLeads += 1;\n\n  // Count by source\n  const source = (r.Source || \"Unknown\").toString();\n  sourceCounts[source] = (sourceCounts[source] || 0) + 1;\n\n  // Count by status\n  const status = (r.Status || \"New\").toString();\n  statusCounts[status] = (statusCounts[status] || 0) + 1;\n\n  // Push structured lead\n  leads.push({\n    id: r['Lead ID'] || '',\n    name: r.Name || '',\n    email: r.Email || '',\n    source,\n    interest: r.Interest || '',\n    status,\n    date: r.Date || ''\n  });\n}\n\n// find top source\nlet topSource = null;\nlet topSourceCount = 0;\nfor (const s of Object.keys(sourceCounts)) {\n  if (sourceCounts[s] > topSourceCount) {\n    topSourceCount = sourceCounts[s];\n    topSource = s;\n  }\n}\n\nreturn [{\n  json: {\n    totalLeads,\n    topSource,\n    topSourceLeads: topSourceCount,\n    sources: sourceCounts,\n    statuses: statusCounts,\n    leads\n  }\n}];\n\n  const date = (r.Date || r.date || '').toString().slice(0,10);\n  if (date !== targetDay) continue;\n  leadCount += 1;\n  const src = (r.Source || r.source || 'unknown').toString();\n  sources[src] = (sources[src] || 0) + 1;\n}\n\nreturn [{ json: { date: targetDay, leadCount, leadSources: sources }}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        48
+      ],
+      "id": "8bc6ba91-c149-4655-aeb5-baa7c1b435f6",
+      "name": "Leads Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\nconst rows = items.map(i => i.json);\n\nconst complaints = [];\nfor (const r of rows) {\n  complaints.push({\n    date: r.Date || r.date || null,\n    customer: r['Customer Name'] || r.Customer || \"Unknown\",\n    orderId: r['Order ID'] || null,\n    issue: r.Issue || r.Complaint || \"Not specified\",\n    status: r.Status || \"Pending\"\n  });\n}\n\nreturn [{\n  json: {\n    totalComplaints: complaints.length,\n    complaints\n  }\n}];\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        240
+      ],
+      "id": "a1a634a1-c9f9-4ee8-95cb-412a87ef10d6",
+      "name": "Complaints Aggregate"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        32
+      ],
+      "id": "c57d7c2d-6eb7-4d3c-9780-2b056380a5b5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=E-commerce Daily Summary  \nSales Date: {{ $('Read Sales').first().json.Date }}\nLeads Date: {{ $('Read Leads').first().json.Date }}\nComplaint Date:{{ $('Read Complaints').first().json.Date }}\n\nSales: {{$node[\"Merge\"].json[\"totalSales\"]}} USD from {{$node[\"Merge\"].json[\"ordersCount\"]}} orders.  \nTop product: {{$node[\"Merge\"].json[\"topProduct\"]}} ({{$node[\"Merge\"].json[\"topProductUnits\"]}} units).  \n\nLeads: {{ $('Leads Aggregate').first().json.totalLeads }} (sources: {{ $('Read Leads').all().map(item => item.json['Source']).join(', ') }}\n).  \n\nTotal Complaints: {{ $('Complaints Aggregate').first().json.totalComplaints }}.  \n\nComplaints Customer Name ({{ $('Read Complaints').all().map(item => item.json['Customer Name']).join(', ') }}\n) Issue ({{ $('Read Complaints').all().map(item => item.json['Issue']).join(', ') }}\n)\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an assistant that creates daily performance reports for an e-commerce business. \nYour task is to take structured JSON input (sales, leads, complaints) and generate a clear, professional summary.\n\nRules:\n- If complaintCount > 5, start the message with \"⚠️ URGENT:\".\n- Always use a friendly but professional tone.\n- Summarize results in 3–5 concise sentences.\n- Provide 2 actionable recommendations based on the data (specific steps for sales, leads, or complaints).\n- Provide 1 one-line follow-up suggestion (who to check with, or what to review).\n- Keep the formatting clean and easy to read.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        48
+      ],
+      "id": "e66e1a67-511b-427b-8045-e468d279264b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        272
+      ],
+      "id": "e611b59b-1a05-4163-b6b2-191242c15b99",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"date\": \"2025-09-20\",\n  \"totalSales\": 1250,\n  \"ordersCount\": 8,\n  \"topProduct\": \"Wireless Mouse\",\n  \"topProductUnits\": 15,\n  \"leadCount\": 12,\n  \"leadSources\": [\"Facebook\", \"Instagram\"],\n  \"complaintCount\": 6,\n  \"complaints\": [\n    { \"customer\": \"Alice\", \"complaint\": \"Shipping delay\" },\n    { \"customer\": \"Bob\", \"complaint\": \"Received wrong item\" },\n    { \"customer\": \"Cynthia\", \"complaint\": \"Damaged packaging\" },\n    { \"customer\": \"David\", \"complaint\": \"Late delivery\" },\n    { \"customer\": \"Ella\", \"complaint\": \"Product not as described\" },\n    { \"customer\": \"Frank\", \"complaint\": \"No tracking update\" }\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        272
+      ],
+      "id": "624fc2f5-2ad9-4f91-83e9-36d81b75e4e8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=Daily Business Health Report — {{ $json.output[0].date }}",
+        "message": "=<h2 style=\"font-family: Arial, sans-serif; color:#333;\">\n  📊 Daily Business Health Report — {{ $json.output[0].date }}\n</h2>\n\n<div style=\"font-family: Arial, sans-serif; font-size:14px; line-height:1.6; color:#444;\">\n  <p><strong>Sales:</strong> {{ $json.output[0].totalSales }} USD from {{ $json.output[0].ordersCount }} orders.</p>\n  <p><strong>Top Product:</strong> {{ $json.output[0].topProduct }} ({{ $json.output[0].topProductUnits }} units sold).</p>\n  <p><strong>Leads:</strong> {{ $json.output[0].leadCount }}(sources: {{ $json.output[0].leadSources }}).</p>\n  <p><strong>Complaints:</strong>  {{ $json.output[0].complaintCount }}total complaints received.</p>\n</div>\n\n<img src={{ $('Code').item.json.chartUrl }}\"\" alt=\"Business Overview Chart\" style=\"margin-top:20px; max-width:100%;\"/>\n\n<hr style=\"margin:20px 0; border:0; border-top:1px solid #ddd;\"/>\n<p style=\"font-family: Arial, sans-serif; font-size:12px; color:#999;\">\n  Generated automatically by your business AI agent.\n</p>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1744,
+        48
+      ],
+      "id": "34fe7dd7-03ad-4fb7-8a1e-3a44736da077",
+      "name": "Send a message",
+      "webhookId": "9e60d0cb-ebe2-4155-812a-52c4d484ee8b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        48
+      ],
+      "id": "c60df051-e56d-41ae-b0da-7606cf77a0d9",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = items[0].json;\nconst labels = ['Sales ($)', 'Leads', 'Complaints'];\nconst values = [m.totalSales || 0, m.leadCount || 0, m.complaintCount || 0];\n\nconst chartConfig = {\n  type: 'bar',\n  data: {\n    labels,\n    datasets: [{ label: 'Daily snapshot', data: values }]\n  },\n  options: {\n    title: { display: true, text: `Snapshot - ${m.date}` }\n  }\n};\n\nconst url = 'https://quickchart.io/chart?c=' + encodeURIComponent(JSON.stringify(chartConfig));\nreturn [{ json: { ...m, chartUrl: url } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        48
+      ],
+      "id": "0ed41d13-311f-420a-b078-2ff3eb2268d0",
+      "name": "Code"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read Sales",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Leads",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Complaints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sales": {
+      "main": [
+        [
+          {
+            "node": "Sales Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads": {
+      "main": [
+        [
+          {
+            "node": "Leads Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Complaints": {
+      "main": [
+        [
+          {
+            "node": "Complaints Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Complaints Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2378041b-2dce-4dd1-a4a0-b044a4bc19c8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "mxDj3rPHxb2DEuRp",
+  "tags": []
+}

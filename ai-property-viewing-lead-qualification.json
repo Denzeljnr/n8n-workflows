@@ -1,0 +1,1471 @@
+{
+  "name": "Real Estate Property Viewing & Lead Qualification System - Feasibility Breakdown",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2f388c97-8c56-427e-b289-21fad6fee84e",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        304
+      ],
+      "id": "8a6213bc-2a65-41bf-b94b-3229d075c533",
+      "name": "Webhook",
+      "webhookId": "2f388c97-8c56-427e-b289-21fad6fee84e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2128,
+        -512
+      ],
+      "id": "7d1c3475-05f5-47f8-ab46-12f831c57810",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BzDB55dCXN9Xqc5JcL5o6nbOZdqx-x466TvPmON0KQ8",
+          "mode": "list",
+          "cachedResultName": "real est",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BzDB55dCXN9Xqc5JcL5o6nbOZdqx-x466TvPmON0KQ8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BzDB55dCXN9Xqc5JcL5o6nbOZdqx-x466TvPmON0KQ8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fullName": "={{ $json.body.fullName }}",
+            "email": "={{ $json.body.email }}",
+            "phone": "={{ $json.body.phone }}",
+            "propertyId": "={{ $json.body.propertyId }}",
+            "propertyAddress": "={{ $json.body.propertyAddress }}",
+            "preferredDateISO": "={{ $json.body.preferredDate }}",
+            "preferredTime": "={{ $json.body.preferredTime }}",
+            "budgetRange": "={{ $json.body.budgetRange }}",
+            "financialStatus": "={{ $json.body.financingStatus }}",
+            "timeframe": "={{ $json.body.timeframe }}",
+            "additionalNotes": "={{ $json.body.additionalNotes }}",
+            "status": "new",
+            "receivedAt": "={{ $now.format('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fullName",
+              "displayName": "fullName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "propertyId",
+              "displayName": "propertyId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "propertyAddress",
+              "displayName": "propertyAddress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferredDateISO",
+              "displayName": "preferredDateISO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferredTime",
+              "displayName": "preferredTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budgetRange",
+              "displayName": "budgetRange",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "financialStatus",
+              "displayName": "financialStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timeframe",
+              "displayName": "timeframe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "additionalNotes",
+              "displayName": "additionalNotes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "receivedAt",
+              "displayName": "receivedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -64,
+        -512
+      ],
+      "id": "1a1c523f-524a-4537-bb3d-1e169b6553c8",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Input: \n{\n  \"fullName\":\"{{$json[\"fullName\"]}}\",\n  \"email\":\"{{$json[\"email\"]}}\",\n  \"phone\":\"{{$json[\"phone\"]}}\",\n  \"budgetRange\":\"{{$json[\"budgetRange\"]}}\",\n  \"financingStatus\":\"{{ $json.financialStatus }}\",\n  \"timeframe\":\"{{$json[\"timeframe\"]}}\",\n  \"preferredDate\":\"{{$json[\"preferredDateISO\"]}}\",\n  \"preferredTime\":\"{{$json[\"preferredTime\"]}}\",\n  \"propertyId\":\"{{$json[\"propertyId\"]}}\",\n  \"additionalNotes\":\"{{$json[\"additionalNotes\"]}}\"\n}\n\nRules:\n- If budget range covers property price (use property price if provided later), mark \"possible\" else \"needs_review\".\n- If financingStatus == \"Pre-approved\" or \"Cash buyer\" and timeframe within 3 months, mark high interest.\n- Return JSON only in this shape:\n{\n \"qualified\": true|false,\n \"confidence\": 0-100,\n \"reason\": \"short reason\",\n \"recommendedNextStep\": \"auto_book\" | \"ask_more_info\" | \"manual_followup\",\n \"tags\": [\"pre-approved\",\"urgent\",\"low-budget\" ...]\n}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an assistant that analyzes real estate lead qualification. Return a JSON object only.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        -512
+      ],
+      "id": "f8e994e0-3296-4172-992e-f4c2995ccf5d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -288
+      ],
+      "id": "b939ee98-9334-492e-a6f0-454b001936dd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"qualified\": true,\n  \"confidence\": 88,\n  \"reason\": \"Pre-approved and timeframe within 1-3 months\",\n  \"recommendedNextStep\": \"auto_book\",\n  \"tags\": [\"pre-approved\",\"1-3 months\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        -288
+      ],
+      "id": "3c5a54ab-e1b5-4a85-90f5-fbc3c8dc05c2",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8378008-17b3-43f3-bf9f-9b06487d790c",
+              "leftValue": "={{ $json.output.qualified }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -512
+      ],
+      "id": "03d59200-e59b-4b92-985b-b8627758c7b7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk",
+          "mode": "list",
+          "cachedResultName": "real est2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 601369034,
+          "mode": "list",
+          "cachedResultName": "properties",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit#gid=601369034"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Property ID",
+              "lookupValue": "={{ $('Webhook').item.json.body.propertyId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        784,
+        -512
+      ],
+      "id": "1b48fbbd-5a23-4073-9db6-bcdc5ffa0725",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7c045add-b9db-415f-afc9-ed2063df953d",
+              "name": "fullName",
+              "value": "={{ $json.body.fullName }}",
+              "type": "string"
+            },
+            {
+              "id": "c9f01211-346d-45e4-a569-11c5e64c305a",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "f1a272b9-3c89-4174-8738-1b6c1ac1589e",
+              "name": "phone",
+              "value": "={{ $json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "f78e51e7-0d1c-4cc7-a55b-ed39a975e856",
+              "name": "propertyId",
+              "value": "={{ $json.body.propertyId }}",
+              "type": "string"
+            },
+            {
+              "id": "ccf1bec4-f866-45a8-b1e8-8bde36634e45",
+              "name": "propertyAddress",
+              "value": "={{ $json.body.propertyAddress }}",
+              "type": "string"
+            },
+            {
+              "id": "b58d62de-aed6-4497-a729-8ad442f4b400",
+              "name": "preferredDate",
+              "value": "={{ $json.body.preferredDate }}",
+              "type": "string"
+            },
+            {
+              "id": "d7cc0c8d-b0d6-4eeb-9ad2-25ffdcdebb88",
+              "name": "budgetRange",
+              "value": "={{ $json.body.budgetRange }}",
+              "type": "string"
+            },
+            {
+              "id": "cd1741fd-24d8-4def-a84f-25a805dad910",
+              "name": "financingStatus",
+              "value": "={{ $json.body.financingStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "a760b9cd-746d-4987-8f66-5cb29221d701",
+              "name": "timeframe",
+              "value": "={{ $json.body.timeframe }}",
+              "type": "string"
+            },
+            {
+              "id": "2f5c2300-df46-49bf-896c-3f1c800371fa",
+              "name": "additionalNotes",
+              "value": "={{ $json.body.additionalNotes }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        304
+      ],
+      "id": "7771efe0-230a-4f30-8092-46b06312b227",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"leadScore\": 85,\n  \"qualificationStatus\": \"Hot Lead\",\n  \"reasoning\": \"Brief explanation of the score\",\n  \"recommendedAction\": \"What the agent should do next\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        528
+      ],
+      "id": "89f3d2df-826d-449e-a24f-2e4ecc3a3e15",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        528
+      ],
+      "id": "e5432aa7-cddd-4fa7-b438-df287a6bacf2",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5c255b6-4ebe-4906-95db-1a2fa8bf77c5",
+              "name": "leadScore",
+              "value": "={{ $json.output.leadScore }}",
+              "type": "number"
+            },
+            {
+              "id": "2a2b7e70-fd55-495b-875b-baa7e2469c7f",
+              "name": "=qualificationStatus",
+              "value": "={{ $json.output.qualificationStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "60fc979a-d030-43b9-a7ec-3e8b5c222809",
+              "name": "reasoning",
+              "value": "={{ $json.output.reasoning }}",
+              "type": "string"
+            },
+            {
+              "id": "b88fe208-7748-4d83-918b-16c21a6f26d2",
+              "name": "recommendedAction",
+              "value": "={{ $json.output.recommendedAction }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        304
+      ],
+      "id": "4093952c-06a1-4b08-ab9e-b468cb28fb6b",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const date = $('Webhook').first().json.body.preferredDate; // \"2025-10-20\"\nconst time = $('Webhook').first().json.body.preferredTime // \"2:00 PM\"\nconst [timePart, meridiem] = time.split(' ');\nlet [hour,min] = timePart.split(':').map(Number);\nif (meridiem === 'PM' && hour !== 12) hour += 12;\nif (meridiem === 'AM' && hour === 12) hour = 0;\n\nconst dtStart = new Date(date + 'T' + String(hour).padStart(2,'0') + ':' + String(min||0).padStart(2,'0') + ':00');\nconst dtEnd = new Date(dtStart.getTime() + 60*60*1000); // 1 hour\n\nreturn [{ json: { dtStart: dtStart.toISOString(), dtEnd: dtEnd.toISOString() } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        -512
+      ],
+      "id": "9580c1d6-aba0-410e-90cc-afef6b17f951",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Booking"
+        },
+        "timeMin": "={{ $json.dtStart }}",
+        "timeMax": "={{ $json.dtEnd }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        -512
+      ],
+      "id": "4596acb9-6a5a-49f7-bbba-3ac07cded0e5",
+      "name": "Get availability in a calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "30aa97c6-adc4-4eee-8c0f-58efb4c7c1c4",
+              "leftValue": "={{ $json.available }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        -512
+      ],
+      "id": "d571d98b-cdc1-4758-b532-b4250877ed7a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Booking"
+        },
+        "start": "={{ $('Code1').item.json.dtStart }}",
+        "end": "={{ $('Code1').item.json.dtEnd }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $('Append row in sheet').item.json.email }} "
+          ],
+          "description": "={{ $('Append row in sheet').item.json.propertyAddress }}",
+          "summary": "=Viewing: {{ $('Get row(s) in sheet').item.json['Property Type'] }} — {{ $('Append row in sheet').item.json.fullName }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1680,
+        -512
+      ],
+      "id": "0a7fd9ee-22cd-463c-a2d0-0026f670fee7",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.attendees[0].email }}",
+        "subject": "=Viewing Confirmed — {{ $('Get row(s) in sheet').item.json['Property Type'] }} on {{ $('Append row in sheet').item.json.preferredDateISO }} at {{ $('Append row in sheet').item.json.preferredTime }}",
+        "message": "=<div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; font-family: Arial, sans-serif;\">          <h2 style=\"color: #1e3a8a; margin-top: 0;\">Viewing Confirmed ✓</h2>          <p style=\"color: #333; font-size: 15px; line-height: 1.6;\">         Hi <strong>{{ $('Append row in sheet').item.json.fullName }}</strong>,     </p>          <p style=\"color: #333; font-size: 15px; line-height: 1.6;\">         Your viewing for <strong>{{ $('Append row in sheet').item.json.propertyAddress }}</strong> is scheduled on <strong>{{ $('Append row in sheet').item.json.preferredDateISO }}</strong> at <strong>{{ $('Append row in sheet').item.json.preferredTime }}</strong>.     </p>          <div style=\"background-color: #f3f4f6; padding: 20px; border-radius: 6px; margin: 20px 0;\">         <p style=\"margin: 0 0 8px 0; color: #333; font-size: 15px;\">             <strong>Agent:</strong> Sarah Johnson         </p>         <p style=\"margin: 0 0 8px 0; color: #333; font-size: 15px;\">             <strong>Phone:</strong> (555) 987-6543         </p>         <p style=\"margin: 0; color: #333; font-size: 15px;\">             <strong>Virtual tour:</strong> <a href=\"https://virtualtour.dreamhomerealty.com/{{ $('Append row in sheet').item.json.propertyId }}\" style=\"color: #1e3a8a;\">View Property</a>         </p>     </div>          <p style=\"color: #333; font-size: 15px; line-height: 1.6;\">         Thanks,<br>         <strong>DreamHome Realty</strong>     </p>          <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 25px 0;\">          <p style=\"color: #6b7280; font-size: 13px; margin: 0;\">         Questions? Call us at (555) 123-4567     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1904,
+        -512
+      ],
+      "id": "69cbd0ce-facb-4d70-bd1c-a28d0839b138",
+      "name": "Send a message",
+      "webhookId": "8c48a799-0d21-4fd8-8b0a-b2affceaa8fa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const date = $('Webhook').first().json.body.preferredDate; // \"2025-10-20\"\nconst time = $('Webhook').first().json.body.preferredTime // \"2:00 PM\"\nconst [timePart, meridiem] = time.split(' ');\nlet [hour,min] = timePart.split(':').map(Number);\nif (meridiem === 'PM' && hour !== 12) hour += 12;\nif (meridiem === 'AM' && hour === 12) hour = 0;\n\nconst dtStart = new Date(date + 'T' + String(hour).padStart(2,'0') + ':' + String(min||0).padStart(2,'0') + ':00');\nconst dtEnd = new Date(dtStart.getTime() + 60*60*1000); // 1 hour\n\nreturn [{ json: { dtStart: dtStart.toISOString(), dtEnd: dtEnd.toISOString() } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        304
+      ],
+      "id": "8ae94018-ef95-4e5a-8fc2-548a8392de59",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Your viewing request has been submitted successfully!\",\n  \"leadScore\": {{ $('append customer request').item.json['Lead Score'] }},\n  \"status\": \"{{ $('Get availability').item.json.available }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3264,
+        304
+      ],
+      "id": "d6462bcf-bd39-40b5-8fdf-78c1ce610211",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2816,
+        304
+      ],
+      "id": "199544da-5b8b-47f4-9091-d84c78c41622",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk",
+          "mode": "list",
+          "cachedResultName": "real est2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 601369034,
+          "mode": "list",
+          "cachedResultName": "properties",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit#gid=601369034"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Property ID",
+              "lookupValue": "={{ $json.propertyId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        400,
+        304
+      ],
+      "id": "254f2f30-05b8-465e-a9af-d0e5e318e693",
+      "name": "get properties info",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead Information:\n- Name: {{ $('Edit Fields').item.json.fullName }}\n- Budget Range: {{ $('Edit Fields').item.json.budgetRange }}\n- Property Price: {{ $json.Price }}\n- Financing Status: {{ $('Edit Fields').item.json.financingStatus }}\n- Timeframe: {{ $('Edit Fields').item.json.timeframe }}\n- Additional Notes: {{ $('Edit Fields').item.json.additionalNotes }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a real estate lead qualification assistant. Analyze this lead and provide a qualification score (0-100) and status.\n\nScoring Criteria:\n- Budget matches property price: +30 points\n- Pre-approved or cash buyer: +25 points\n- Looking to buy within 1-3 months: +20 points\n- Within 3-6 months: +15 points\n- Provided detailed notes/questions: +10 points\n- Budget significantly below property price: -20 points\n\n\nQualification Status should be one of: \"Hot Lead\", \"Warm Lead\", \"Qualified Lead\", or \"Cold Lead\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        304
+      ],
+      "id": "9f047755-ef07-4c95-a87b-2ce61631c5f2",
+      "name": "real estate lead qualification assistant"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk",
+          "mode": "list",
+          "cachedResultName": "real est2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 636820977,
+          "mode": "list",
+          "cachedResultName": "agent ava",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit#gid=636820977"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $('Edit Fields').item.json.preferredDate }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1248,
+        304
+      ],
+      "id": "e956b57f-ef09-4979-ae9c-cbae49b9f2e0",
+      "name": "get agent availability",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Booking"
+        },
+        "timeMin": "={{ $json.dtStart }}",
+        "timeMax": "={{ $json.dtEnd }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1696,
+        304
+      ],
+      "id": "d1f3ddcf-1730-4fe9-bb3c-0a0063de2158",
+      "name": "Get availability",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk",
+          "mode": "list",
+          "cachedResultName": "real est2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1547016177,
+          "mode": "list",
+          "cachedResultName": "view request",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17t93bXYqEuO0W8xdgfZ7sfdgrdbQblp06Ps_HH4MsFk/edit#gid=1547016177"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('Edit Fields').item.json.fullName }}",
+            "Email": "={{ $('Edit Fields').item.json.email }}",
+            "Phone": "={{ $('Edit Fields').item.json.phone }}",
+            "Property ID": "={{ $('Edit Fields').item.json.propertyId }}",
+            "Property Address": "={{ $('Edit Fields').item.json.propertyAddress }}",
+            "Preferred Date": "={{ $('Edit Fields').item.json.preferredDate }}",
+            "Budget Range": "={{ $('Edit Fields').item.json.budgetRange }}",
+            "Financing Status": "={{ $('Edit Fields').item.json.financingStatus }}",
+            "Timeframe": "={{ $('Edit Fields').item.json.timeframe }}",
+            "Preferred Time": "={{ $('Webhook').item.json.body.preferredTime }}",
+            "Additional Notes": "={{ $('Webhook').item.json.body.additionalNotes }}",
+            "Lead Score": "={{ $('real estate lead qualification assistant').item.json.output.leadScore }}",
+            "Qualification Status": "={{ $('real estate lead qualification assistant').item.json.output.qualificationStatus }}",
+            "Agent Assigned": "={{ $('get agent availability').item.json['Agent Name'] }}",
+            "Post-Viewing Feedback": "=Pending",
+            "Viewing Confirmed": "={{ $json.available }}",
+            "Buying Intent Score": "To be updated after viewing"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Address",
+              "displayName": "Property Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Date",
+              "displayName": "Preferred Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Time",
+              "displayName": "Preferred Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Financing Status",
+              "displayName": "Financing Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeframe",
+              "displayName": "Timeframe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Additional Notes",
+              "displayName": "Additional Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Qualification Status",
+              "displayName": "Qualification Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Agent Assigned",
+              "displayName": "Agent Assigned",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Viewing Confirmed",
+              "displayName": "Viewing Confirmed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post-Viewing Feedback",
+              "displayName": "Post-Viewing Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buying Intent Score",
+              "displayName": "Buying Intent Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2144,
+        304
+      ],
+      "id": "bc79dfe4-6c92-4934-bc20-79e266fd1181",
+      "name": "append customer request",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('get agent availability').item.json['Agent Email'] }}",
+        "subject": "=🔥 HOT LEAD: {{ $('Generate Lead ID').item.json.fullName }} - {{ $('Generate Lead ID').item.json.propertyAddress }}",
+        "message": "=<h2 style=\"color: #dc2626;\">🔥 High-Priority Hot Lead Alert</h2>\n\n<p><strong>Lead Score: {{ $('append customer request').item.json['Lead Score'] }}/100</strong></p>\n<p><strong>Status:</strong> {{ $('append customer request').item.json['Qualification Status'] }}</p>\n\n<h3>Lead Information:</h3>\n<ul>\n  <li><strong>Name:</strong> {{ $('append customer request').item.json['Full Name'] }}</li>\n  <li><strong>Email:</strong> {{ $('append customer request').item.json.Email }}</li>\n  <li><strong>Phone:</strong> {{ $('append customer request').item.json.Phone }}</li>\n</ul>\n\n<h3>Property Details:</h3>\n<ul>\n  <li><strong>Property:</strong> {{ $('append customer request').item.json['Property Address'] }}</li>\n  <li><strong>Property ID:</strong> {{ $('append customer request').item.json['Property ID'] }}</li>\n  <li><strong>Price:</strong> ${{ $('get properties info').item.json.Price }}</li>\n</ul>\n\n<h3>Viewing Request:</h3>\n<ul>\n  <li><strong>Preferred Date:</strong> {{ $('Webhook').item.json.body.preferredDate }}</li>\n  <li><strong>Preferred Time:</strong> {{ $('Webhook').item.json.body.preferredTime }}</li>\n  <li><strong>Status:</strong> {{ $('Get availability').item.json.available }}</li>\n</ul>\n\n<h3>Qualification Details:</h3>\n<ul>\n  <li><strong>Budget:</strong> {{ $('append customer request').item.json['Budget Range'] }}</li>\n  <li><strong>Financing:</strong> {{ $('append customer request').item.json['Financing Status'] }}</li>\n  <li><strong>Timeframe:</strong> {{ $('append customer request').item.json.Timeframe }}</li>\n</ul>\n\n<h3>AI Analysis:</h3>\n<p><strong>Reasoning:</strong> {{ $('real estate lead qualification assistant').item.json.output.reasoning }}</p>\n<p><strong>Recommended Action:</strong> {{ $('real estate lead qualification assistant').item.json.output.recommendedAction }}</p>\n\n<p style=\"background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b;\">\n  ⚡ <strong>ACTION REQUIRED:</strong> Contact this lead within 30 minutes for best conversion rates.\n</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2592,
+        208
+      ],
+      "id": "db96243e-6651-414b-920c-0a36fbb4b7d1",
+      "name": "Hot lead mail",
+      "webhookId": "c7dfb155-df2e-4e5a-bded-32fe63ddb2a9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "48a5159b-e77f-4788-8cae-52097ad8f194",
+              "leftValue": "={{ $('real estate lead qualification assistant').item.json.output.leadScore }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        304
+      ],
+      "id": "35a57c12-6ef1-4478-bd45-0e503a0c82ad",
+      "name": "lead score more than 79"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "30aa97c6-adc4-4eee-8c0f-58efb4c7c1c4",
+              "leftValue": "={{ $json.available }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        304
+      ],
+      "id": "77e637c3-708b-4786-b895-de19752baa4f",
+      "name": "If available"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('get agent availability').item.json['Agent Email'] }}",
+        "subject": "=New Viewing Request:  {{ $json['Full Name'] }}- Score: {{ $json['Lead Score'] }}",
+        "message": "=<h2>New Viewing Request Received</h2>  <p><strong>Lead Score: {{ $json['Lead Score'] }}/100</strong></p> <p><strong>Status:</strong> {{ $json['Qualification Status'] }}</p>  <h3>Lead Information:</h3> <ul>   <li><strong>Name:</strong> {{ $json['Full Name'] }}</li>   <li><strong>Email:</strong> {{ $json.Email }}</li>   <li><strong>Phone:</strong> {{ $json.Phone }}</li> </ul>  <h3>Property & Viewing:</h3> <ul>   <li><strong>Property:</strong> {{ $json['Property Address'] }}</li>   <li><strong>Date:</strong> {{ $json['Preferred Date'] }}</li>   <li><strong>Time:</strong> {{ $('Webhook').item.json.body.preferredTime }}</li> </ul>  <p><strong>Recommended Action:</strong> {{ $('real estate lead qualification assistant').item.json.output.recommendedAction }}</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2592,
+        400
+      ],
+      "id": "1d7db1b9-d8bd-4fb8-ac8c-8a8f5ee3b022",
+      "name": "warm/cold lead mail",
+      "webhookId": "c7dfb155-df2e-4e5a-bded-32fe63ddb2a9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('append customer request').item.json.Email }}",
+        "subject": "=Your Viewing Request for {{ $('append customer request').item.json['Property Address'] }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">   <h2 style=\"color: #1e3a8a;\">Thank You for Your Interest!</h2>      <p>Hi {{ $('append customer request').item.json['Full Name'] }},</p>      <p>We've received your viewing request for:</p>      <div style=\"background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;\">     <h3 style=\"margin-top: 0;\">{{ $('append customer request').item.json['Property Address'] }}</h3>     <p><strong>Price:</strong> ${{ $('get properties info').item.json.Price }}</p>     <p><strong>Property Type:</strong> {{ $('get properties info').item.json['Property Type'] }}</p>     <p><strong>Bedrooms:</strong> {{ $('get properties info').item.json.Bedrooms }} | <strong>Bathrooms:</strong> {{ $('get properties info').item.json.Bathrooms }}</p>   </div>      <h3>Your Viewing Details:</h3>   <ul>     <li><strong>Requested Date:</strong> {{ $('Webhook').item.json.body.preferredDate }}</li>     <li><strong>Requested Time:</strong> {{ $('Webhook').item.json.body.preferredTime }}</li>     <li><strong>Status:</strong> {{ $('Get availability').item.json.available }}</li>   </ul>      <p><strong>What happens next?</strong></p>   <p>Our agent, {{ $('get agent availability').item.json['Agent Name'] }}, will contact you within 24 hours to confirm your viewing appointment. She'll reach out via {{ $('get agent availability').item.json['Agent Email'] }}.</p>      <div style=\"background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;\">     <p style=\"margin: 0;\"><strong>📞 Have questions?</strong> Call us at (555) 123-4567</p>   </div>      <p>We look forward to showing you this amazing property!</p>      <p>Best regards,<br>   <strong>DreamHome Realty Team</strong></p>      <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;\">      <p style=\"font-size: 12px; color: #6b7280;\">     Reference ID: {{ $('get agent availability').item.json['Property ID'] }}   </p> </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3040,
+        304
+      ],
+      "id": "446c053c-f663-4c9b-a96a-4f949906450a",
+      "name": "customer mail",
+      "webhookId": "073e5b95-6c70-4e23-98bc-89d838c88796",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "get properties info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "real estate lead qualification assistant",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "real estate lead qualification assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "get agent availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Get availability in a calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Get availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "customer mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get properties info": {
+      "main": [
+        [
+          {
+            "node": "real estate lead qualification assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "real estate lead qualification assistant": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get agent availability": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability": {
+      "main": [
+        [
+          {
+            "node": "If available",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append customer request": {
+      "main": [
+        [
+          {
+            "node": "lead score more than 79",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot lead mail": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lead score more than 79": {
+      "main": [
+        [
+          {
+            "node": "Hot lead mail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "warm/cold lead mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If available": {
+      "main": [
+        [
+          {
+            "node": "append customer request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "warm/cold lead mail": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customer mail": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "39af35ce-dd74-4c16-8e1f-68824c7e60eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "wf3LjK2Z0ab5FnLt",
+  "tags": []
+}

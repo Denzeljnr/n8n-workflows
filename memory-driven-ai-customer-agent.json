@@ -1,0 +1,645 @@
+{
+  "name": "Customer experience Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "769686c0-383f-409c-b37d-26a002f278b9",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        448
+      ],
+      "id": "df02ad82-5ebe-48cf-8a59-173bcf3949bd",
+      "name": "Webhook",
+      "webhookId": "769686c0-383f-409c-b37d-26a002f278b9"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1520,
+        448
+      ],
+      "id": "425031f0-0d33-4375-b45e-766882239e49",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7305879-c265-401f-955e-f401acd4c8b8",
+              "name": "body.user_id",
+              "value": "={{ $json.body.user_id }}",
+              "type": "string"
+            },
+            {
+              "id": "2c2f10c3-2211-44bf-b349-d712224c6852",
+              "name": "body.session_id",
+              "value": "={{ $json.body.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "2958db63-7fb6-4456-a708-3490f4f7a3f6",
+              "name": "body.message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "53546da1-e602-4f83-897d-cb182c806602",
+              "name": "body.tone_override",
+              "value": "={{ $json.body.tone_override }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -512,
+        448
+      ],
+      "id": "c0d49133-f270-4686-9671-f3a7ba57f8c7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        832,
+        672
+      ],
+      "id": "82d4ef79-4065-41e0-95cc-bcb896976d31",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        880
+      ],
+      "id": "59c92318-ce47-40d1-86f6-1450f1213395",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User Message: {{ $('Edit Fields').first().json.body.message }}\nCustomer Name: {{ $('Merge').first().json.full_name }}\nCustomer Email: {{ $('Merge').first().json.email }}\nCustomer Segment: {{ $('Merge').first().json.segment }}\nCustomer Preferences:{{ $('Merge').first().json.preferences }} \nCustomer Purchase History: {{ $('Merge').first().json.purchase_history }}\nPreferred Tone: {{ $json.tone }}\n\n\nConversation History\n{{ $('Aggregate').all().map(item => item.json.Message_history).flat().map(m => m.role + \": \" + m.content).join(\"\\n\\n\") }}\n\n\n\nnote: remove symbols like \"*\" from the reponse",
+        "options": {
+          "systemMessage": "=You are an assistant for LuxThreads Fashion Company.\nYour job is to answer customer questions using the provided conversation history (for memory and personalization) and the Supabase Vector Store (for knowledge base).\n\nResponse Flow:\n\nCheck Conversation History (Memory)\n\nReview the conversation history provided in the prompt along with the current user message.\n\nIf there is relevant past context such as name, preferences, or prior questions, use it to personalize the answer.\n\nIf the user is already known and the conversation history contains more than two messages, avoid using their name in every response.\n\nOnly include the user’s name in responses that clearly start or conclude a conversation, or when addressing a first-time question.\n\nCheck Supabase Vector Store (Knowledge Base)\n\nRetrieve the most relevant documents related to the current query.\n\nIf the knowledge base has an answer, use it directly in your response.\n\nConstruct the Response\n\nAlways ground personalization in the conversation history first, then enrich with knowledge base results.\n\nAdapt tone based on the language guide (formal, casual, playful, professional).\n\nIf neither the conversation history nor the knowledge base provides an answer, say so politely and suggest next steps such as contacting support or providing an alternative resource.\n\nGuidelines\n\nAlways prefer conversation history first for personalization.\n\nAlways prefer the knowledge base second for factual accuracy.\n\nKeep responses clear, helpful, and warm.\n\nNever invent information that is not found in the conversation history or the knowledge base.\n\nWhen formatting your response, use HTML tags instead of markdown - write <strong>bold text</strong> instead of **bold text**, and use <em>italic</em> instead of *italic*.\n\nnote: remove symbols like \"*\" from the reponse"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        864,
+        448
+      ],
+      "id": "c1bce680-0572-4f4b-b2d3-8abd6a651168",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "knowledge",
+          "mode": "list",
+          "cachedResultName": "knowledge"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        1088
+      ],
+      "id": "21fa9a14-4dab-4b9c-a993-a4202ea2f753",
+      "name": "Supabase Vector Store4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "kD8E7D9U0JcWOuoH",
+          "name": "bolt"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        1312
+      ],
+      "id": "bb5edea4-d9b4-46bd-b012-137c62308794",
+      "name": "Embeddings Google Gemini4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        1312
+      ],
+      "id": "2cc560b2-885b-4039-8713-b421ae759251",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1520
+      ],
+      "id": "b1419f13-4c52-40a2-91c5-0cfa1f50caf4",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        1088
+      ],
+      "id": "c0235b5b-7f24-403d-9a3d-0522971b4d56",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1E4tGBNaEfS7mV3Emj2dEvTlnR0gpdz96",
+          "mode": "list",
+          "cachedResultName": "LuxThreads Fashion Company Knowledge Base.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1E4tGBNaEfS7mV3Emj2dEvTlnR0gpdz96/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -512,
+        1088
+      ],
+      "id": "47450c47-064d-4b82-a482-ccb09cc8ecd3",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62fcb795-3b8e-4aa2-9b1e-3601fb23ddd4",
+              "name": "reply",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        448
+      ],
+      "id": "e1c79314-0ee2-447f-be3e-a145b80294d4",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Use this tool to search the Supabase Vector Store for relevant business knowledge.  \n- Query it with the user’s question.  \n- Retrieve the most relevant documents or context.  \n- Summarize and include the information in your response.  \n- If no relevant results are found, say \"I couldn’t find that in our knowledge base\" and respond politely.\n",
+        "tableName": {
+          "__rl": true,
+          "value": "knowledge",
+          "mode": "list",
+          "cachedResultName": "knowledge"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        672
+      ],
+      "id": "55a89945-d485-4de2-9a4a-fdc439c387f9",
+      "name": "Knowledge",
+      "credentials": {
+        "supabaseApi": {
+          "id": "kD8E7D9U0JcWOuoH",
+          "name": "bolt"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').first().json.body.user_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        672
+      ],
+      "id": "abf9807c-43c9-45c9-9bf0-06ae024facef",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "Message_history",
+        "include": "specifiedFields",
+        "fieldsToInclude": "role,content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        160,
+        544
+      ],
+      "id": "c597d9f9-e2fd-46b3-9486-c3b2ae2e9d60",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        384,
+        448
+      ],
+      "id": "26b02a49-a6ab-448b-9a97-6b546eafd759",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine everything from the Merge node into a single item\n\n// Collect data from all merged items\nlet combinedMessageHistory = [];\nlet customerData = {};\nlet currentMessage = \"\";\nlet tone = \"friendly\";\n\n// Loop through all items coming from the Merge node\nfor (const item of $input.all()) {\n  const json = item.json;\n\n  // Merge message history\n  if (json.Message_history && Array.isArray(json.Message_history)) {\n    combinedMessageHistory = combinedMessageHistory.concat(\n      json.Message_history.map(m => ({ role: m.role, content: m.content }))\n    );\n  }\n\n  // Get the latest customer data\n  if (json.customer) {\n    customerData = { ...customerData, ...json.customer };\n  }\n\n  // Use the latest user message if available\n  if (json.body && json.body.message) {\n    currentMessage = json.body.message;\n  }\n\n  // Tone override\n  if (json.body && json.body.tone_override) {\n    tone = json.body.tone_override;\n  } else if (json.customer && json.customer.tone_preference) {\n    tone = json.customer.tone_preference;\n  }\n}\n\n// Return a single item\nreturn [\n  {\n    json: {\n      customer: customerData,\n      tone: $('Edit Fields').first().json.body.tone_override,\n      current_message: currentMessage,\n      Message_history: combinedMessageHistory\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        448
+      ],
+      "id": "c31c7268-7e47-4f5d-a413-147d43ffea2f",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nif (!data || data.length === 0) {\n  return [{ json: { Message_history: [] } }];\n}\nreturn data;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        544
+      ],
+      "id": "660ec659-40c8-4592-84d8-c5400e52bae5",
+      "name": "bypass new users"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "customers",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        368
+      ],
+      "id": "69c6e0f8-4488-47b8-b833-f635f22cadcd",
+      "name": "customer db",
+      "credentials": {
+        "supabaseApi": {
+          "id": "kD8E7D9U0JcWOuoH",
+          "name": "bolt"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "conversation_messages",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        544
+      ],
+      "id": "9dd7dff8-9eea-49dc-9bc4-110aebdac8aa",
+      "name": "message db",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "kD8E7D9U0JcWOuoH",
+          "name": "bolt"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "customer db",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "message db",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Knowledge",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini4": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bypass new users": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customer db": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "message db": {
+      "main": [
+        [
+          {
+            "node": "bypass new users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a35fa0e4-c931-486d-bbb1-ac3969e0172a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "xVtahXH3Kj76mViM",
+  "tags": []
+}

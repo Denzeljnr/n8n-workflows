@@ -1,0 +1,1548 @@
+{
+  "name": "Automated Doctor Appointment",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8b329c37-4285-47a9-92af-34fd8397b99f",
+              "name": "Timestamp",
+              "value": "={{ $json.Timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "c3fccb5d-4b90-4e3c-a811-dc10e60b3ad2",
+              "name": "Patient Name ",
+              "value": "={{ $json['Patient Name '] }}",
+              "type": "string"
+            },
+            {
+              "id": "ea063705-20a0-42c1-95b1-d2e0bad8e024",
+              "name": "  Email  ",
+              "value": "={{ $json['  Email  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "ca8fea83-7ed1-42b8-90fe-09c22eeec4a9",
+              "name": "  Phone  ",
+              "value": "={{ $json['  Phone  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "401c894f-2f57-403a-830c-2437e857538c",
+              "name": "  Doctor  ",
+              "value": "={{ $json['  Doctor  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "7b40a1a0-711a-4327-a042-0965ae1e0c89",
+              "name": "  Preferred Date  ",
+              "value": "={{ $json['  Preferred Date  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "e275992d-e609-45be-b35c-a0e7c13e4e58",
+              "name": "  Preferred Time  ",
+              "value": "={{ $json['  Preferred Time  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "68e7a3bc-1ff9-474d-8b39-1f4e20b1f4f3",
+              "name": "  Duration (minutes)  ",
+              "value": "={{ $json['  Duration (minutes)  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "8bd53742-287a-4abb-9f37-366398aab0be",
+              "name": "  Reason / Notes  ",
+              "value": "={{ $json['  Reason / Notes  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "7b102428-6c04-42e5-8537-e8690f718c7b",
+              "name": "Status",
+              "value": "={{ $json.Status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        160
+      ],
+      "id": "4361f90b-0353-4296-83e7-fe87f92565a8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your tasks\n\nReceive:\n\npreferredDate: from form → {{ $json['  Preferred Date  '] }}\npreferredTime: from form → {{ $json['  Preferred Time  '] }}\n\nslotMinutes: {{ $json['  Duration (minutes)  '] }}\n\nA list of existing calendar events (each with start and end times).\n\nConvert preferredDate + preferredTime into ISO datetime (requestedStartIso).\nThen calculate the requestedEndIso = requestedStartIso + slotMinutes.\n\nCheck for conflicts:\n\nIf the requested slot does not overlap with any existing event → confirm it as the appointment.\n\nIf the requested slot is already taken → try to find the next closest free slot on the same day.\n\nIf no slots are free that day → return \"no_free_slot_today\".\n\nReturn one of the following:\n\nIf scheduled at requested time: \"scheduled_requested\" with start/end times.\n\nIf rescheduled to a nearby slot: \"scheduled_rescheduled\" with new start/end times.\n\nIf no slots are available: \"no_free_slot_today\".\n\n\n\nTodays date is {{ $now.format(\"yyyy-MM-dd\") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an assistant that checks if a doctor has availability in their calendar for a patient’s requested appointment."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        160
+      ],
+      "id": "8bc36e6b-17e3-4c39-a687-9798063afe89",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        384
+      ],
+      "id": "78b40593-86bd-4a50-a755-5df2c52dd422",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"schedulingStatus\": \"scheduled\",\n  \"finalStartIso\": \"2025-08-20T09:00:00\",\n  \"finalEndIso\": \"2025-08-20T09:30:00\"\n}\n\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        384
+      ],
+      "id": "2ae54ba0-a645-4286-9551-4747a3decacc",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        384
+      ],
+      "id": "7d8cb084-1837-4a06-afb9-2c36222b25f5",
+      "name": "Get availability in a calendar in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc6e63f3-ea40-4e7a-b9aa-11fcd421ffb2",
+              "leftValue": "={{ $json.output.schedulingStatus }}",
+              "rightValue": "scheduled_requested",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        160
+      ],
+      "id": "757ad65c-862e-4a67-92b6-0359480e1ffe",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "start": "={{ $json.output.finalStartIso }}",
+        "end": "={{ $json.output.finalEndIso }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $('Code').item.json['  Email  '] }}"
+          ],
+          "summary": "=Doctors Appointment for {{ $('Code').item.json['Patient Name '] }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "12a51759-8a97-4f8d-bbc3-e978bac60d6e",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code').item.json['  Email  '] }}",
+        "subject": "=Appointment Schedule - {{ $('Code').item.json['  Doctor  '] }} ",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body style=\"font-family: Arial, sans-serif; color: #333; padding: 20px;\">\n    <h2 style=\"color: #2E86C1;\">Appointment Confirmation</h2>\n    <p>Dear Patient,</p>\n    <p>\n      Your appointment has been successfully scheduled from \n      <strong>{{ $json.start.dateTime }}</strong> to \n      <strong>{{ $json.end.dateTime }}</strong>.\n    </p>\n    <p>\n      Please arrive 10 minutes early and bring any required documents.\n    </p>\n    <p style=\"margin-top: 20px;\">Thank you,<br><strong>Your Clinic Team</strong></p>\n    <hr style=\"margin-top:30px; border:none; border-top:1px solid #ddd;\" />\n    <p style=\"font-size: 12px; color: #888;\">\n      If you need to reschedule, please contact us at (123) 456-7890.\n    </p>\n  </body>\n</html>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1616,
+        0
+      ],
+      "id": "93900050-d291-4eb4-b53e-a0667bc94450",
+      "name": "Send a message",
+      "webhookId": "7535136d-9755-4669-b5e3-6785450cfbc4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw",
+          "mode": "list",
+          "cachedResultName": "Patient Appointment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 10092836,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit#gid=10092836"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Scheduled",
+            "Scheduled Start": "={{ $('Create an event').item.json.start.dateTime }}",
+            "Scheduled End": "={{ $('Create an event').item.json.end.dateTime }}",
+            "Event Created": "Yes",
+            "Patient Name ": "={{ $('Code').item.json['Patient Name '] }}"
+          },
+          "matchingColumns": [
+            "Patient Name "
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Name ",
+              "displayName": "Patient Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "  Email  ",
+              "displayName": "  Email  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Phone  ",
+              "displayName": "  Phone  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Doctor  ",
+              "displayName": "  Doctor  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Date  ",
+              "displayName": "  Preferred Date  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Time  ",
+              "displayName": "  Preferred Time  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Duration (minutes)  ",
+              "displayName": "  Duration (minutes)  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Reason / Notes  ",
+              "displayName": "  Reason / Notes  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scheduled Start",
+              "displayName": "Scheduled Start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scheduled End",
+              "displayName": "Scheduled End",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Event Created",
+              "displayName": "Event Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1840,
+        0
+      ],
+      "id": "40f44557-dd4a-470e-b320-fdf68188371d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Patient: {{ $('Code').item.json['Patient Name '] }}\nDoctor: {{ $('Code').item.json['  Doctor  '] }}\nDate/Time: {{ $('AI Agent').item.json.output.finalStartIso }} to {{ $('AI Agent').item.json.output.finalEndIso }} (Africa/Lagos)\nNotes: {{ $('Code').item.json['  Reason / Notes  '] }}\n\nKeep it human, <120 words, reschedule instructions.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a clinic assistant. Write a short, friendly rescheduling email for an appointment.\n\ncheck the calendar for three available date suggestion for the appointment \n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        304
+      ],
+      "id": "4aa7b649-f100-4a2f-91c3-96a33c03bec2",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        528
+      ],
+      "id": "f21296ac-58c0-49c6-a20a-335cd1ad0988",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        528
+      ],
+      "id": "90c9b8aa-bcce-47e9-ab4f-942392f90a6f",
+      "name": "Get availability in a calendar in Google Calendar1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw",
+          "mode": "list",
+          "cachedResultName": "Patient Appointment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 10092836,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit#gid=10092836"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Not Scheduled"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -208,
+        160
+      ],
+      "id": "a9b4a64a-c6c6-4494-8a95-a1956796d473",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        160
+      ],
+      "id": "2fde650f-49ef-4943-8186-02bbe2031cf4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tz = 'Africa/Lagos';\nconst date = $json.date;   // YYYY-MM-DD\nconst time = $json.time;   // HH:mm\nconst dur = parseInt($json.durationMin || 30, 10);\n\nconst startLocal = `${date}T${time}:00`;\nconst start = new Date(startLocal); // n8n uses server TZ; if needed, adjust with luxon/moment in Code node, otherwise keep simple\nconst end = new Date(start.getTime() + dur * 60000);\n\nconst pad = n => String(n).padStart(2, '0');\nconst iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;\n\nreturn [{\n  json: {\n    ...$json,\n    startIso: iso(start),\n    endIso: iso(end),\n    slotMinutes: dur,\n    tz\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        160
+      ],
+      "id": "2fba53cd-6dc9-4b18-bd17-5eb0a31f02d2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"to\": \"example@email.com\",\n  \"subject\": \"Rescheduled Meeting\",\n  \"body\": \"Hello, your meeting has been rescheduled to 21st August at 10:00 AM.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1408,
+        528
+      ],
+      "id": "d6c2facd-4425-44a7-91f1-8314caea26db",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code').item.json['  Email  '] }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1616,
+        304
+      ],
+      "id": "86e0170a-f304-4985-9f2f-53025ff675a7",
+      "name": "Send a message2",
+      "webhookId": "1ddabef3-0b08-4066-bca4-3bf1fb2740c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8b329c37-4285-47a9-92af-34fd8397b99f",
+              "name": "Timestamp",
+              "value": "={{ $json.body.Booking_date }}",
+              "type": "string"
+            },
+            {
+              "id": "c3fccb5d-4b90-4e3c-a811-dc10e60b3ad2",
+              "name": "Patient Name ",
+              "value": "={{ $json.body.patient_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ea063705-20a0-42c1-95b1-d2e0bad8e024",
+              "name": "  Email  ",
+              "value": "={{ $json.body.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "401c894f-2f57-403a-830c-2437e857538c",
+              "name": "  Doctor  ",
+              "value": "={{ $json.body.Doctor}}",
+              "type": "string"
+            },
+            {
+              "id": "7b40a1a0-711a-4327-a042-0965ae1e0c89",
+              "name": "  Preferred Date  ",
+              "value": "={{ $json.body.date }}",
+              "type": "string"
+            },
+            {
+              "id": "e275992d-e609-45be-b35c-a0e7c13e4e58",
+              "name": "  Preferred Time  ",
+              "value": "={{ $json.body.Time }}",
+              "type": "string"
+            },
+            {
+              "id": "68e7a3bc-1ff9-474d-8b39-1f4e20b1f4f3",
+              "name": "  Duration (minutes)  ",
+              "value": "={{ $json.body.Duration }}",
+              "type": "string"
+            },
+            {
+              "id": "8bd53742-287a-4abb-9f37-366398aab0be",
+              "name": "  Reason / Notes  ",
+              "value": "={{ $json.body.reason }}",
+              "type": "string"
+            },
+            {
+              "id": "08974aca-2bcf-4184-96f7-0990ae89d7ec",
+              "name": "Booking_date",
+              "value": "={{ $json.body.Booking_date }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        1040
+      ],
+      "id": "7489681e-aa6d-440b-9879-be87045af459",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your tasks\n\nReceive:\n\npreferredDate: from form → {{ $json.output.Preferred_date }}\npreferredTime: from form → {{ $json.output.Preferred_Time }}\n\nslotMinutes: {{ $json.output.Duration }}\n\nA list of existing calendar events (each with start and end times).\n\nConvert preferredDate + preferredTime into ISO datetime (requestedStartIso).\nThen calculate the requestedEndIso = requestedStartIso + slotMinutes.\n\nCheck for conflicts:\n\nIf the requested slot does not overlap with any existing event → confirm it as the appointment.\n\nIf the requested slot is already taken → try to find the next closest free slot on the same day.\n\nIf no slots are free that day → return \"no_free_slot_today\".\n\nReturn one of the following:\n\nIf scheduled at requested time: \"scheduled_requested\" with start/end times.\n\nIf rescheduled to a nearby slot: \"scheduled_rescheduled\" with new start/end times.\n\nIf no slots are available: \"no_free_slot_today\".\n\n\n\nTodays date is {{ $now.format(\"yyyy-MM-dd\") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an assistant that checks if a doctor has availability in their calendar for a patient’s requested appointment."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        1040
+      ],
+      "id": "22f4d2f1-d9df-402a-bbe9-8235a0fb7d10",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1264
+      ],
+      "id": "082c3cda-eb0d-48cc-93d1-f60cc0b4dcf6",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"schedulingStatus\": \"scheduled\",\n  \"finalStartIso\": \"2025-08-20T09:00:00\",\n  \"finalEndIso\": \"2025-08-20T09:30:00\"\n}\n\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        1264
+      ],
+      "id": "6e6e94d4-5721-4eb8-b29b-0fa521ae0163",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        1264
+      ],
+      "id": "dba3d439-d4f2-4f45-8e54-9671164c6172",
+      "name": "Get availability in a calendar in Google Calendar2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc6e63f3-ea40-4e7a-b9aa-11fcd421ffb2",
+              "leftValue": "={{ $json.output.schedulingStatus }}",
+              "rightValue": "scheduled_requested",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        1040
+      ],
+      "id": "a7869ab5-938d-4b7d-a5d4-911b5fe6aa84",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "start": "={{ $json.output.finalStartIso }}",
+        "end": "={{ $json.output.finalEndIso }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $('Edit Fields1').item.json['  Email  '] }}"
+          ],
+          "summary": "=Doctors Appointment for {{ $('Edit Fields1').item.json['Patient Name '] }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1248,
+        880
+      ],
+      "id": "bd0fa0cd-39a6-43cc-9371-676b63e89cb9",
+      "name": "Create an event1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=example@email.com",
+        "subject": "=Appointment Schedule - {{ $('Edit Fields1').item.json['  Doctor  '] }}",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body style=\"font-family: Arial, sans-serif; color: #333; padding: 20px;\">\n    <h2 style=\"color: #2E86C1;\">Appointment Confirmation</h2>\n    <p>Dear Patient,</p>\n    <p>\n      Your appointment has been successfully scheduled from \n      <strong>{{ $json.start.dateTime }}</strong> to \n      <strong>{{ $json.end.dateTime }}</strong>.\n    </p>\n    <p>\n      Please arrive 10 minutes early and bring any required documents.\n    </p>\n    <p style=\"margin-top: 20px;\">Thank you,<br><strong>Your Clinic Team</strong></p>\n    <hr style=\"margin-top:30px; border:none; border-top:1px solid #ddd;\" />\n    <p style=\"font-size: 12px; color: #888;\">\n      If you need to reschedule, please contact us at (123) 456-7890.\n    </p>\n  </body>\n</html>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1584,
+        880
+      ],
+      "id": "c677c9aa-5307-4630-990c-ebc872ab0c5f",
+      "name": "Send a message1",
+      "webhookId": "7535136d-9755-4669-b5e3-6785450cfbc4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Patient: {{ $('Code1').item.json['Patient Name '] }}\nDoctor: {{ $('Code1').item.json['  Doctor  '] }}\nDate/Time: {{ $('AI Agent2').item.json.output.finalStartIso }} to {{ $('AI Agent2').item.json.output.finalEndIso }} (Africa/Lagos)\nNotes: {{ $('Code1').item.json['  Reason / Notes  '] }}\n\nKeep it human, <120 words, reschedule instructions.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a clinic assistant. Write a short, friendly rescheduling email for an appointment.\n\ncheck the calendar for three available date suggestion for the appointment \n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1152,
+        1184
+      ],
+      "id": "aaf9a728-446e-47a0-93a9-3a75aa3c66c2",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        1408
+      ],
+      "id": "04282b14-82f1-4251-8b18-fa7820b992a8",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1248,
+        1408
+      ],
+      "id": "3c76c72c-6dfe-4993-b050-4bf94b5a0643",
+      "name": "Get availability in a calendar in Google Calendar3",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"to\": \"example@email.com\",\n  \"subject\": \"Rescheduled Meeting\",\n  \"body\": \"Hello, your meeting has been rescheduled to 21st August at 10:00 AM.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        1408
+      ],
+      "id": "2a1ab148-389f-4d9f-987e-e655278c423a",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields1').item.json['  Email  '] }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1584,
+        1184
+      ],
+      "id": "b9bffffb-b381-4f32-8b7c-bf55acfbff77",
+      "name": "Send a message3",
+      "webhookId": "1ddabef3-0b08-4066-bca4-3bf1fb2740c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d7f76ede-2d65-46b1-9ceb-68092258e4d5",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        1040
+      ],
+      "id": "9bb2e954-3945-4ce7-8253-a759e2603b0f",
+      "name": "Webhook",
+      "webhookId": "d7f76ede-2d65-46b1-9ceb-68092258e4d5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2048,
+        1008
+      ],
+      "id": "16ca6877-10bd-4618-9fca-bfb620131cc9",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw",
+          "mode": "list",
+          "cachedResultName": "Patient Appointment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 69421032,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fs4UfQ9SwRLnbV1Mnl6IfRuHz_Yrgde4-aaZrm5Kxiw/edit#gid=69421032"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient Name ": "={{ $('Edit Fields1').item.json['Patient Name '] }}",
+            "  Doctor  ": "={{ $('Edit Fields1').item.json['  Doctor  '] }}",
+            "Timestamp": "={{ $('Basic LLM Chain').item.json.output.Date_booked }}",
+            "  Email  ": "={{ $('Edit Fields1').item.json['  Email  '] }}",
+            "  Preferred Date  ": "={{ $('Edit Fields1').item.json['  Preferred Date  '] }}",
+            "  Preferred Time  ": "={{ $('Edit Fields1').item.json['  Preferred Time  '] }}",
+            "  Duration (minutes)  ": "={{ $('Edit Fields1').item.json['  Duration (minutes)  '] }}",
+            "  Reason / Notes  ": "={{ $('Edit Fields1').item.json['  Reason / Notes  '] }}"
+          },
+          "matchingColumns": [
+            "Patient Name "
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Name ",
+              "displayName": "Patient Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "  Email  ",
+              "displayName": "  Email  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Doctor  ",
+              "displayName": "  Doctor  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Date  ",
+              "displayName": "  Preferred Date  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Time  ",
+              "displayName": "  Preferred Time  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Duration (minutes)  ",
+              "displayName": "  Duration (minutes)  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Reason / Notes  ",
+              "displayName": "  Reason / Notes  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1808,
+        880
+      ],
+      "id": "9e92670a-5fc4-47de-938b-b2ebf6cae5fa",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Date booked: {{ $('Webhook').item.json.body.Booking_date }}\nPreferred date: {{ $json['  Preferred Date  '] }}\nPreferred Time: {{ $json['  Preferred Time  '] }}\nDuration: {{ $json['  Duration (minutes)  '] }}\n\ntodays day is ",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Make sure the depature and return dates are in the future not in the past and output in a time and date format\n\ntoday is {{ $now.format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        160,
+        848
+      ],
+      "id": "387621af-8fac-43b0-81b9-83e465f27bae",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        128,
+        672
+      ],
+      "id": "d27bb23c-3cf9-499a-921f-c365cb5d437e",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"Date_booked\": \"\",\n\t\"Preferred_date\": \"\",\n    \"Preferred_Time\": \"\",\n    \"Duration\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        672
+      ],
+      "id": "aebb3063-b11e-4046-b01b-decbd57dc8ef",
+      "name": "Structured Output Parser4"
+    }
+  ],
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create an event1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar3": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4ae4a8d-cb74-43f8-b74c-4abd08091e27",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "83vJ0XP7u2GWyJJ9",
+  "tags": []
+}

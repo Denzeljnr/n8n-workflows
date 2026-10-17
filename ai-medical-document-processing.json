@@ -1,0 +1,2086 @@
+{
+  "name": "Medical Referral & Records Processing System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "q": "subject:(referral OR \"lab result\" OR \"lab results\" OR \"test results\" OR insurance OR prescription)"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        -128
+      ],
+      "id": "174d456b-f074-459a-9480-a9aee5feeb27",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const subject = item.json.emailSubject?.toLowerCase() || '';\n  const body = item.json.emailBody?.toLowerCase() || '';\n  const filename = item.json.attachmentName?.toLowerCase() || '';\n\n  let documentType = 'Unknown';\n  let storageFolder = 'Medical Records';\n\n  if (subject.includes('referral') || body.includes('referral') || filename.includes('referral')) {\n    documentType = 'Referral';\n    storageFolder = 'Referrals';\n  } else if (subject.includes('lab result') || subject.includes('test result') ||\n             body.includes('lab result') || filename.includes('lab')) {\n    documentType = 'Lab Result';\n    storageFolder = 'Lab Results';\n  } else if (subject.includes('insurance') || filename.includes('insurance') || \n             body.includes('insurance')) {\n    documentType = 'Insurance Document';\n    storageFolder = 'Insurance Documents';\n  } else if (subject.includes('prescription') || filename.includes('prescription') || \n             body.includes('prescription')) {\n    documentType = 'Prescription';\n    storageFolder = 'Prescriptions';\n  }\n\n  return {\n    json: {\n      ...item.json,\n      documentType,\n      storageFolder\n    },\n    binary: item.binary // ✅ keep the Gmail file for upload\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -208
+      ],
+      "id": "d7bc4eb0-15f9-44f5-965b-4977d0903558",
+      "name": "Identify Document Type"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0eb7becd-f3d2-4750-b3b5-634262073b92",
+              "leftValue": "attachment_0",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -128
+      ],
+      "id": "7d6d172e-6455-4693-802c-94199fe17e92",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Referral",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "81103484-f2cf-4aa9-92b1-d5e606a8e384"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Referral"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e976cfe7-199a-47d7-b8cd-093b764d86b8",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Lab Result",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Lab Result"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6b7608f0-23b1-4afa-a6d1-b100bacefd45",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Insurance Document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Insurance Document"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d09c3dc2-97da-4670-ae91-42d6ebac3d6f",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Prescription",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Prescription"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1104,
+        -240
+      ],
+      "id": "2e3bf7bb-166f-4723-b625-cdacc5078578",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const binary = item.binary || {};\n  const attachmentKey = Object.keys(binary)[0] || 'attachment_0';\n  const attachment = binary[attachmentKey] || {};\n\n  return {\n    json: {\n      emailSubject: item.json.subject || '',\n      senderEmail: item.json.from?.value?.[0]?.address || '',\n      senderName: item.json.from?.value?.[0]?.name || '',\n      receivedDate: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      emailBody: item.json.text || '',\n      attachmentName: attachment.fileName || '',\n      attachmentData: JSON.stringify(attachment) || '',\n      attachmentMimeType: attachment.mimeType || '',\n      documentId: `MED-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 15)}`\n    },\n    binary // ✅ preserve the original attachment binary for upload later\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -208
+      ],
+      "id": "69af82e0-36f8-45d3-8fae-1828510c0271",
+      "name": "Extract Email Info"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1SQQaKQgpea2DBgZ6OzwuZzgHLKGzTKMD",
+          "mode": "list",
+          "cachedResultName": "Lab Results",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1SQQaKQgpea2DBgZ6OzwuZzgHLKGzTKMD"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1456,
+        -336
+      ],
+      "id": "c2ff94e5-2ce3-4dff-9ad6-a2c45c34842a",
+      "name": "Upload file to Lab Result",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "10JTZSaw-7isOtiTE3_5fMebZ8dwEbJcK",
+          "mode": "list",
+          "cachedResultName": "Referrals",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/10JTZSaw-7isOtiTE3_5fMebZ8dwEbJcK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        -480
+      ],
+      "id": "2c73238c-6f93-4c12-ab2e-83da9787288d",
+      "name": "Upload file to Lab Referral",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "19zyon3Q7C6ebNjRbyjwoHN6XcQ7tPVaI",
+          "mode": "list",
+          "cachedResultName": "Insurance Documents",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/19zyon3Q7C6ebNjRbyjwoHN6XcQ7tPVaI"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1456,
+        -112
+      ],
+      "id": "e0d4883d-ceab-4caa-9bd8-c19418316262",
+      "name": "Upload file to Insurance",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "177EGInzHRyxTfdLMfgW1xrrxgZee93Su",
+          "mode": "list",
+          "cachedResultName": "Prescriptions",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/177EGInzHRyxTfdLMfgW1xrrxgZee93Su"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        16
+      ],
+      "id": "1e171970-c4c7-45b8-8659-ee6764303d3a",
+      "name": "Upload file to prescriptions",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1872,
+        -224
+      ],
+      "id": "a2927218-6d08-4ae9-bbc3-0971cfa038a8",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        -224
+      ],
+      "id": "ec25d590-83f2-4e99-b54a-b6dc2fb8afb5",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the attached medical document and extract key information according to the specified JSON format.\n\n**Document Context:**\n- Document Type: {{ $('Identify Document Type').item.json.documentType }}\n- Sender: {{ $('Extract Email Info').item.json.senderName }} ({{ $('Extract Email Info').item.json.senderEmail }})\n- Received: {{ $('Extract Email Info').item.json.receivedDate }}\n- Document Text: {{ $json.text }}\n\nPlease process this document and provide the structured JSON output.\n\n[ATTACHED: Medical document file - MIME type: {{ $('Extract Email Info').item.json.attachmentMimeType }}]",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a medical records processing AI assistant specialized in analyzing medical documents and extracting structured information. Your role is to:\n\n1. Accurately extract patient demographics, medical conditions, test results, and administrative details\n2. Identify urgency levels and risk factors that require immediate attention\n3. Provide structured JSON output for downstream processing\n4. Flag missing or incomplete critical information\n\nCRITICAL GUIDELINES:\n- Flag as CRITICAL if lab values are significantly outside normal ranges\n- Mark as URGENT if document contains: urgent, stat, immediate, emergency, critical\n- Extract ALL test results with values and reference ranges\n- Identify whether this is a new patient or follow-up visit\n- Note any medication changes or new prescriptions\n- Flag missing critical information (incomplete patient details, unclear diagnosis)\n- Use null for any field where information is not found in the document\n\nOUTPUT FORMAT:\nAlways respond with valid JSON containing these fields:\n{\n  \"patientName\": \"Full patient name\",\n  \"patientDOB\": \"Date of birth in YYYY-MM-DD format\",\n  \"patientAge\": \"Age in years (calculate if needed)\",\n  \"patientGender\": \"Male, Female, or Other\",\n  \"documentType\": \"Referral, Lab Result, Insurance Document, or Prescription\",\n  \"referringDoctor\": \"Name of referring physician (if applicable)\",\n  \"primaryDiagnosis\": \"Main diagnosis or reason for referral\",\n  \"secondaryDiagnoses\": [\"List of secondary conditions or findings\"],\n  \"testType\": \"Type of lab test or procedure (if applicable)\",\n  \"labResults\": {\n    \"testName\": \"value and unit\",\n    \"examples\": \"Glucose: 110 mg/dL, HbA1c: 6.2%\"\n  },\n  \"abnormalFindings\": [\"List any abnormal or concerning results\"],\n  \"urgencyLevel\": \"Routine, Urgent, or Critical\",\n  \"insuranceProvider\": \"Insurance company name (if mentioned)\",\n  \"insurancePolicyNumber\": \"Policy or member ID\",\n  \"medications\": [\"List of medications mentioned\"],\n  \"allergies\": [\"List of allergies mentioned\"],\n  \"recommendedActions\": [\"Follow-up needed\", \"Schedule specialist appointment\", etc.],\n  \"followUpRequired\": \"Yes or No\",\n  \"followUpTimeframe\": \"Within 1 week, 2 weeks, 1 month, etc.\",\n  \"summary\": \"2-3 sentence summary of the document\",\n  \"riskFlags\": [\"Any concerning findings that need immediate attention\"]\n}\n```\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        224
+      ],
+      "id": "01588be8-8288-43a9-9189-997dd9ff2787",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        400,
+        112
+      ],
+      "id": "1bb56b19-aa06-46d5-ba50-61df28c78229",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"patientName\": \"Full patient name\",\n  \"patientDOB\": \"YYYY-MM-DD\",\n  \"patientAge\": 45,\n  \"patientGender\": \"Male\",\n  \"documentType\": \"Lab Result\",\n  \"referringDoctor\": \"Dr. Jane Doe\",\n  \"primaryDiagnosis\": \"Hypertension\",\n  \"secondaryDiagnoses\": [\"Diabetes Mellitus Type 2\"],\n  \"testType\": \"Blood Test\",\n  \"labResults\": [\n    {\n      \"testName\": \"Glucose\",\n      \"value\": \"110\",\n      \"unit\": \"mg/dL\",\n      \"referenceRange\": \"70-100 mg/dL\"\n    },\n    {\n      \"testName\": \"HbA1c\",\n      \"value\": \"6.2\",\n      \"unit\": \"%\",\n      \"referenceRange\": \"Below 5.7%\"\n    }\n  ],\n  \"abnormalFindings\": [\"Elevated glucose level\"],\n  \"urgencyLevel\": \"Routine\",\n  \"insuranceProvider\": \"ABC Health Insurance\",\n  \"insurancePolicyNumber\": \"INS-123456\",\n  \"medications\": [\"Metformin 500mg\", \"Lisinopril 10mg\"],\n  \"allergies\": [\"Penicillin\"],\n  \"recommendedActions\": [\"Follow-up needed\", \"Schedule specialist appointment\"],\n  \"followUpRequired\": \"Yes\",\n  \"followUpTimeframe\": \"Within 2 weeks\",\n  \"summary\": \"This report shows elevated glucose levels consistent with Type 2 diabetes. Follow-up recommended.\",\n  \"riskFlags\": [\"Possible diabetes progression\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        112
+      ],
+      "id": "4f595970-2d6e-42ee-a07d-6fee8fe304f4",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d36abe8-af44-4a36-b1ae-6ace59727efd",
+              "name": "patientName",
+              "value": "={{ $json.output.patientName }}",
+              "type": "string"
+            },
+            {
+              "id": "ca8771f6-9ba7-4751-a2ac-514b1b8531b4",
+              "name": "patientAge",
+              "value": "={{ $json.output.patientAge }}",
+              "type": "number"
+            },
+            {
+              "id": "70eb29e7-63ff-4a6b-bfad-8006aee93d96",
+              "name": "patientGender",
+              "value": "={{ $json.output.patientGender }}",
+              "type": "string"
+            },
+            {
+              "id": "37c2f5ed-9219-4aa7-add4-35ce8884ebce",
+              "name": "documentType",
+              "value": "={{ $json.output.documentType }}",
+              "type": "string"
+            },
+            {
+              "id": "143a3d37-0b22-4514-b8f5-b73ecb3d6160",
+              "name": "referringDoctor",
+              "value": "={{ $json.output.referringDoctor }}",
+              "type": "string"
+            },
+            {
+              "id": "04785929-544d-4107-ac1c-4b4094d177fc",
+              "name": "primaryDiagnosis",
+              "value": "={{ $json.output.primaryDiagnosis }}",
+              "type": "string"
+            },
+            {
+              "id": "300b785a-1450-4b88-949a-0cabe57fc1b8",
+              "name": "secondaryDiagnoses",
+              "value": "={{ $json.output.secondaryDiagnoses.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "b08a24d2-867d-4772-b25f-de55a3d2b395",
+              "name": "testType",
+              "value": "={{ $json.output.testType }}",
+              "type": "string"
+            },
+            {
+              "id": "d3ea49a1-1681-4b9a-9eb9-2b4209fcdb55",
+              "name": "labResults",
+              "value": "={{ $json.output.labResults.map(l => `${l.testName}: ${l.value} ${l.unit} (Ref: ${l.referenceRange})`).join(', ') }}\n",
+              "type": "array"
+            },
+            {
+              "id": "be6e6d60-eeaf-4dc4-a996-c20c703af8ac",
+              "name": "abnormalFindings",
+              "value": "={{ $json.output.abnormalFindings.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "b255d6a2-cfd1-40eb-ada0-d4bed9cb2b75",
+              "name": "urgencyLevel",
+              "value": "={{ $json.output.urgencyLevel }}",
+              "type": "string"
+            },
+            {
+              "id": "5ea61ccc-7dfc-4751-aa47-ef6bbb4a13e6",
+              "name": "insuranceProvider",
+              "value": "={{ $json.output.insuranceProvider }}",
+              "type": "string"
+            },
+            {
+              "id": "aa3567da-2aee-4139-943e-68df2f892940",
+              "name": "insurancePolicyNumber",
+              "value": "={{ $json.output.insurancePolicyNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "bb3ca87a-f4c1-418e-943e-e52a45ed9988",
+              "name": "medications",
+              "value": "={{ $json.output.medications.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "dba6532f-0b25-4ba0-9222-e93f27de9649",
+              "name": "allergies",
+              "value": "={{ $json.output.allergies.join(', ') }}\n",
+              "type": "array"
+            },
+            {
+              "id": "bccb52a8-78ed-48f7-8ddc-18eb8de55f5b",
+              "name": "recommendedActions",
+              "value": "={{ $json.output.recommendedActions.join('. ') }}",
+              "type": "array"
+            },
+            {
+              "id": "40a5f411-b472-4725-9e84-b041cc9ae8eb",
+              "name": "followUpRequired",
+              "value": "={{ $json.output.followUpRequired }}",
+              "type": "string"
+            },
+            {
+              "id": "7101a3f6-a80e-4faa-92ca-7767043e6eb6",
+              "name": "followUpTimeframe",
+              "value": "={{ $json.output.followUpTimeframe }}",
+              "type": "string"
+            },
+            {
+              "id": "3398694a-a777-4c17-819d-86d905702e18",
+              "name": "summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "c80bfcb3-ec04-49f4-b0ec-96c6fac82e2f",
+              "name": "riskFlags",
+              "value": "={{ $json.output.riskFlags }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        224
+      ],
+      "id": "d3e92d7e-4ef9-4adf-a65b-93aafea3013e",
+      "name": "Parse AI Response"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8",
+          "mode": "list",
+          "cachedResultName": " Patient Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patients",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Patient Name",
+              "lookupValue": "={{ $json.patientName }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        992,
+        224
+      ],
+      "id": "2647a1a1-253f-470b-b487-ac6ecaa6b037",
+      "name": "Find Patient in Database",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5445f221-0b6f-4562-9627-564cf033fdce",
+              "leftValue": "={{ $json.exists }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        224
+      ],
+      "id": "abc09176-fde6-4cb4-99b0-1d9a1d1f86ec",
+      "name": "IF - Patient Exists?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8",
+          "mode": "list",
+          "cachedResultName": " Patient Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patients",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient ID": "=PAT-{{ $now.format('yyyyMMddHHmmss') }}",
+            "Timestamp": "={{ $now.format('yyyy-MM-dd HH:mm:ss') }}",
+            "Patient Name": "={{ $('Parse AI Response').item.json.patientName }}",
+            "Date of Birth": "={{ $('Parse AI Response').item.json.patientDOB }}",
+            "Age": "={{ $('Parse AI Response').item.json.patientAge }}",
+            "Gender": "={{ $('Parse AI Response').item.json.patientGender }}",
+            "Phone": "To be collected",
+            "Email": "To be collected",
+            "Address": "To be collected",
+            "Insurance Provider": "={{ $('Parse AI Response').item.json.insuranceProvider }}",
+            "Primary Doctor": "To be assigned",
+            "Insurance ID": "={{ $('Parse AI Response').item.json.insurancePolicyNumber }}",
+            "Status": "New - Needs Intake",
+            "Last Visit Date": "={{ $now.format('yyyy-MM-dd') }}",
+            "Medical Conditions": "={{ $('Parse AI Response').item.json.primaryDiagnosis }}",
+            "Allergies": "={{ $('Parse AI Response').item.json.allergies }}",
+            "Notes": "New patient from referral/lab result"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient ID",
+              "displayName": "Patient ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date of Birth",
+              "displayName": "Date of Birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insurance Provider",
+              "displayName": "Insurance Provider",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insurance ID",
+              "displayName": "Insurance ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Primary Doctor",
+              "displayName": "Primary Doctor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Visit Date",
+              "displayName": "Last Visit Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Appointment",
+              "displayName": "Next Appointment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Medical Conditions",
+              "displayName": "Medical Conditions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Allergies",
+              "displayName": "Allergies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1616,
+        304
+      ],
+      "id": "3afa3f51-74fc-44d4-b9ad-5e87c7668370",
+      "name": "Create New Patient",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8",
+          "mode": "list",
+          "cachedResultName": " Patient Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patients",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient Name": "={{ $json['Patient Name'] }}",
+            "Last Visit Date": "={{ $now.format('yyyy-MM-dd') }}",
+            "Insurance Provider": "={{ $('Parse AI Response').item.json.insuranceProvider || $json[\"Insurance Provider\"] }}",
+            "Status": "Active"
+          },
+          "matchingColumns": [
+            "Patient Name"
+          ],
+          "schema": [
+            {
+              "id": "Patient ID",
+              "displayName": "Patient ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date of Birth",
+              "displayName": "Date of Birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insurance Provider",
+              "displayName": "Insurance Provider",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Insurance ID",
+              "displayName": "Insurance ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Primary Doctor",
+              "displayName": "Primary Doctor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Visit Date",
+              "displayName": "Last Visit Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Appointment",
+              "displayName": "Next Appointment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Medical Conditions",
+              "displayName": "Medical Conditions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Allergies",
+              "displayName": "Allergies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1616,
+        128
+      ],
+      "id": "3f4e1f5b-325a-45fa-a482-5f0d859b5f2f",
+      "name": "Update Existing Patient",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node names\nconst lookupNode = \"Find Patient in Database\";\nconst parseNode = \"Parse AI Response\";\n\n// Get data from both\nconst lookupData = $items(lookupNode)[0];\nconst parsedData = $items(parseNode)[0];\n\n// Check if lookup node found a match\nconst patientExists = lookupData && lookupData.json && Object.keys(lookupData.json).length > 0;\n\n// If found in database, return that data\nif (patientExists) {\n  return [\n    {\n      json: {\n        source: \"database\",\n        exists: true,\n        ...lookupData.json\n      }\n    }\n  ];\n} else {\n  // Otherwise, use data from the AI parser\n  return [\n    {\n      json: {\n        source: \"ai\",\n        exists: false,\n        ...parsedData.json\n      }\n    }\n  ];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        224
+      ],
+      "id": "0353a554-6bfb-43ce-98dc-33c06fd9d4de",
+      "name": "Code"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1904,
+        224
+      ],
+      "id": "05b1a55b-bb89-4a78-a0b5-a41af094c106",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8",
+          "mode": "list",
+          "cachedResultName": " Patient Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 440876942,
+          "mode": "list",
+          "cachedResultName": "Referrals & Lab Results",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit#gid=440876942"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Document ID": "={{ $('Extract Email Info').item.json.documentId }}",
+            "Timestamp": "={{ $('Extract Email Info').item.json.receivedDate }}",
+            "Document Type": "={{ $('Parse AI Response').item.json.documentType }}",
+            "Patient Name": "={{ $('Parse AI Response').item.json.patientName }}",
+            "Patient DOB": "={{ $('Parse AI Response').item.json.patientDOB }}",
+            "Referring Doctor": "={{ $('Parse AI Response').item.json.referringDoctor }}",
+            "Diagnosis/Reason": "={{ $('Parse AI Response').item.json.primaryDiagnosis }}",
+            "Urgency Level": "={{ $('Parse AI Response').item.json.urgencyLevel }}",
+            "Lab Results": "={{ $('Parse AI Response').item.json.labResults }}",
+            "Test Type": "={{ $('Parse AI Response').item.json.testType }}",
+            "Document Link": "={{ $('Download file').item.json.webViewLink }}",
+            "Assigned Doctor": "To be assigned",
+            "Status": " Pending Review",
+            "Follow-up Required": "={{ $('Parse AI Response').item.json.followUpRequired }}",
+            "Follow-up Date": "={{ $('Parse AI Response').item.json.followUpTimeframe }}",
+            "Action Items": "={{ $('Parse AI Response').item.json.recommendedActions }}",
+            "Processing Notes": "={{ $('Parse AI Response').item.json.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Document ID",
+              "displayName": "Document ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Type",
+              "displayName": "Document Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient DOB",
+              "displayName": "Patient DOB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Referring Doctor",
+              "displayName": "Referring Doctor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Diagnosis/Reason",
+              "displayName": "Diagnosis/Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency Level",
+              "displayName": "Urgency Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lab Results",
+              "displayName": "Lab Results",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Test Type",
+              "displayName": "Test Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Link",
+              "displayName": "Document Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned Doctor",
+              "displayName": "Assigned Doctor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up Required",
+              "displayName": "Follow-up Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up Date",
+              "displayName": "Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action Items",
+              "displayName": "Action Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Processing Notes",
+              "displayName": "Processing Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2112,
+        224
+      ],
+      "id": "6dd3a137-a702-41a6-b278-2530bbbab915",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c23c0c11-adeb-409c-bed4-f665a3782360",
+              "leftValue": "={{ $json['Urgency Level'] }}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "d1179219-1cdf-4d74-838c-c9d2be2dfcfe",
+              "leftValue": "={{ $json['Urgency Level'] }}",
+              "rightValue": "Urgent",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        608
+      ],
+      "id": "44e4a422-cd53-4efc-94a5-05eeff013d9f",
+      "name": "IF - Urgent Case?"
+    },
+    {
+      "parameters": {
+        "sendTo": "replace with clinic email",
+        "subject": "=New Medical Document: {{ $json['Document Type'] }} - {{ $json['Patient Name'] }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #1e3a8a;\">New Medical Document Received</h2>          <div style=\"background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;\">         <table style=\"width: 100%;\">             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Patient:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Patient Name'] }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>DOB:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Patient DOB'] }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Document Type:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Document Type'] }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Priority:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Urgency Level'] }}</td>             </tr>         </table>     </div>          <p><strong>Summary:</strong> {{ $('Parse AI Response').item.json.summary }}</p>          <p><strong>Action Required:</strong> {{ $('Parse AI Response').item.json.recommendedActions }}</p>          <a href=\"{{ $json['Document Link'] }}\"         style=\"display: inline-block; background-color: #1e3a8a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">         View Document     </a>          <p style=\"color: #666; font-size: 12px; margin-top: 20px;\">         Document ID: {{ $('Extract Email Info').item.json.documentId }}     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        704
+      ],
+      "id": "58f38a2f-cbd6-4068-b81f-484d16b8c073",
+      "name": "Send Standard Notification",
+      "webhookId": "dc9ecf0c-a585-4e55-8aa9-c9ea3e9d3f6f",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "replace with clinic email",
+        "subject": "=🚨 URGENT: {{ $('Parse AI Response').item.json.urgencyLevel }} Case - {{ $('Parse AI Response').item.json.patientName }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; background-color: #fee2e2; border-left: 5px solid #dc2626; padding: 20px;\">\n    \n    <h2 style=\"color: #dc2626; margin-top: 0;\">🚨 URGENT MEDICAL DOCUMENT</h2>\n    \n    <div style=\"background-color: #ffffff; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n        <h3 style=\"color: #1e3a8a; margin-top: 0;\">Patient Information</h3>\n        <table style=\"width: 100%;\">\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Patient:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse AI Response').item.json.patientName }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>DOB:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse AI Response').item.json.patientDOB }} (Age: {{ $('Parse AI Response').item.json.patientAge }})</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Gender:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse AI Response').item.json.patientGender }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Document Type:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse AI Response').item.json.documentType }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Urgency:</strong></td>\n                <td style=\"padding: 8px 0; font-size: 18px; font-weight: bold; color: #dc2626;\">{{ $('Parse AI Response').item.json.urgencyLevel }}</td>\n            </tr>\n        </table>\n    </div>\n    \n    <div style=\"background-color: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #991b1b;\">⚠️ Critical Findings</h4>\n        <p style=\"margin: 0; color: #991b1b;\"><strong>Diagnosis:</strong> {{ $('Parse AI Response').item.json.primaryDiagnosis }}</p>\n        <p style=\"margin: 10px 0 0 0; color: #991b1b;\"><strong>Risk Flags:</strong> {{ $('Parse AI Response').item.json.riskFlags || 'See document for details' }}</p>\n        <p style=\"margin: 10px 0 0 0; color: #991b1b;\"><strong>Abnormal Findings:</strong> {{ $('Parse AI Response').item.json.abnormalFindings || 'See document for details' }}</p>\n    </div>\n    \n    <div style=\"background-color: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #1e40af;\">📋 Recommended Actions</h4>\n        <p style=\"margin: 0; color: #1e40af;\">{{ $('Parse AI Response').item.json.recommendedActions || 'Review document and determine appropriate action' }}</p>\n        <p style=\"margin: 10px 0 0 0; color: #1e40af;\"><strong>Follow-up Required:</strong> {{ $('Parse AI Response').item.json.followUpRequired }} ({{ $('Parse AI Response').item.json.followUpTimeframe }})</p>\n    </div>\n    \n    <div style=\"background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0;\">Document Summary</h4>\n        <p style=\"margin: 0; color: #4b5563;\">{{ $('Parse AI Response').item.json.summary }}</p>\n    </div>\n    \n    <div style=\"background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <p style=\"margin: 0; font-weight: bold; color: #856404;\">⏰ IMMEDIATE ACTION REQUIRED</p>\n        <p style=\"margin: 5px 0 0 0; color: #856404;\">Please review this case and respond within 1 hour.</p>\n    </div>\n    \n    <a href=\"{{ $('Append row in sheet').item.json['Document Link'] }}\" \n       style=\"display: inline-block; background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px; font-weight: bold;\">\n        📄 View Full Document\n    </a>\n    \n    <hr style=\"border: none; border-top: 1px solid #ddd; margin: 30px 0;\">\n    \n    <p style=\"color: #666; font-size: 12px; margin: 0;\">\n        Document ID: {{ $('Extract Email Info').item.json.documentId }}<br>\n        Received: {{ $('Extract Email Info').item.json.receivedDate }}<br>\n        From: {{ $('Extract Email Info').item.json.senderName }} ({{ $('Extract Email Info').item.json.senderEmail }})\n    </p>\n    \n</div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        512
+      ],
+      "id": "82cf6ad9-754f-4759-ab60-d5721d534a63",
+      "name": "Send URGENT Alert",
+      "webhookId": "dc9ecf0c-a585-4e55-8aa9-c9ea3e9d3f6f",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d17a54f1-3f00-4192-9450-f737ee052f38",
+              "leftValue": "={{ $('Parse AI Response').item.json.followUpRequired }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        608
+      ],
+      "id": "9f303ab0-fd26-43ea-8386-b8950fe73b7e",
+      "name": "IF - Follow-up Required?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const timeframe = $('Parse AI Response').first().json.followUpTimeframe || 'Within 2 weeks';\nconst today = new Date();\nlet followUpDate = new Date(today);\n\n// Parse timeframe and calculate date\nif (timeframe.toLowerCase().includes('1 week') || timeframe.toLowerCase().includes('one week')) {\n  followUpDate.setDate(today.getDate() + 7);\n} else if (timeframe.toLowerCase().includes('2 week') || timeframe.toLowerCase().includes('two week')) {\n  followUpDate.setDate(today.getDate() + 14);\n} else if (timeframe.toLowerCase().includes('1 month') || timeframe.toLowerCase().includes('one month')) {\n  followUpDate.setMonth(today.getMonth() + 1);\n} else if (timeframe.toLowerCase().includes('3 month')) {\n  followUpDate.setMonth(today.getMonth() + 3);\n} else if (timeframe.toLowerCase().includes('6 month')) {\n  followUpDate.setMonth(today.getMonth() + 6);\n} else {\n  // Default to 2 weeks\n  followUpDate.setDate(today.getDate() + 14);\n}\n\n// Set to 9 AM\nfollowUpDate.setHours(9, 0, 0, 0);\n\nreturn {\n  json: {\n    followUpDate: followUpDate.toISOString().split('T')[0],\n    followUpDateTime: followUpDate.toISOString(),\n    followUpTimeDisplay: followUpDate.toLocaleString('en-US', {\n      weekday: 'long',\n      year: 'numeric',\n      month: 'long',\n      day: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit'\n    })\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        512
+      ],
+      "id": "26e9f639-a436-40c4-b0df-97e329ebf358",
+      "name": "Calculate Follow-up Date"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8",
+          "mode": "list",
+          "cachedResultName": " Patient Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1448758979,
+          "mode": "list",
+          "cachedResultName": "Appointments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mn4TJxCI34M6LS51SC2bO8DAJR44DBCPT35Tc-dUDl8/edit#gid=1448758979"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Appointment ID": "=APT-{{ $now.format('yyyyMMddHHmmss') }}",
+            "Patient Name": "={{ $('Parse AI Response').item.json.patientName }}",
+            "Patient ID": "={{ $('Merge').item.json['Patient ID'] }}",
+            "Doctor Name": "To be assigned",
+            "Appointment Date": "={{ $('Calculate Follow-up Date').item.json.followUpDate }}",
+            "Appointment Time": "09:00 AM",
+            "Reason": "=Follow-up for {{ $('Parse AI Response').item.json.primaryDiagnosis }}",
+            "Status": "Scheduled",
+            "Reminder Sent": "No"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient ID",
+              "displayName": "Patient ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Doctor Name",
+              "displayName": "Doctor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Date",
+              "displayName": "Appointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Time",
+              "displayName": "Appointment Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reminder Sent",
+              "displayName": "Reminder Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1360,
+        512
+      ],
+      "id": "80b0dfc1-e5f0-4261-8d24-623e9f0cdb00",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Dr appointment"
+        },
+        "start": "={{ $('Calculate Follow-up Date').item.json.followUpDateTime }}",
+        "end": "={{ new Date(new Date($('Calculate Follow-up Date').item.json.followUpDateTime).getTime() + 30*60000).toISOString() }}",
+        "additionalFields": {
+          "description": "=Patient: {{ $('Parse AI Response').item.json.patientName }}   \nDOB: {{ $('Parse AI Response').item.json.patientDOB }}   \nAge: {{ $('Parse AI Response').item.json.patientAge }}\nPrimary Diagnosis: {{ $('Parse AI Response').item.json.primaryDiagnosis }}\n  \nRecommended Actions: {{ $('Parse AI Response').item.json.recommendedActions }}\n  \nDocument Link: {{ $('Download file').item.json.webViewLink }}\n  Document ID: {{ $('Extract Email Info').item.json.documentId }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        512
+      ],
+      "id": "78bdf9ab-547e-4015-8925-db774434c839",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Email Info').item.json.senderEmail }}",
+        "subject": "=Medical Document Received - {{ $('Parse AI Response').item.json.patientName }}\n",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #059669;\">✓ Document Successfully Received</h2>          <p>Dear {{ $('Extract Email Info').item.json.senderName }},</p>          <p>Thank you for sending the medical document. It has been received and processed automatically.</p>          <div style=\"background-color: #f0fdf4; padding: 15px; border-left: 4px solid #059669; margin: 20px 0;\">         <p style=\"margin: 0;\"><strong>✓ Document Type:</strong> {{ $('Parse AI Response').item.json.documentType }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Patient:</strong> {{ $('Parse AI Response').item.json.patientName }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Status:</strong> {{ $('Parse AI Response').item.json.urgencyLevel }} - {{ $('Parse AI Response').item.json.urgencyLevel === 'Critical' || $('Parse AI Response').item.json.urgencyLevel === 'Urgent' ? 'Urgent review in progress' : 'Pending review' }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Reference ID:</strong> {{ $('Extract Email Info').item.json.documentId }}</p>     </div>          {{ $('Parse AI Response').item.json.followUpRequired === 'Yes' ? `     <div style=\"background-color: #eff6ff; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0;\">         <p style=\"margin: 0;\"><strong>📅 Follow-up Appointment Scheduled</strong></p>         <p style=\"margin: 5px 0 0 0;\">Date: $('Calculate Follow-up Date').item.json.followUpTimeDisplay</p>         <p style=\"margin: 5px 0 0 0;\">You will receive a calendar invitation and reminder.</p>     </div>     ` : '' }}          <p>The appropriate medical staff has been notified and will review the document shortly.</p>          <p>Best regards,<br>     <strong>Automated Medical Records System</strong></p>          <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;\">          <p style=\"color: #6b7280; font-size: 12px;\">         This is an automated confirmation. For urgent matters, please call the clinic directly.     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2064,
+        608
+      ],
+      "id": "c9564612-60f5-46f2-a058-ac766e1df6a0",
+      "name": "Send Confirmation Email",
+      "webhookId": "fd41970e-ed70-4d1e-9ce2-78dc638be8c9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1792,
+        608
+      ],
+      "id": "ce0c7420-537e-4dc3-a522-2bf4fda71c38",
+      "name": "Merge1",
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Document Type": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Upload file to Lab Referral",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload file to Lab Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload file to Insurance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload file to prescriptions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Info": {
+      "main": [
+        [
+          {
+            "node": "Identify Document Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file to Lab Result": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file to Insurance": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file to prescriptions": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file to Lab Referral": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Find Patient in Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Patient in Database": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Patient Exists?": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Patient",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New Patient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "IF - Patient Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Patient": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Patient": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "IF - Urgent Case?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Urgent Case?": {
+      "main": [
+        [
+          {
+            "node": "Send URGENT Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Standard Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send URGENT Alert": {
+      "main": [
+        [
+          {
+            "node": "IF - Follow-up Required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Standard Notification": {
+      "main": [
+        [
+          {
+            "node": "IF - Follow-up Required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Follow-up Required?": {
+      "main": [
+        [
+          {
+            "node": "Calculate Follow-up Date",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calculate Follow-up Date": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aa1a34a5-12b9-49d8-a670-803c5c059664",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "GsrA0r3HGLYlA2hV",
+  "tags": []
+}

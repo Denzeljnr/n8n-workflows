@@ -1,0 +1,763 @@
+{
+  "name": "Semantic Search with Real RAG Engineering",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e3a2bb5e-c51e-416b-97c6-90cb18ec4425",
+              "leftValue": "={{ $json.Document[0].filename.endsWith('.pdf') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        0
+      ],
+      "id": "b09253cb-a7cc-44cd-9620-593031182a4f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Document",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "9f5a273c-b2f0-4df7-8f24-2d15615c6d5f",
+      "name": "Extract from File (PDF branch)"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "Document",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        96
+      ],
+      "id": "0be3fdef-979c-4870-8ac9-0b999cef2f44",
+      "name": "Extract from File (Text branch)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        704,
+        -16
+      ],
+      "id": "50e8df0d-f076-4e0b-aa54-8fae92765349",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d4aeeef-ba44-4d01-a845-23fbb86a33aa",
+              "name": "sourceDocument",
+              "value": "={{ $('Form Trigger').item.json['Source Name'] || $('Form Trigger').item.json.Document[0].filename }}",
+              "type": "string"
+            },
+            {
+              "id": "3e0180dd-587f-48c4-8f5d-372153a9feab",
+              "name": "fullText",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -16
+      ],
+      "id": "e930c16a-bbf8-487e-afae-fb259849bcf6",
+      "name": "Prepare document fields"
+    },
+    {
+      "parameters": {
+        "formTitle": "Document Insert",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Document",
+              "fieldLabel": "Document",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Source Name",
+              "fieldLabel": "Source Name"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "58f2e694-ac84-48b4-b46e-5f82f5755ac4",
+      "name": "Form Trigger",
+      "webhookId": "0661f384-9445-430d-bd26-8844c7663835"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.fullText }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "strategy",
+                "value": "fixed"
+              },
+              {
+                "name": "sourceDocument",
+                "value": "={{ $('Prepare document fields').item.json.sourceDocument }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        -432
+      ],
+      "id": "111c35f4-9af4-4323-8bcf-f1fe1fb54c39",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 500
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        -336
+      ],
+      "id": "b04f460b-0bb1-4324-9ac7-05a98876644c",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -336
+      ],
+      "id": "147d4c99-637f-48e0-9761-0a2fc8a6d20f",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "n8n_chunks",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        1152,
+        -192
+      ],
+      "id": "28aa49e0-7c85-4f07-92f8-5670bb1a7d84",
+      "name": "Insert fixed chunks",
+      "credentials": {
+        "postgres": {
+          "id": "sTxJvjSXwo3iecZA",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "n8n_chunks",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        1184,
+        96
+      ],
+      "id": "d916495c-e7d2-4f56-999e-22e7c4d1edba",
+      "name": "Insert paragraph chunks",
+      "credentials": {
+        "postgres": {
+          "id": "sTxJvjSXwo3iecZA",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        256
+      ],
+      "id": "863df8a2-632e-4d30-8f80-42ccd303bf07",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.fullText }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "strategy",
+                "value": "paragraph"
+              },
+              {
+                "name": "sourceDocument",
+                "value": "={{ $('Prepare document fields').item.json.sourceDocument }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        256
+      ],
+      "id": "c2dc36be-9536-47c9-a07e-6321abba2bf3",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 500,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        400
+      ],
+      "id": "cac69a1a-b4d7-4550-b495-688d3b02f6fd",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "formTitle": "Document Retrieve ",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Question",
+              "fieldLabel": "Question",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Strategy",
+              "fieldLabel": "Strategy",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "fixed"
+                  },
+                  {
+                    "option": "paragraph"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        -48,
+        704
+      ],
+      "id": "16ef83e7-3049-4cae-b118-1f3cfa622c23",
+      "name": "Form trigger 1",
+      "webhookId": "7dc75816-434b-4198-abb1-311bfe333f27"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        128,
+        864
+      ],
+      "id": "2f37464b-22ae-45b0-ac7c-8bc11774c2c4",
+      "name": "Embeddings Google Gemini2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": "n8n_chunks",
+        "prompt": "={{ $json.Question }}",
+        "topK": 20,
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "strategy",
+                "value": "={{ $json.Strategy }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        704
+      ],
+      "id": "eb1fd5d0-be1b-48b3-a2f8-f408b405c6df",
+      "name": "Retrieve candidates",
+      "credentials": {
+        "postgres": {
+          "id": "sTxJvjSXwo3iecZA",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const question = $('Form trigger 1').first().json.Question;\n\nconst candidates = $input.all().map((item, i) => ({\n  index: i,\n  text: item.json.document?.pageContent,\n  sourceDocument: item.json.document?.metadata?.sourceDocument || 'unknown'\n}));\n\nconst prompt = `Question: ${question}\n\nRate each passage's relevance to the question, 0-10. Respond ONLY with a JSON array of integers, same order as given, no other text.\n\n` + candidates.map(c => `[${c.index}] ${c.text}`).join('\\n');\n\nreturn [{ json: { prompt, candidates, question } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        704
+      ],
+      "id": "fc3e82c0-b60b-455b-9d2d-0374699165bf",
+      "name": "Format candidates for reranking"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        896
+      ],
+      "id": "a78df6e8-9ecd-4329-a4e9-8a5ff9aa5109",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are a relevance-scoring assistant for a document search system. You will be given a user's question and a numbered list of text passages retrieved from a vector database. Your only job is to rate how relevant each passage is to answering the question, on a scale of 0 (completely irrelevant) to 10 (directly and completely answers the question).\n\nRules:\n- Score every passage in the list, even if none of them seem relevant to the question.\n- Do not explain your reasoning or add any commentary.\n- Do not include any text other than the JSON array.\n- The array must have exactly the same number of elements, in the same order, as the passages given.\n\nRespond ONLY in this exact format, no other text:\n[7, 2, 9, 0, 5]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        704
+      ],
+      "id": "35fa98c5-de13-4611-9d6e-2d15311b6a0c",
+      "name": "Score relevance"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\nconst cleaned = raw.replace(/```json|```/g, '').trim();\nlet scores;\ntry { scores = JSON.parse(cleaned); } catch { scores = []; }\n\nconst candidates = $('Format candidates for reranking').first().json.candidates;\nconst ranked = candidates\n  .map((c, i) => ({ ...c, relevance: scores[i] ?? 0 }))\n  .sort((a, b) => b.relevance - a.relevance)\n  .slice(0, 5);\n\nreturn [{\n  json: {\n    question: $('Format candidates for reranking').first().json.question,\n    ranked\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        704
+      ],
+      "id": "3e82eb8a-0138-4005-ae68-29e604e0fb80",
+      "name": "Rerank and keep top 5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { question, ranked } = $input.first().json;\n\nconst context = ranked\n  .map(r => `[Source: ${r.sourceDocument}] ${r.text}`)\n  .join('\\n\\n');\n\nconst prompt = `Question: ${question}\n\nPassages:\n${context}`;\n\nreturn [{ json: { question, ranked, answerPrompt: prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        704
+      ],
+      "id": "fce10d57-5085-4fa7-ac15-82eeafe0a630",
+      "name": "Build answer context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.answerPrompt }}",
+        "options": {
+          "systemMessage": "You are a research assistant answering questions using only the source passages provided to you. Follow these rules strictly:\n\n1. Only use information contained in the passages below. Do not use any outside knowledge, even if you're confident it's correct.\n2. If the passages don't contain enough information to fully answer the question, say so clearly instead of guessing or filling gaps with assumptions.\n3. After every claim or piece of information in your answer, cite which source document it came from, in square brackets, exactly like this: [Source: filename.pdf]\n4. If multiple passages support the same point, you may cite more than one source.\n5. Keep the answer focused and directly address the question asked — don't pad with unrelated detail from the passages."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1488,
+        704
+      ],
+      "id": "325e29b2-6ae5-4bf2-8883-bffb4d6bedff",
+      "name": "Generate answer"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "={{ $json.output }}"
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.4,
+      "position": [
+        1792,
+        704
+      ],
+      "id": "043a2fb8-7ae0-4a38-add2-5d9641ef0965",
+      "name": "Form",
+      "webhookId": "6524ee1f-8a5a-4058-966b-da1a6056dc6f"
+    }
+  ],
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract from File (PDF branch)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File (Text branch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File (Text branch)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract from File (PDF branch)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Prepare document fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare document fields": {
+      "main": [
+        [
+          {
+            "node": "Insert fixed chunks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert paragraph chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert fixed chunks",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert fixed chunks",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert paragraph chunks",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert paragraph chunks",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form trigger 1": {
+      "main": [
+        [
+          {
+            "node": "Retrieve candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Retrieve candidates",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve candidates": {
+      "main": [
+        [
+          {
+            "node": "Format candidates for reranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format candidates for reranking": {
+      "main": [
+        [
+          {
+            "node": "Score relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Score relevance",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate answer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score relevance": {
+      "main": [
+        [
+          {
+            "node": "Rerank and keep top 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rerank and keep top 5": {
+      "main": [
+        [
+          {
+            "node": "Build answer context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build answer context": {
+      "main": [
+        [
+          {
+            "node": "Generate answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate answer": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "a6f3da76-efe8-4634-b4a5-66dc0c1d0df5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "TdN9CTWkdrR-Kle8HnkW-",
+  "tags": []
+}

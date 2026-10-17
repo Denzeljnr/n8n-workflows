@@ -1,0 +1,1182 @@
+{
+  "name": "AI Meeting-to-Execution Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "11363c35-ffdc-4893-9e83-cff1e5ba63ad",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5a3e897e-88c8-44ee-9ff2-6d2db551c5ec",
+      "name": "Webhook",
+      "webhookId": "11363c35-ffdc-4893-9e83-cff1e5ba63ad"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Meeting processed successfully! All participants will receive their tasks shortly.\",\n  \"meetingId\": \"{{ $('AI Extraction Node').first().json.output.meetingId }}\",\n  \"stats\": {\n    \"totalTasks\": {{ $('AI Extraction Node').first().json.output.totalTasks }},\n    \"totalDecisions\": {{ $('AI Extraction Node').first().json.output.totalDecisions }},\n    \"participantCount\": {{ $('AI Extraction Node').first().json.output.participants.length }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2736,
+        0
+      ],
+      "id": "12e3f667-3261-4105-afec-8816b4ba80c8",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input data\nconst input = $input.first().json;\n\n// Parse participants into array\nconst participantsRaw = input.participants || \"\";\nconst participantsList = participantsRaw\n  .split('\\n')\n  .filter(line => line.trim().length > 0)\n  .map(line => {\n    // Expected format: \"Name - email@domain.com\"\n    const parts = line.split('-').map(p => p.trim());\n    if (parts.length >= 2) {\n      return {\n        name: parts[0],\n        email: parts[1]\n      };\n    }\n    return null;\n  })\n  .filter(p => p !== null);\n\n// Validate we have at least one participant\nif (participantsList.length === 0) {\n  throw new Error(\"No valid participants found. Format: Name - email@domain.com\");\n}\n\n// Validate meeting notes length\nconst notes = input.meetingNotes || \"\";\nif (notes.length < 100) {\n  throw new Error(\"Meeting notes must be at least 100 characters\");\n}\n\n// Parse reminder preferences\nconst reminderPrefs = input.reminderPreferences || [];\nconst reminders = {\n  twoDaysBefore: reminderPrefs.includes('2days'),\n  oneDayBefore: reminderPrefs.includes('1day'),\n  onDeadline: reminderPrefs.includes('deadline'),\n  oneDayAfter: reminderPrefs.includes('overdue')\n};\n\n// Return cleaned data\nreturn [{\n  json: {\n    meetingTitle: input.meetingTitle,\n    meetingDate: input.meetingDate,\n    meetingType: input.meetingType,\n    teamDepartment: input.teamDepartment || \"Not specified\",\n    meetingLead: input.meetingLead,\n    leadEmail: input.leadEmail,\n    participants: participantsList,\n    participantCount: participantsList.length,\n    meetingNotes: notes,\n    recordingLink: input.recordingLink || \"\",\n    additionalContext: input.additionalContext || \"\",\n    reminderSettings: reminders,\n    submittedAt: input.timestamp || new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f35839f4-60cd-4495-b072-08448d4fa2d1",
+      "name": "Parse & Validate Input"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f9cf1dee-d736-45c7-86ab-6b2856962a5a",
+              "name": "meetingTitle",
+              "value": "={{ $json.body.meetingTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "ce9723b7-4e8e-4b59-b8ce-cfdf660dcf2a",
+              "name": "meetingDate",
+              "value": "={{ $json.body.meetingDate }}",
+              "type": "string"
+            },
+            {
+              "id": "e95b1a98-4efb-467b-a115-348d87b5ce2d",
+              "name": "meetingType",
+              "value": "={{ $json.body.meetingType }}",
+              "type": "string"
+            },
+            {
+              "id": "65926da2-28e2-4b68-a518-70daeae2c34e",
+              "name": "teamDepartment",
+              "value": "={{ $json.body.teamDepartment }}",
+              "type": "string"
+            },
+            {
+              "id": "97c69d6b-2fc9-453f-908b-c8f1ac489624",
+              "name": "meetingLead",
+              "value": "={{ $json.body.meetingLead }}",
+              "type": "string"
+            },
+            {
+              "id": "e218666d-47d0-4c82-8852-0931961cccbf",
+              "name": "leadEmail",
+              "value": "={{ $json.body.leadEmail }}",
+              "type": "string"
+            },
+            {
+              "id": "6719c53b-633d-4e80-a02f-c7c05e8f6cff",
+              "name": "participants",
+              "value": "={{ $json.body.participants }}",
+              "type": "string"
+            },
+            {
+              "id": "1c1e7530-9381-4914-8379-d8065e6ecb08",
+              "name": "meetingNotes",
+              "value": "={{ $json.body.meetingNotes }}",
+              "type": "string"
+            },
+            {
+              "id": "8f96b696-6107-4b6b-98a7-5e758a5836b7",
+              "name": "recordingLink",
+              "value": "={{ $json.body.recordingLink }}",
+              "type": "string"
+            },
+            {
+              "id": "09f792a7-8cd3-4f30-b9b4-2363755a62dc",
+              "name": "reminderPreferences",
+              "value": "={{ $json.body.reminderPreferences }}",
+              "type": "array"
+            },
+            {
+              "id": "9c393f20-08ab-4849-89c2-a7c1151fadb3",
+              "name": "additionalContext",
+              "value": "={{ $json.body.additionalContext }}",
+              "type": "string"
+            },
+            {
+              "id": "89fdebd7-5a09-4ff2-bc31-74888a9550db",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "06d544ca-0727-4934-adaf-473c643e57d8",
+      "name": "Parse"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\n// Generate unique meeting ID\nconst timestamp = Date.now();\nconst randomStr = Math.random().toString(36).substring(2, 8);\nconst meetingId = `MTG-${timestamp}-${randomStr}`;\n\nreturn [{\n  json: {\n    ...data,\n    meetingId: meetingId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "15695e23-a8b8-4c46-b7b0-06b70a8b3b12",
+      "name": "Generate Meeting ID"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4",
+          "mode": "list",
+          "cachedResultName": "Meeting Task Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Meetings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Meeting ID": "={{ $json.meetingId }}",
+            "Meeting Date": "={{ $json.meetingDate }}",
+            "Meeting Title": "={{ $json.meetingTitle }}",
+            "Meeting Type": "={{ $json.meetingType }}",
+            "Team/Department": "={{ $json.teamDepartment }}",
+            "Lead Email": "={{ $json.leadEmail }}",
+            "Meeting Lead": "={{ $json.meetingLead }}",
+            "Participants": "={{ $json.participants.map(p => `${p.name} - ${p.email}`).join('\\n') }}\n",
+            "Recording Link": "={{ $json.recordingLink }}",
+            "Raw Notes": "={{ $json.meetingNotes }}",
+            "Processed Date": "={{ $now.toISO() }}",
+            "Status": "Processing"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meeting Title",
+              "displayName": "Meeting Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meeting Date",
+              "displayName": "Meeting Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meeting Type",
+              "displayName": "Meeting Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Team/Department",
+              "displayName": "Team/Department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meeting Lead",
+              "displayName": "Meeting Lead",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Email",
+              "displayName": "Lead Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Participants",
+              "displayName": "Participants",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recording Link",
+              "displayName": "Recording Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Raw Notes",
+              "displayName": "Raw Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Processed Date",
+              "displayName": "Processed Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "1c97d3b1-2b00-4699-a743-79aed73c7a86",
+      "name": "Save to Google Sheets - Meetings Tab",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this meeting and extract structured information.\n\nMEETING DETAILS:\nTitle: {{ $json['Meeting Title'] }}\nDate: {{ $json['Meeting Date'] }}\nType: {{ $json['Meeting Type'] }}\nTeam: {{ $json['Team/Department'] }}\nLead: {{ $json['Lead Email'] }}\n\nPARTICIPANTS:\n{{ $json.Participants }}\n\nADDITIONAL CONTEXT:\n{{ $('Parse & Validate Input').item.json.additionalContext }}\n\nMEETING NOTES:\n{{ $json['Raw Notes'] }}\n\n---\nEXTRACT THE FOLLOWING (respond ONLY in valid JSON format):\n\n{\n  \"meetingSummary\": \"2-3 sentence summary of the meeting's purpose and outcomes\",\n  \"decisions\": [\n    {\n      \"decision\": \"Clear statement of what was decided\",\n      \"impact\": \"Who/what this affects\"\n    }\n  ],\n  \"actionItems\": [\n    {\n      \"task\": \"Clear, specific description of the task\",\n      \"owner\": \"Exact name of person responsible (must match participant list) or 'UNASSIGNED'\",\n      \"deadline\": \"YYYY-MM-DD format or 'NO_DEADLINE' or 'ASAP'\",\n      \"priority\": \"HIGH or MEDIUM or LOW\",\n      \"context\": \"Why this task matters or any dependencies\"\n    }\n  ],\n  \"unclearItems\": [\n    \"Any discussions that seemed important but had no clear owner or deadline\"\n  ],\n  \"nextMeetingNeeded\": true or false,\n  \"blockers\": [\n    \"Any identified blockers or risks mentioned\"\n  ]\n}\n\nIMPORTANT RULES:\n1. Owner names MUST exactly match names from the participant list above\n2. If no clear owner, use 'UNASSIGNED'\n3. If no deadline mentioned, use 'NO_DEADLINE'\n4. Extract ALL action items, even small ones\n5. Decisions are agreements/conclusions, not tasks\n6. Return ONLY the JSON, no other text\n7. Ensure valid JSON syntax\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert meeting analyst and project manager. Your job is to extract actionable intelligence from meeting notes. You identify: \n1) Clear decisions that were made\n2) Specific action items that require work\n3) Who owns each task\n4) Realistic deadlines\n\nYou write in clear, direct language. You never make assumptions - if something is unclear, you flag it. You understand team dynamics and accountability.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        992,
+        0
+      ],
+      "id": "2b11b66c-76b0-40b8-8666-b6ee93919ff2",
+      "name": "AI Extraction Node"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        160
+      ],
+      "id": "10190e43-905b-46ca-b486-73e2c2fe6af0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"meetingId\": \"M12345\",\n  \"meetingTitle\": \"Q1 2025 Product Roadmap Planning\",\n  \"meetingDate\": \"2026-01-24\",\n  \"meetingLead\": \"Sarah Johnson\",\n  \"leadEmail\": \"example@email.com\",\n  \"participants\": [\n    {\"name\": \"Michael Chen\", \"email\": \"michael.chen@company.com\"},\n    {\"name\": \"Emily Rodriguez\", \"email\": \"emily.r@company.com\"},\n    {\"name\": \"David Kim\", \"email\": \"david.kim@company.com\"},\n    {\"name\": \"Lisa Anderson\", \"email\": \"lisa.a@company.com\"}\n  ],\n  \"reminderSettings\": {\n    \"twoDaysBefore\": true,\n    \"oneDayBefore\": true,\n    \"onDeadline\": true,\n    \"oneDayAfter\": true\n  },\n  \"meetingSummary\": \"This meeting outlined Q1 priorities, discussed the mobile app launch, marketing campaign, and onboarding improvements.\",\n  \"decisions\": [\n    {\"decision\": \"Launch mobile app by March 15th with core features\", \"impact\": \"Product Team, Customers\"},\n    {\"decision\": \"Budget approved for $50k marketing campaign\", \"impact\": \"Marketing Team\"}\n  ],\n  \"actionItems\": [\n    {\"task\": \"Finalize mobile app feature list\", \"owner\": \"Michael Chen\", \"deadline\": \"2026-01-31\", \"priority\": \"HIGH\", \"context\": \"Needed for on-time launch\"},\n    {\"task\": \"Prepare detailed marketing campaign breakdown\", \"owner\": \"Emily Rodriguez\", \"deadline\": \"2026-01-29\", \"priority\": \"MEDIUM\", \"context\": \"For final review and approval\"}\n  ],\n  \"unclearItems\": [\n    \"Security issues with API integration require clarification before next meeting\"\n  ],\n  \"blockers\": [\n    \"Legal team hasn't approved new terms of service\",\n    \"Design team at full capacity\"\n  ],\n  \"nextMeetingNeeded\": true,\n  \"totalTasks\": 2,\n  \"totalDecisions\": 2,\n  \"unassignedTasks\": 0\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        160
+      ],
+      "id": "568c47fa-e325-42bc-8d64-3621bbf049eb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.output;\nconst tasks = data.actionItems || [];\nconst meetingId = data.meetingId;\n\n// Convert each task to sheet row format\nconst taskRows = tasks.map((task, index) => {\n  const taskId = `${meetingId}-TASK-${index + 1}`;\n  \n  return {\n    json: {\n      taskId: taskId,\n      meetingId: meetingId,\n      taskDescription: task.task,\n      ownerName: task.owner,\n      ownerEmail: findOwnerEmail(task.owner, data.participants),\n      deadline: task.deadline,\n      status: \"Pending\",\n      priority: task.priority || \"MEDIUM\",\n      createdDate: new Date().toISOString().split('T')[0],\n      lastReminderSent: \"\",\n      completionDate: \"\"\n    }\n  };\n});\n\n// Helper function to find email\nfunction findOwnerEmail(ownerName, participants) {\n  if (ownerName === \"UNASSIGNED\") return \"\";\n  \n  const participant = participants.find(p => \n    p.name.toLowerCase().includes(ownerName.toLowerCase()) ||\n    ownerName.toLowerCase().includes(p.name.toLowerCase())\n  );\n  \n  return participant ? participant.email : \"\";\n}\n\nreturn taskRows;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        0
+      ],
+      "id": "cb6a8678-6192-4c52-9350-e1dc17f39614",
+      "name": "format for google sheet"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4",
+          "mode": "list",
+          "cachedResultName": "Meeting Task Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1638019586,
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit#gid=1638019586"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Task ID": "={{ $json.taskId }}",
+            "Meeting ID": "={{ $json.meetingId }}",
+            "Task Description": "={{ $json.taskDescription }}",
+            "Owner Name": "={{ $json.ownerName }}",
+            "Owner Email": "={{ $json.ownerEmail }}",
+            "Deadline": "={{ $json.deadline }}",
+            "Status": "={{ $json.status }}",
+            "Priority": "={{ $json.priority }}",
+            "Created Date": "={{ $json.createdDate }}",
+            "Last Reminder Sent": "={{ $json.lastReminderSent }}",
+            "Completion Date": "={{ $json.completionDate }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Task Description",
+              "displayName": "Task Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Owner Name",
+              "displayName": "Owner Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Owner Email",
+              "displayName": "Owner Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deadline",
+              "displayName": "Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created Date",
+              "displayName": "Created Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Reminder Sent",
+              "displayName": "Last Reminder Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Completion Date",
+              "displayName": "Completion Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "823b0504-73d7-49da-83e2-22cea1faca0b",
+      "name": "Save Tasks to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from Parse AI Response node\nconst data = $('AI Extraction Node').first().json.output;\nconst decisions = data.decisions || [];\nconst meetingId = data.meetingId;\n\n// Convert each decision to sheet row\nconst decisionRows = decisions.map((decision, index) => {\n  const decisionId = `${meetingId}-DEC-${index + 1}`;\n  \n  return {\n    json: {\n      decisionId: decisionId,\n      meetingId: meetingId,\n      decisionDescription: decision.decision,\n      impact: decision.impact || \"Not specified\",\n      recordedDate: new Date().toISOString().split('T')[0]\n    }\n  };\n});\n\nreturn decisionRows.length > 0 ? decisionRows : [{ json: { skip: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        0
+      ],
+      "id": "b588326b-6c30-4f5b-b299-b7196643f90d",
+      "name": "get decision for sheet"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4",
+          "mode": "list",
+          "cachedResultName": "Meeting Task Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1833336751,
+          "mode": "list",
+          "cachedResultName": "Decisions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit#gid=1833336751"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Decision ID": "={{ $json.decisionId }}",
+            "Meeting ID": "={{ $json.meetingId }}",
+            "Decision Description": "={{ $json.decisionDescription }}",
+            "Impact": "={{ $json.impact }}",
+            "Recorded Date": "={{ $json.recordedDate }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Decision ID",
+              "displayName": "Decision ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Decision Description",
+              "displayName": "Decision Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Impact",
+              "displayName": "Impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recorded Date",
+              "displayName": "Recorded Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1952,
+        0
+      ],
+      "id": "99a50d9e-f73b-4619-baa5-cddffb5804b0",
+      "name": "Google Sheets - Append Decisions",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get parsed data\nconst data = $('AI Extraction Node').first().json.output;\nconst participants = data.participants || [];\nconst actionItems = data.actionItems || [];\nconst decisions = data.decisions || [];\n\n// Group tasks by participant\nconst participantTasks = {};\n\nparticipants.forEach(participant => {\n  participantTasks[participant.email] = {\n    name: participant.name,\n    email: participant.email,\n    tasks: []\n  };\n});\n\n// Assign tasks to participants\nactionItems.forEach(task => {\n  const ownerName = task.owner;\n  \n  if (ownerName === \"UNASSIGNED\") return;\n  \n  // Find matching participant\n  const participant = participants.find(p => \n    p.name.toLowerCase().includes(ownerName.toLowerCase()) ||\n    ownerName.toLowerCase().includes(p.name.toLowerCase())\n  );\n  \n  if (participant && participantTasks[participant.email]) {\n    participantTasks[participant.email].tasks.push(task);\n  }\n});\n\n// Convert to array for iteration\nconst results = Object.values(participantTasks)\n  .filter(p => p.tasks.length > 0)\n  .map(participant => ({\n    json: {\n      meetingId: data.meetingId,\n      meetingTitle: data.meetingTitle,\n      meetingDate: data.meetingDate,\n      meetingSummary: data.meetingSummary,\n      participantName: participant.name,\n      participantEmail: participant.email,\n      tasks: participant.tasks,\n      taskCount: participant.tasks.length,\n      decisions: decisions,\n      blockers: data.blockers || [],\n      meetingLead: data.meetingLead,\n      leadEmail: data.leadEmail\n    }\n  }));\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ],
+      "id": "05bd6033-2a24-45b2-80a8-7ccbd0e06b8d",
+      "name": "Group Tasks by Participant"
+    },
+    {
+      "parameters": {
+        "sendTo": "=example@email.com",
+        "subject": "=Your Tasks from {{$json.meetingTitle}} ({{$json.meetingDate}})",
+        "message": "=<html>\n<body style=\"font-family: Arial; max-width: 600px; margin: 0 auto;\">\n\n<div style=\"background: #4f46e5; color: white; padding: 20px;\">\n  <h1>Your Action Items</h1>\n  <p>From: {{ $json.meetingTitle }}</p>\n</div>\n\n<div style=\"background: #f9fafb; padding: 20px;\">\n  <h2>Hi {{ $json.participantName }},</h2>\n  \n  <p>You have <b>{{ $json.taskCount }}</b> action items from today's meeting.</p>\n  \n  <p><b>Meeting Summary:</b><br>{{ $json.meetingSummary }}</p>\n  \n  <h2>Your Tasks:</h2>\n  \n  <p>Below are your assigned tasks. Please review and complete by the specified deadlines.</p>\n  \n  <p>For the complete list of your {{ $json.taskCount }} tasks with full details, please check the attached summary or your task management system.</p>\n  \n  <h3>Sample Task (First Task):</h3>\n  <div style=\"background: white; padding: 15px; border-left: 4px solid #4f46e5;\">\n    <p><b>{{ $json.tasks[0].task }}</b></p>\n    <p>Priority: {{ $json.tasks[0].priority }} | Deadline: {{ $json.tasks[0].deadline }}</p>\n  </div>\n  \n  <p><i>Note: Full task list includes all {{ $json.taskCount }} items with detailed context.</i></p>\n  \n  <h2>Key Decisions:</h2>\n  <p>Important decisions from the meeting that affect your work.</p>\n  \n  <h2>Next Steps:</h2>\n  <ol>\n    <li>Review all your tasks</li>\n    <li>Clarify unclear deadlines with {{ $json.meetingLead }}</li>\n    <li>Update the team if you encounter blockers</li>\n  </ol>\n  \n  <p>Questions? Contact <b>{{ $json.meetingLead }}</b> at {{ $json.leadEmail }}</p>\n</div>\n\n<div style=\"padding: 20px; text-align: center; color: #666; font-size: 12px;\">\n  <p>Meeting Action Pipeline | Meeting ID: {{ $json.meetingId }}</p>\n</div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Meeting Action Pipeline"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2336,
+        0
+      ],
+      "id": "33c89704-b387-492e-bbe6-4fae88185015",
+      "name": "Send Personalized Task Emails",
+      "webhookId": "5c674909-5667-413a-8167-112044b517e8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Extraction Node').first().json.output.leadEmail }}",
+        "subject": "=Meeting Summary: {{ $('AI Extraction Node').first().json.output.meetingTitle }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 700px; margin: 0 auto; padding: 20px; }\n    .header { background: #1f2937; color: white; padding: 20px; border-radius: 8px 8px 0 0; }\n    .content { background: #ffffff; padding: 20px; border: 1px solid #e5e7eb; }\n    .stats { display: flex; gap: 20px; margin: 20px 0; }\n    .stat-box { flex: 1; background: #f3f4f6; padding: 15px; border-radius: 8px; text-align: center; }\n    .stat-number { font-size: 32px; font-weight: bold; color: #4f46e5; }\n    .task-list { background: #f9fafb; padding: 15px; margin: 10px 0; border-radius: 4px; }\n    .warning { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 15px 0; }\n    .success { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 15px 0; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1 style=\"margin: 0;\">Meeting Processed Successfully</h1>\n      <p style=\"margin: 5px 0 0 0;\">{{ $('AI Extraction Node').first().json.output.meetingTitle }}</p>\n    </div>\n    \n    <div class=\"content\">\n      <h2>Hi {{ $('AI Extraction Node').first().json.output.meetingLead }},</h2>\n      \n      <p>Your meeting has been processed and all participants have received their personalized task lists.</p>\n      \n      <div class=\"stats\">\n        <div class=\"stat-box\">\n          <div class=\"stat-number\">{{ $('AI Extraction Node').first().json.output.totalTasks }}</div>\n          <div>Total Tasks</div>\n        </div>\n        <div class=\"stat-box\">\n          <div class=\"stat-number\">{{ $('AI Extraction Node').first().json.output.totalDecisions }}</div>\n          <div>Decisions Made</div>\n        </div>\n        <div class=\"stat-box\">\n          <div class=\"stat-number\">{{ $('AI Extraction Node').first().json.output.participants.length }}</div>\n          <div>Participants</div>\n        </div>\n      </div>\n      \n      <h3>Meeting Summary:</h3>\n      <p>{{ $('AI Extraction Node').first().json.output.meetingSummary }}</p>\n      \n      <h3>All Action Items:</h3>\n      <p><strong>Task 1:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[0].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[0].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[0].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[0].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[0].context }}</small></p>\n      \n      <p><strong>Task 2:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[1].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[1].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[1].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[1].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[1].context }}</small></p>\n      \n      <p><strong>Task 3:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[2].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[2].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[2].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[2].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[2].context }}</small></p>\n      \n      <p><strong>Task 4:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[3].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[3].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[3].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[3].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[3].context }}</small></p>\n      \n      <p><strong>Task 5:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[4].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[4].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[4].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[4].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[4].context }}</small></p>\n      \n      <p><strong>Task 6:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[5].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[5].owner }} | \n      Deadline: {{ $('AI Extraction Node').v.json.output.actionItems[5].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[5].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[5].context }}</small></p>\n      \n      <p><strong>Task 7:</strong> {{ $('AI Extraction Node').first().json.output.actionItems[6].task }}<br>\n      Owner: {{ $('AI Extraction Node').first().json.output.actionItems[6].owner }} | \n      Deadline: {{ $('AI Extraction Node').first().json.output.actionItems[6].deadline }} | \n      Priority: {{ $('AI Extraction Node').first().json.output.actionItems[6].priority }}<br>\n      <small>{{ $('AI Extraction Node').first().json.output.actionItems[6].context }}</small></p>\n      \n      <p><i>Note: Showing up to 7 tasks. Check Google Sheet for complete list if more tasks exist.</i></p>\n      \n      <h3>Unassigned Tasks Warning:</h3>\n      <div class=\"warning\">\n        <strong>⚠️ Action Required:</strong> {{ $('AI Extraction Node').first().json.output.unassignedTasks }} task(s) have no clear owner. Please assign these manually in your Google Sheet.\n      </div>\n      \n      <h3>Decisions Recorded:</h3>\n      <div class=\"task-list\">\n        <strong>{{ $('AI Extraction Node').first().json.output.decisions[0].decision }}</strong><br>\n        <small>Impact: {{ $('AI Extraction Node').first().json.output.decisions[0].impact }}</small>\n      </div>\n      \n      <div class=\"task-list\">\n        <strong>{{ $('AI Extraction Node').first().json.output.decisions[1].decision }}</strong><br>\n        <small>Impact: {{ $('AI Extraction Node').first().json.output.decisions[1].impact }}</small>\n      </div>\n      \n      <h3>Identified Blockers:</h3>\n      <div class=\"warning\">\n        <ul>\n          <li>{{ $('AI Extraction Node').first().json.output.blockers[0] }}</li>\n          <li>{{ $('AI Extraction Node').first().json.output.blockers[1] }}</li>\n        </ul>\n      </div>\n      \n      <div class=\"success\">\n        <h4>✓ Automated Follow-ups Scheduled</h4>\n        <p>Participants will receive reminders based on the preferences you selected during submission.</p>\n        <p>Reminder system is active and will send notifications at appropriate times before deadlines.</p>\n      </div>\n      \n      <p><strong>Meeting ID:</strong> {{ $('AI Extraction Node').first().json.output.meetingId }}</p>\n      \n      <p>You can track task completion in your <a href=\"YOUR_GOOGLE_SHEET_URL\">Google Sheet Dashboard</a>.</p>\n      \n      <p><strong>Next Steps:</strong></p>\n      <ol>\n        <li>Review unassigned tasks and assign owners</li>\n        <li>Monitor task completion in Google Sheets</li>\n        <li>Follow up on high-priority items</li>\n        <li>Address identified blockers</li>\n      </ol>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2544,
+        0
+      ],
+      "id": "04ba3ed7-b193-4c65-9999-cbe7b14a72bc",
+      "name": "Send Summary Email to Meeting Lead",
+      "webhookId": "f04eb7f1-8963-4494-b752-347cba9eeaa0",
+      "executeOnce": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        352
+      ],
+      "id": "7061f0af-9910-452a-b58c-944e8412d6e3",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4",
+          "mode": "list",
+          "cachedResultName": "Meeting Task Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1638019586,
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit#gid=1638019586"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        352
+      ],
+      "id": "e096cf85-323d-4002-819c-6ae3258a823a",
+      "name": "Read Tasks from Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allTasks = $input.all();\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nconst tasksNeedingReminders = [];\n\nallTasks.forEach(item => {\n  const task = item.json;\n  \n  // Skip if not pending\n  if (task.Status !== \"Pending\") return;\n  \n  // Skip if no valid email\n  if (!task[\"Owner Email\"] || task[\"Owner Email\"].trim() === \"\") return;\n  \n  // Skip if deadline is not a valid date\n  const deadline = task.Deadline;\n  if (!deadline || deadline === \"NO_DEADLINE\" || deadline === \"ASAP\") return;\n  \n  // Parse deadline\n  const deadlineDate = new Date(deadline);\n  if (isNaN(deadlineDate)) return;\n  \n  deadlineDate.setHours(0, 0, 0, 0);\n  \n  // Calculate days until deadline\n  const daysUntil = Math.floor((deadlineDate - today) / (1000 * 60 * 60 * 24));\n  \n  // Check if reminder needed\n  let reminderType = null;\n  \n  if (daysUntil === 2) {\n    reminderType = \"2_DAYS_BEFORE\";\n  } else if (daysUntil === 1) {\n    reminderType = \"1_DAY_BEFORE\";\n  } else if (daysUntil === 0) {\n    reminderType = \"DUE_TODAY\";\n  } else if (daysUntil === -1) {\n    reminderType = \"1_DAY_OVERDUE\";\n  }\n  \n  if (reminderType) {\n    tasksNeedingReminders.push({\n      json: {\n        taskId: task[\"Task ID\"],\n        meetingId: task[\"Meeting ID\"],\n        taskDescription: task[\"Task Description\"],\n        ownerName: task[\"Owner Name\"],\n        ownerEmail: task[\"Owner Email\"],\n        deadline: deadline,\n        priority: task.Priority,\n        reminderType: reminderType,\n        daysUntil: daysUntil\n      }\n    });\n  }\n});\n\nreturn tasksNeedingReminders.length > 0 ? tasksNeedingReminders : [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        352
+      ],
+      "id": "e26cb8dc-7a4e-473c-ab39-d61b8f27024f",
+      "name": "Filter Pending Tasks"
+    },
+    {
+      "parameters": {
+        "sendTo": "=example@email.com",
+        "subject": "={{ $json.reminderType === '2_DAYS_BEFORE' ? '⏰ Reminder: Task due in 2 days' : \n   $json.reminderType === '1_DAY_BEFORE' ? '⚠️ Reminder: Task due tomorrow' :\n   $json.reminderType === 'DUE_TODAY' ? '🔴 URGENT: Task due today' :\n   '❗ OVERDUE: Task was due yesterday' }}",
+        "message": "=<!DOCTYPE html> <html> <head>   <style>     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }     .container { max-width: 600px; margin: 0 auto; padding: 20px; }     .header { padding: 20px; border-radius: 8px 8px 0 0; color: white; }     .header-warning { background: #f59e0b; }     .header-urgent { background: #ef4444; }     .header-overdue { background: #991b1b; }     .content { background: #ffffff; padding: 20px; border: 1px solid #e5e7eb; }     .task-box { background: #f9fafb; padding: 20px; margin: 20px 0; border-left: 4px solid #4f46e5; border-radius: 4px; }     .deadline { font-size: 24px; font-weight: bold; color: #ef4444; margin: 15px 0; }   </style> </head> <body>   <div class=\"container\">     <div class=\"header {{ $json.daysUntil >= 1 ? 'header-warning' : $json.daysUntil === 0 ? 'header-urgent' : 'header-overdue' }}\">       <h1 style=\"margin: 0;\">Task Reminder</h1>     </div>          <div class=\"content\">       <h2>Hi {{ $json.ownerName }},</h2>              <p>         {% if $json.daysUntil === 2 %}           This is a reminder that you have a task due in <strong>2 days</strong>.         {% elsif $json.daysUntil === 1 %}           This is a reminder that you have a task due <strong>tomorrow</strong>.         {% elsif $json.daysUntil === 0 %}           This is an urgent reminder that you have a task due <strong>today</strong>.         {% else %}           This task was due <strong>yesterday</strong> and is now overdue.         {% endif %}       </p>              <div class=\"task-box\">         <h3 style=\"margin-top: 0;\">{{ $json.taskDescription }}</h3>         <p><strong>Priority:</strong> {{ $json.priority }}</p>         <div class=\"deadline\">Deadline: {{ $json.deadline }}</div>         <p><strong>Meeting ID:</strong> {{ $json.meetingId }}</p>       </div>              {% if $json.daysUntil < 0 %}       <p style=\"color: #991b1b;\"><strong>⚠️ This task is overdue. Please update your team on the status or complete it as soon as possible.</strong></p>       {% endif %}              <p>If you've completed this task, please update the status in the <a href=\"YOUR_GOOGLE_SHEET_URL\">task tracker</a>.</p>              <p>If you're blocked or need help, reach out to your team lead immediately.</p>     </div>   </div> </body> </html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        352
+      ],
+      "id": "aeed1043-9c09-4dc7-8582-587ca3b07878",
+      "name": "Send Reminder Emails",
+      "webhookId": "81780072-4979-4ef8-a7f0-961ecf43b1c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4",
+          "mode": "list",
+          "cachedResultName": "Meeting Task Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1638019586,
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HzabHm4DLWut8uHJuu2sm25FR-xVOxcSLORKaubkjj4/edit#gid=1638019586"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Task ID": "={{ $('Filter Pending Tasks').item.json.taskId }}",
+            "Last Reminder Sent": "={{ $now.format('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "Task ID"
+          ],
+          "schema": [
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Task Description",
+              "displayName": "Task Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Owner Name",
+              "displayName": "Owner Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Owner Email",
+              "displayName": "Owner Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deadline",
+              "displayName": "Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created Date",
+              "displayName": "Created Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Reminder Sent",
+              "displayName": "Last Reminder Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Completion Date",
+              "displayName": "Completion Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        352
+      ],
+      "id": "de81db54-3864-47a6-81da-614714a3466e",
+      "name": "Update Last Reminder Sent",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Generate Meeting ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Meeting ID": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets - Meetings Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets - Meetings Tab": {
+      "main": [
+        [
+          {
+            "node": "AI Extraction Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Extraction Node": {
+      "main": [
+        [
+          {
+            "node": "format for google sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Extraction Node",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Extraction Node",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format for google sheet": {
+      "main": [
+        [
+          {
+            "node": "Save Tasks to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Tasks to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "get decision for sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get decision for sheet": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Append Decisions": {
+      "main": [
+        [
+          {
+            "node": "Group Tasks by Participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Tasks by Participant": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Task Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Personalized Task Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Summary Email to Meeting Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Summary Email to Meeting Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Tasks from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Tasks from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter Pending Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Pending Tasks": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reminder Emails": {
+      "main": [
+        [
+          {
+            "node": "Update Last Reminder Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d3cfaca4-dae2-40ef-bb1f-f448be50cf25",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "757bnXo4hgzhrO2P7vmVs",
+  "tags": []
+}

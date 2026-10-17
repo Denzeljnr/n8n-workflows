@@ -1,0 +1,1037 @@
+{
+  "name": "Website Project Request (Responses)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        224
+      ],
+      "id": "26055880-9ae1-42e5-b86b-ebe4f233fd9e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        512
+      ],
+      "id": "b71d282d-94ae-4fae-b99a-fd2c756d4994",
+      "name": "Wait",
+      "webhookId": "78e83112-bdb4-4280-89fd-e7d120544dcd"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"\",\n  \"body\": \"\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        224
+      ],
+      "id": "b81277cf-6ee9-477b-abed-6eafe3202a37",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "=*/30 * * * * *\n"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "subject:Website Project Confirmation"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        608
+      ],
+      "id": "0c3722ef-96ba-4b2f-b0f4-f0d9610cf4b9",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3f2fb268-36ea-4ff3-9ba0-7574eb49eb2d",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        608
+      ],
+      "id": "2b4fbde4-7e6c-4871-b4f0-d950a8a36f88",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        832
+      ],
+      "id": "6e090bbf-29b2-416c-96ce-10c3ebb91bf0",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        704
+      ],
+      "id": "6a4c8781-0e87-4787-ad4e-cb6a8f33fd1f",
+      "name": "Wait1",
+      "webhookId": "d849181c-7cce-43c4-8357-5f336cd9b112"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The email should sound like a natural conversation — not a bullet list — and weave the details smoothly into sentences.  \nAvoid making the email too long; focus on warmth, clarity, and a personal touch.\n\nHere is the form submission:  \nFull Name: {{$json[\"Full Name\"]}}  \nEmail: {{ $json.Email }}  \nPhone: {{$json[\"Phone Number\"]}}  \nBusiness Name: {{ $json['  Business Name  '] }} \nIndustry: {{ $json['  Business Industry  '] }} \nBusiness Description: {{ $json['  Brief Description of Your Business  '] }}  \nWebsite Purpose: {{ $json['  Purpose of the Website  '] }}\nPreferred Style: {{ $json['  Preferred Website Style   [Clean & Minimal]'] }}  \nFeatures Needed: {{ $json['  Specific Features Needed  '] }}\nContent Plan:  {{ $json['  Will You Provide Content (Text, Images, Videos)?  '] }} \nBudget Range: {{ $json['  Budget Range (in Naira)  '] }}\nDeadline: {{$json[\"Deadline (Desired Completion Date)\"]}}  \n\nWrite in this style:  \n- Friendly opening (e.g., “Thanks for sharing your details…”).  \n- Smoothly combine related details into natural sentences.  \n- Keep paragraphs short (1–3 sentences max).  \n- Close with: “Could you please reply with YES if this is correct, or NO if you’d like to make changes?”  \n\nExample tone:  \nHi [Name], thanks for filling out our form! From what you shared, you run [Business Name] in the [Industry] space and want a [Website Purpose] site in a [Preferred Style] style. You mentioned features like [Features Needed] and your budget is [Budget Range]. Your goal is to have it ready by [Deadline]. Does this sound right?  \n\nEnd with the exact sentence:  \nCould you please reply with YES if this is correct, or NO if you’d like to make changes?\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an assistant writing a friendly yet professional confirmation email to a client about their website request\n\nin html format"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3909765f-72e4-4623-9335-ee3f0b1ae9d7",
+      "name": "professional confirmation email"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= \nYour task is to read the Gmail reply provided and determine if the sender’s response means “YES” (approval/confirmation) or “NO” (rejection/changes needed).  \n\nRules:  \n- Output only one word: YES or NO.  \n- If the response is unclear but suggests agreement, return YES.  \n- If the response is unclear but suggests disagreement or changes, return NO.  \n\nHere is the Gmail reply:  \n\n{{ $json.textAsHtml }}",
+        "options": {
+          "systemMessage": "You are a text classification specialist. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        608
+      ],
+      "id": "04ab94fc-14af-4a43-accb-bd9426447ca6",
+      "name": "text classification specialist"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+        "subject": "Approval Confirmed",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Confirmation Received</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;\">\n    <table role=\"presentation\" style=\"width: 100%; border-collapse: collapse;\">\n        <tr>\n            <td style=\"padding: 20px 0;\">\n                <table role=\"presentation\" style=\"width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n                    <tr>\n                        <td style=\"padding: 40px 30px; text-align: left;\">\n                            <p style=\"margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #333333;\">\n                                Thank you, We've received your confirmation.\n                            </p>\n                            <p style=\"margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #333333;\">\n                                Our team will review your request and get back to you within 24 hours.\n                            </p>\n                            <p style=\"margin: 0; font-size: 16px; line-height: 1.6; color: #666666;\">\n                                – Denzel Media\n                            </p>\n                        </td>\n                    </tr>\n                </table>\n            </td>\n        </tr>\n    </table>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        512
+      ],
+      "id": "1a3ed7a7-3f5b-4b50-90ef-50f918094640",
+      "name": "Approval Confirmed",
+      "webhookId": "e899b44b-e526-4135-a145-38c7ffc08fad",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+        "subject": "Rejection Confirmed",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Thank You for Your Feedback</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;\">\n    <table role=\"presentation\" style=\"width: 100%; border-collapse: collapse;\">\n        <tr>\n            <td style=\"padding: 20px 0;\">\n                <table role=\"presentation\" style=\"width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n                    <tr>\n                        <td style=\"padding: 40px 30px; text-align: left;\">\n                            <p style=\"margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #333333;\">\n                                Thanks for your feedback. We understand your decision and would be happy for you to review the offer again at your convenience.\n                            </p>\n                            <p style=\"margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #333333;\">\n                                Please feel free to get back to us if you'd like to revisit the details.\n                            </p>\n                            <p style=\"margin: 0; font-size: 16px; line-height: 1.6; color: #666666;\">\n                                – Denzel Media\n                            </p>\n                        </td>\n                    </tr>\n                </table>\n            </td>\n        </tr>\n    </table>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        736,
+        704
+      ],
+      "id": "1eb152f9-bb41-45a8-9048-20fe2c52e671",
+      "name": "Rejection Confirmed",
+      "webhookId": "e899b44b-e526-4135-a145-38c7ffc08fad",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=example@email.com",
+        "subject": "=Website Project Confirmation - {{ $('Get row(s) in sheet').item.json['Full Name'] }}",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        -80
+      ],
+      "id": "afe31d1f-3d24-4197-8e6d-876790c89096",
+      "name": "Website Project Confirmation",
+      "webhookId": "18a6fdda-39ae-4906-b6ab-20418ab9fd87",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0",
+          "mode": "list",
+          "cachedResultName": "Website Project Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 189497293,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit#gid=189497293"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Confirmation ",
+              "lookupValue": "=Pending"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        32,
+        144
+      ],
+      "id": "6d0d2ed7-b1ed-4f5e-8661-2c21474a17cd",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        208
+      ],
+      "id": "3118961f-8b63-4101-a0c7-b183805ca605",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0",
+          "mode": "list",
+          "cachedResultName": "Website Project Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 189497293,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit#gid=189497293"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Confirmation ",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        944,
+        512
+      ],
+      "id": "3768c48f-b06a-4a1c-9533-913a10c23949",
+      "name": "Check",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0",
+          "mode": "list",
+          "cachedResultName": "Website Project Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 189497293,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit#gid=189497293"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Confirmation ",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        960,
+        704
+      ],
+      "id": "cbe7338d-84ff-4565-abaf-bc1af5aa1ce4",
+      "name": "Check1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0",
+          "mode": "list",
+          "cachedResultName": "Website Project Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 189497293,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit#gid=189497293"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json['Full Name'] }}",
+            "Confirmation ": "Approved"
+          },
+          "matchingColumns": [
+            "Full Name"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Business Name  ",
+              "displayName": "  Business Name  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Business Industry  ",
+              "displayName": "  Business Industry  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Brief Description of Your Business  ",
+              "displayName": "  Brief Description of Your Business  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Purpose of the Website  ",
+              "displayName": "  Purpose of the Website  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Clean & Minimal]",
+              "displayName": "  Preferred Website Style   [Clean & Minimal]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Specific Features Needed  ",
+              "displayName": "  Specific Features Needed  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Will You Provide Content (Text, Images, Videos)?  ",
+              "displayName": "  Will You Provide Content (Text, Images, Videos)?  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Budget Range (in Naira)  ",
+              "displayName": "  Budget Range (in Naira)  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deadline (Desired Completion Date)",
+              "displayName": "Deadline (Desired Completion Date)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Bold & Colorful]",
+              "displayName": "  Preferred Website Style   [Bold & Colorful]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Corporate & Professional]",
+              "displayName": "  Preferred Website Style   [Corporate & Professional]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Creative & Artistic]",
+              "displayName": "  Preferred Website Style   [Creative & Artistic]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Modern & Trendy]",
+              "displayName": "  Preferred Website Style   [Modern & Trendy]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confirmation ",
+              "displayName": "Confirmation ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1152,
+        512
+      ],
+      "id": "ad0456e2-c3b8-49f4-ab43-24cdd24a8cfd",
+      "name": "Update",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0",
+          "mode": "list",
+          "cachedResultName": "Website Project Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 189497293,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cJ47UvVwGAZl80ojnGrjE0k6WzCd5UQ1OmPYVo0Dch0/edit#gid=189497293"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json['Full Name'] }}",
+            "Confirmation ": "Rejected"
+          },
+          "matchingColumns": [
+            "Full Name"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Business Name  ",
+              "displayName": "  Business Name  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Business Industry  ",
+              "displayName": "  Business Industry  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Brief Description of Your Business  ",
+              "displayName": "  Brief Description of Your Business  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Purpose of the Website  ",
+              "displayName": "  Purpose of the Website  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Clean & Minimal]",
+              "displayName": "  Preferred Website Style   [Clean & Minimal]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Specific Features Needed  ",
+              "displayName": "  Specific Features Needed  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Will You Provide Content (Text, Images, Videos)?  ",
+              "displayName": "  Will You Provide Content (Text, Images, Videos)?  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Budget Range (in Naira)  ",
+              "displayName": "  Budget Range (in Naira)  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deadline (Desired Completion Date)",
+              "displayName": "Deadline (Desired Completion Date)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Bold & Colorful]",
+              "displayName": "  Preferred Website Style   [Bold & Colorful]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Corporate & Professional]",
+              "displayName": "  Preferred Website Style   [Corporate & Professional]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Creative & Artistic]",
+              "displayName": "  Preferred Website Style   [Creative & Artistic]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Website Style   [Modern & Trendy]",
+              "displayName": "  Preferred Website Style   [Modern & Trendy]",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confirmation ",
+              "displayName": "Confirmation ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1152,
+        704
+      ],
+      "id": "52b2ba5d-5e48-47f5-889b-dfd16cceff53",
+      "name": "Update1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "professional confirmation email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Approval Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "professional confirmation email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "text classification specialist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "text classification specialist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Rejection Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "professional confirmation email": {
+      "main": [
+        [
+          {
+            "node": "Website Project Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "text classification specialist": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Project Confirmation": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "professional confirmation email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check1": {
+      "main": [
+        [
+          {
+            "node": "Update1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejection Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Check1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9ece3336-7e6f-4c42-8eae-61ebf6eb38f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "GWie3Jybou4HQLYl",
+  "tags": []
+}

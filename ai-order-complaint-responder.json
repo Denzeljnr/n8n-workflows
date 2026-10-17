@@ -1,0 +1,374 @@
+{
+  "name": "Order Complaint Responder",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU",
+          "mode": "list",
+          "cachedResultName": "Order Compliant  (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1575404450,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU/edit#gid=1575404450"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5d959b90-b4ed-41e8-aa87-4b24820a064b",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your role is to prepare a short, natural-sounding draft for a human agent to approve and send.\n\nHere is the customer’s submission:\nFull Name: {{$json[\"Full Name\"]}}\nEmail: {{$json[\"Email Address\"]}}\nOrder ID: {{$json[\"Order ID\"]}}\nIssue Type: {{$json[\"Issue Type\"]}}\nIssue Description: {{$json[\"  Describe the Issue  \"]}}\nPreferred Resolution: {{$json[\"  Preferred Resolution  \"]}}\n\nYour tasks:\nProblem: followed by a short, clear sentence describing the customer’s main issue.\n\nProposed Step: followed by the best next action (refund, replacement, repair, follow-up, etc.).\n\nDraft Email: followed by a short, polite, and human-sounding message to the customer explaining what will be done and why.\n\nAvoid robotic or overly formal tone. Make it sound like a helpful person wrote it.\n\nFollow exactly this format — no extra text, no bullet points, no JSON:\n\n\nexample\n\nThanks for letting us know about the mix-up with your jacket order. I’ve arranged for a prepaid return label so you can send the wrong size back to us at no cost. As soon as the return is scanned by the courier, we’ll ship the correct size right away.\n\n\n\n\n\n",
+        "options": {
+          "systemMessage": "You are a friendly, professional customer service agent at [Your "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d3a86f95-d9c8-4d4b-82fe-5a6cfb65afdd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        320,
+        224
+      ],
+      "id": "83e7c1da-37c3-4636-8d23-2a4a2ab2ee94",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Google Sheets Trigger').item.json['Email Address'] }}",
+        "subject": "=Order Issue Resolution Draft – {{ $('Google Sheets Trigger').item.json['Order ID'] }}",
+        "message": "=<h3>Order Issue Resolution Draft</h3>  <p><strong>Customer Name:</strong> {{ $('Google Sheets Trigger').item.json['Full Name'] }}</p> <p><strong>Order ID:</strong> {{ $('Google Sheets Trigger').item.json['Order ID'] }}</p> <p><strong>Issue Summary:</strong> {{ $json.output }}</p> <p><strong>Suggested Resolution:</strong> {{ $('Google Sheets Trigger').item.json['  Preferred Resolution  '] }}</p>  <h4>Draft Email to Customer:</h4> <p>{{ $('Google Sheets Trigger').item.json['Email Address'] }}</p>  <hr> <p>Please reply with <strong>APPROVE</strong> to send this to the customer, or edit as needed.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "bdcf1811-fc44-4bd3-a16a-231c2b698487",
+      "name": "Send message and wait for response",
+      "webhookId": "9a846877-d8ba-4b76-bf99-2fec483379a1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const reply = $json.text || $json.snippet || \"\";\nreturn {\n  approved: /approve|yes/i.test(reply)\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        0
+      ],
+      "id": "90febc17-8f98-471c-946b-a889308cf6c7",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU",
+          "mode": "list",
+          "cachedResultName": "Order Compliant  (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1575404450,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tjVWGSpvYOrvgBonVUzNGJZu6uXwynRumukqVtpCymU/edit#gid=1575404450"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json.approved }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issue Type",
+              "displayName": "Issue Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Describe the Issue  ",
+              "displayName": "  Describe the Issue  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Preferred Resolution  ",
+              "displayName": "  Preferred Resolution  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Upload Picture",
+              "displayName": "Upload Picture",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "625afb9d-092c-4fc8-940f-832ca93cf49e",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JOQeHNNtwCPde1xr",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a6e0a35c-d16b-445b-b826-836bb6838738",
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": "True",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "07b2b1e3-32bc-438d-84e3-9d4d9ff8923f",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8ced5303-dce7-46b4-861a-7aad60f25f6b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "aVikoaMZTeexlBTC",
+  "tags": []
+}

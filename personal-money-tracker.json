@@ -1,0 +1,1051 @@
+{
+  "name": "PERSONAL BANK-LIKE EXPENSE & SAVINGS TRACKER (NAIRA)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "money-tracker/add-income",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9985269-0516-4098-9d0c-32e848cabaed",
+      "name": "Income",
+      "webhookId": "0b0a04cd-cdda-42d8-b635-c0a8b27b9fa4"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "money-tracker/add-expense",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        176
+      ],
+      "id": "a32304eb-3c0b-4985-92d2-dc4aa5732bc5",
+      "name": "Add Expense",
+      "webhookId": "eeb6376b-137c-4fbf-9e57-3da1db559933"
+    },
+    {
+      "parameters": {
+        "path": "money-tracker/get-balance",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        368
+      ],
+      "id": "ec718ee7-97f0-4d05-9ab3-d8fbd248f156",
+      "name": "Get Balance",
+      "webhookId": "30567e9a-14a8-4014-9bbc-9d4399be3fbc"
+    },
+    {
+      "parameters": {
+        "path": "money-tracker/monthly-summary",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        560
+      ],
+      "id": "494112f8-6458-4bd5-b91c-936d2be933e1",
+      "name": "Monthly Summary",
+      "webhookId": "451d3d26-9e86-4b33-bdd3-0b73c918cf19"
+    },
+    {
+      "parameters": {
+        "path": "money-tracker/get-transactions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        768
+      ],
+      "id": "0f2bcf3b-1662-45ae-9751-c80b6b1b25a8",
+      "name": "Get Transactions",
+      "webhookId": "152ec673-997d-4663-82c0-7a339e215842"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Income added successfully\",\n  \"transaction\": {\n    \"id\": \"{{ $json.Transaction_ID }}\",\n    \"amount\": {{ $json.Amount }},\n    \"source\": \"{{ $json.Description }}\",\n    \"date\": \"{{ $json.Date }}\",\n    \"newBalance\": {{ $('Calculate New Balance').item.json.newBalance }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "718f6846-5db2-42b6-9214-6a2c3d2f9ddd",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Expense recorded successfully\",\n  \"transaction\": {\n    \"id\": \"{{ $json.Transaction_ID }}\",\n    \"amount\": {{ $json.Amount }},\n    \"note\": \"{{ $json.Description }}\",\n    \"date\": \"{{ $json.Date }}\",\n    \"newBalance\": {{ $json.Running_Balance }},\n    \"warning\": {{ $json.isNegative ? '\"Balance is negative\"' : 'null' }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1264,
+        176
+      ],
+      "id": "b4194083-fa87-4e67-b940-149fd5d61b82",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"currentBalance\": {{ $json.currentBalance }},\n  \"lastUpdated\": \"{{ $json.lastUpdated }}\",\n  \"formattedBalance\": \"{{ $json.formattedBalance }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        368
+      ],
+      "id": "d2c6c41b-8fa1-40db-8f1b-fe98c3920f0f",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"month\": \"{{ $json.month }}\",\n  \"totalIncome\": {{ $json.totalIncome }},\n  \"totalExpenses\": {{ $json.totalExpenses }},\n  \"netSavings\": {{ $json.netSavings }},\n  \"savingsRate\": {{ $json.savingsRate }},\n  \"transactionCount\": {{ $json.transactionCount }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        560
+      ],
+      "id": "673bd41c-204d-49b9-9508-6414ef059e12",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"transactions\": {{ JSON.stringify($json.transactions) }},\n  \"count\": {{ $json.count }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        768
+      ],
+      "id": "8d25cdbe-1f54-41a9-91d6-5735d62c5693",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json.body;\n\n// Validate required fields\nif (!input.amount || !input.source || !input.date) {\n  throw new Error('Missing required fields: amount, source, or date');\n}\n\n// Validate amount is positive number\nconst amount = parseFloat(input.amount);\nif (isNaN(amount) || amount <= 0) {\n  throw new Error('Amount must be a positive number');\n}\n\n// Validate date format\nconst date = new Date(input.date);\nif (isNaN(date)) {\n  throw new Error('Invalid date format');\n}\n\n// Clean and return data\nreturn [{\n  json: {\n    amount: amount,\n    source: input.source.trim(),\n    date: input.date,\n    type: 'INCOME',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "91290437-1102-4b2c-93e8-08c166e017f2",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Account",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e235ec0d-5e73-47e9-ba85-dfe53213f518",
+      "name": "Read Current Balance",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const incomeData = $node[\"Validate Input\"].json;\nconst accountData = $input.first().json;\n\n// Get current balance (from Google Sheets row 2, column A)\nconst currentBalance = parseFloat(accountData.Current_Balance || 0);\nconst incomeAmount = incomeData.amount;\n\n// Calculate new balance\nconst newBalance = currentBalance + incomeAmount;\n\nconsole.log('Current balance:', currentBalance);\nconsole.log('Income amount:', incomeAmount);\nconsole.log('New balance:', newBalance);\n\nreturn [{\n  json: {\n    ...incomeData,\n    previousBalance: currentBalance,\n    newBalance: newBalance,\n    transactionId: `TXN-${Date.now()}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "6858b3a4-5889-489f-beb1-f3119bcf6294",
+      "name": "Calculate New Balance"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json.body;\n\n// Validate required fields\nif (!input.amount || !input.note || !input.date) {\n  throw new Error('Missing required fields: amount, note, or date');\n}\n\n// Validate amount is positive number\nconst amount = parseFloat(input.amount);\nif (isNaN(amount) || amount <= 0) {\n  throw new Error('Amount must be a positive number');\n}\n\n// Validate date\nconst date = new Date(input.date);\nif (isNaN(date)) {\n  throw new Error('Invalid date format');\n}\n\n// Return cleaned data\nreturn [{\n  json: {\n    amount: amount,\n    note: input.note.trim(),\n    date: input.date,\n    type: 'EXPENSE',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        176
+      ],
+      "id": "8e2633f4-ced9-49c7-9cc7-7ec7e1af163e",
+      "name": "Validate Input1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Account",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        176
+      ],
+      "id": "fb883edf-dffc-49c2-b0d8-29a7c480690d",
+      "name": "Read Current Balance1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const expenseData = $node[\"Validate Input1\"].json;\nconst accountData = $input.first().json;\n\n// Get current balance\nconst currentBalance = parseFloat(accountData.Current_Balance || 0);\nconst expenseAmount = expenseData.amount;\n\n// Calculate new balance (subtract expense)\nconst newBalance = currentBalance - expenseAmount;\n\nconsole.log('Current balance:', currentBalance);\nconsole.log('Expense amount:', expenseAmount);\nconsole.log('New balance:', newBalance);\n\n// Warn if balance goes negative\nif (newBalance < 0) {\n  console.warn('WARNING: Balance is now negative!');\n}\n\nreturn [{\n  json: {\n    ...expenseData,\n    previousBalance: currentBalance,\n    newBalance: newBalance,\n    transactionId: `TXN-${Date.now()}`,\n    isNegative: newBalance < 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        176
+      ],
+      "id": "57352494-732a-42d6-a57d-16baed293c47",
+      "name": "Calculate New Balance1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Account",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": 2,
+            "Current_Balance": "={{ $json.newBalance }}",
+            "Last_Updated": "={{ $json.date }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Current_Balance",
+              "displayName": "Current_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Updated",
+              "displayName": "Last_Updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Starting_Balance",
+              "displayName": "Starting_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "f391e6e1-c7aa-4f99-a5e7-b3c015728476",
+      "name": "Update Account Balance",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Account",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Read Current Balance1').item.json.row_number }}",
+            "Current_Balance": "={{ $json.newBalance }}",
+            "Last_Updated": "={{ $json.date }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Current_Balance",
+              "displayName": "Current_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Updated",
+              "displayName": "Last_Updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Starting_Balance",
+              "displayName": "Starting_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        176
+      ],
+      "id": "9d5668b4-5b58-492c-bc31-98680689a9d3",
+      "name": "Update Account Balance1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1516621879,
+          "mode": "list",
+          "cachedResultName": "Transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=1516621879"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Transaction_ID": "={{ $('Calculate New Balance').item.json.transactionId }}",
+            "Date": "={{ $('Validate Input').item.json.date }}",
+            "Type": "={{ $('Validate Input').item.json.type }}",
+            "Amount": "={{ $('Validate Input').item.json.amount }}",
+            "Description": "={{ $('Validate Input').item.json.source }}",
+            "Running_Balance": "={{ $json.Current_Balance }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Transaction_ID",
+              "displayName": "Transaction_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Running_Balance",
+              "displayName": "Running_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "964fe8aa-f3b9-40d2-a61c-2b675adf9cd6",
+      "name": "Log Transaction",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1516621879,
+          "mode": "list",
+          "cachedResultName": "Transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=1516621879"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Transaction_ID": "={{ $('Calculate New Balance1').item.json.transactionId }}",
+            "Date": "={{ $('Validate Input1').item.json.date }}",
+            "Type": "={{ $('Validate Input1').item.json.type }}",
+            "Amount": "={{ $('Validate Input1').item.json.amount }}",
+            "Description": "={{ $('Validate Input1').item.json.note }}",
+            "Running_Balance": "={{ $('Calculate New Balance1').item.json.newBalance }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Transaction_ID",
+              "displayName": "Transaction_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Running_Balance",
+              "displayName": "Running_Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        176
+      ],
+      "id": "07604e42-8887-49e9-861a-202b484dad00",
+      "name": "Log Transaction1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Account",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        368
+      ],
+      "id": "1e4081bc-ebd2-4f76-86ab-88c2ca49e058",
+      "name": "Read Current Balance2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const accountData = $input.first().json;\n\nconst currentBalance = parseFloat(accountData.Current_Balance || 0);\nconst lastUpdated = accountData.Last_Updated || new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    currentBalance: currentBalance,\n    lastUpdated: lastUpdated,\n    formattedBalance: `₦${currentBalance.toLocaleString('en-NG')}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        368
+      ],
+      "id": "d76b5a78-99e4-467c-bd01-761dc55adb99",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1516621879,
+          "mode": "list",
+          "cachedResultName": "Transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=1516621879"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        560
+      ],
+      "id": "0fb7ad57-360e-4a4b-87c4-b86d45e9c01a",
+      "name": "Read All Transactions",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allTransactions = $input.all().map(item => item.json);\n\n// Get current month and year\nconst now = new Date();\nconst currentMonth = now.getMonth(); // 0-11\nconst currentYear = now.getFullYear();\n\nconsole.log(`Calculating for: ${currentYear}-${currentMonth + 1}`);\n\n// Filter transactions for current month\nconst monthTransactions = allTransactions.filter(txn => {\n  const txnDate = new Date(txn.Date);\n  return txnDate.getMonth() === currentMonth && txnDate.getFullYear() === currentYear;\n});\n\nconsole.log(`Found ${monthTransactions.length} transactions this month`);\n\n// Calculate totals\nlet totalIncome = 0;\nlet totalExpenses = 0;\n\nmonthTransactions.forEach(txn => {\n  const amount = parseFloat(txn.Amount || 0);\n  \n  if (txn.Type === 'INCOME') {\n    totalIncome += amount;\n  } else if (txn.Type === 'EXPENSE') {\n    totalExpenses += amount;\n  }\n});\n\nconst netSavings = totalIncome - totalExpenses;\nconst savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : 0;\n\n// Month name\nconst monthNames = ['January', 'February', 'March', 'April', 'May', 'June',\n                    'July', 'August', 'September', 'October', 'November', 'December'];\nconst monthName = monthNames[currentMonth];\n\nreturn [{\n  json: {\n    month: `${monthName} ${currentYear}`,\n    totalIncome: totalIncome,\n    totalExpenses: totalExpenses,\n    netSavings: netSavings,\n    savingsRate: parseFloat(savingsRate),\n    transactionCount: monthTransactions.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        560
+      ],
+      "id": "4a4a1693-7bc9-43bb-aa56-b0d0a606662d",
+      "name": "Calculate Monthly Totals"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw",
+          "mode": "list",
+          "cachedResultName": "My Money Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1516621879,
+          "mode": "list",
+          "cachedResultName": "Transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GWjaU3TfRVVXmso0MdSuB6KI1arulIlBE6Pop19KHZw/edit#gid=1516621879"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        768
+      ],
+      "id": "70f4f335-703d-4f35-b09c-2a955266d941",
+      "name": "Read All Transactions1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allTransactions = $input.all().map(item => item.json);\n\n// Sort by date (newest first) and limit to last 10\nconst sortedTransactions = allTransactions\n  .filter(txn => txn.Transaction_ID) // Skip header row\n  .sort((a, b) => new Date(b.Date) - new Date(a.Date))\n  .slice(0, 10) // Only last 10\n  .map(txn => ({\n    id: txn.Transaction_ID,\n    date: txn.Date,\n    type: txn.Type,\n    amount: parseFloat(txn.Amount || 0),\n    description: txn.Description,\n    runningBalance: parseFloat(txn.Running_Balance || 0)\n  }));\n\nreturn [{\n  json: {\n    transactions: sortedTransactions,\n    count: sortedTransactions.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        768
+      ],
+      "id": "d91dca54-bb8b-49b2-b1ca-58ea94b7d823",
+      "name": "Format and Sort Transactions"
+    }
+  ],
+  "connections": {
+    "Get Transactions": {
+      "main": [
+        [
+          {
+            "node": "Read All Transactions1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Income": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monthly Summary": {
+      "main": [
+        [
+          {
+            "node": "Read All Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Expense": {
+      "main": [
+        [
+          {
+            "node": "Validate Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Balance": {
+      "main": [
+        [
+          {
+            "node": "Read Current Balance2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Read Current Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Current Balance": {
+      "main": [
+        [
+          {
+            "node": "Calculate New Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate New Balance": {
+      "main": [
+        [
+          {
+            "node": "Update Account Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input1": {
+      "main": [
+        [
+          {
+            "node": "Read Current Balance1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Current Balance1": {
+      "main": [
+        [
+          {
+            "node": "Calculate New Balance1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate New Balance1": {
+      "main": [
+        [
+          {
+            "node": "Update Account Balance1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Account Balance": {
+      "main": [
+        [
+          {
+            "node": "Log Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Account Balance1": {
+      "main": [
+        [
+          {
+            "node": "Log Transaction1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Transaction": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Transaction1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook2": {
+      "main": [
+        []
+      ]
+    },
+    "Read Current Balance2": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Transactions": {
+      "main": [
+        [
+          {
+            "node": "Calculate Monthly Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Monthly Totals": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Transactions1": {
+      "main": [
+        [
+          {
+            "node": "Format and Sort Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format and Sort Transactions": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "47e0d39e-a18f-4fe0-9810-857f1c8e2796",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "FlatGaAHZ1bbbuiiFiJuZ",
+  "tags": []
+}

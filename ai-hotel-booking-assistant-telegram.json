@@ -1,0 +1,371 @@
+{
+  "name": "Hotel booking",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Respond to text message: {{ $json.message.text }}\n\nformat and remove the unneccesary things like \\n * e.t.c so that message can be sent back to telegram\n\nlastly. covert any currency rate to naira. naira rate now is 1550 per 1 dollar",
+        "options": {
+          "systemMessage": "=You are an AI Concierge Assistant for a hotel and events service.  \nYou have access to structured data stored in three sheets:  \n\n1. Room Prices (Room Type, Price per Night, Occupancy, Amenities)  \n2. Packages (Package Name, Price, Duration, Inclusions)  \n3. Menus (Meal, Price, Ingredients, Availability)  \n\nYour responsibilities:  \n- Answer only from these sheets when responding to questions.  \n- Always provide accurate prices, inclusions, and availability.  \n- If asked about booking, propose available dates in the format yyyy-MM-dd.  \n- Confirm availability based on the Room Prices sheet before booking.  \n- Ensure all booking-related actions log a date in yyyy-MM-dd format.  \n- If the requested info is not in the sheets, respond: “I don’t have that information right now.”  \n\nBe polite, professional, and clear in every response.  \n\nnote todays date is {{ $now.format(\"yyyy-mm-dd\") }}\nbook using GMT+01:00 (West African Standard Time)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        144
+      ],
+      "id": "5f2e0079-e756-4fd9-bfef-6dfcaf9f0ae2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        368
+      ],
+      "id": "c1b4a061-017f-4a6a-a4ac-e7b91f204dbc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        144
+      ],
+      "id": "834093b3-ef24-4131-975e-322f8c2e9e74",
+      "name": "Telegram Trigger",
+      "webhookId": "bd4bf788-0077-4673-b67e-a561fc618838",
+      "credentials": {
+        "telegramApi": {
+          "id": "TvHKdsyAEuqnSGvG",
+          "name": "Hotel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw",
+          "mode": "list",
+          "cachedResultName": "Hotel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 357911837,
+          "mode": "list",
+          "cachedResultName": "Room Prices",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit#gid=357911837"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        80,
+        368
+      ],
+      "id": "7d7c1b35-03f6-4513-86cc-da6f9ea5b9ba",
+      "name": "Room price",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw",
+          "mode": "list",
+          "cachedResultName": "Hotel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 362959870,
+          "mode": "list",
+          "cachedResultName": "Packages",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit#gid=362959870"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        208,
+        368
+      ],
+      "id": "e22e7be4-cf3b-4986-9ddf-5d0d5f091d4c",
+      "name": "Packages",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw",
+          "mode": "list",
+          "cachedResultName": "Hotel",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 30320771,
+          "mode": "list",
+          "cachedResultName": "Menus",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rNK9tyGk2SfSSq8Cc_h4LRousEz8fz-EGmwabbBKKQw/edit#gid=30320771"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        336,
+        368
+      ],
+      "id": "d2545b2c-501e-4434-bfb0-2315a4f4ed34",
+      "name": "Menus",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Hotel"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('attendees0_Attendees', ``, 'string') }}"
+          ],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        368
+      ],
+      "id": "bafd1177-bee2-4e85-883f-10db948c4039",
+      "name": "Create an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        368
+      ],
+      "id": "120e31b2-dc1c-4667-8b98-03ea54e9023d",
+      "name": "Send a message in Gmail",
+      "webhookId": "0feb6813-5a55-47b1-83de-3946aea80ae1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        368
+      ],
+      "id": "3e2c861c-156e-4817-9ace-15d32eb70829",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        144
+      ],
+      "id": "0a38781a-96a2-4c9e-a9d8-73d7ff0e2ace",
+      "name": "Send a text message",
+      "webhookId": "16f07585-e56b-41bc-9a82-14aff93b06f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "TvHKdsyAEuqnSGvG",
+          "name": "Hotel"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Room price": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Packages": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Menus": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "18b1b089-2559-4cd7-8802-f50fa27d3395",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "wbevfXE5JKyiT7VM",
+  "tags": []
+}

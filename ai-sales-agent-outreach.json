@@ -1,0 +1,3137 @@
+{
+  "name": "Marketing and Outbound Sales Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a8c0e5ca-52ff-4e47-a10e-7cbb4a365ea4",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -1216
+      ],
+      "id": "05841996-3fd8-430a-83b0-750965f5b82c",
+      "name": "Webhook",
+      "webhookId": "a8c0e5ca-52ff-4e47-a10e-7cbb4a365ea4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1872,
+        -1200
+      ],
+      "id": "65249f85-d2bf-4c43-a2db-5efed3cccd7d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        80
+      ],
+      "id": "34b9653d-172b-4c72-b45d-304646cf74bd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define all search queries to run\nconst searchQueries = [\n  {\n    query: \"construction companies in Lagos Nigeria\",\n    category: \"Construction\",\n    priority: \"HIGH\"\n  },\n  {\n    query: \"property developers in Lagos Nigeria\",\n    category: \"Property Development\",\n    priority: \"HIGH\"\n  },\n  {\n    query: \"real estate developers in Abuja Nigeria\",\n    category: \"Property Development\",\n    priority: \"HIGH\"\n  },\n  {\n    query: \"hotels in Victoria Island Lagos\",\n    category: \"Hospitality\",\n    priority: \"MEDIUM\"\n  },\n  {\n    query: \"hospitals in Lagos Nigeria\",\n    category: \"Healthcare\",\n    priority: \"HIGH\"\n  },\n  {\n    query: \"shopping malls in Lekki Lagos\",\n    category: \"Commercial Retail\",\n    priority: \"MEDIUM\"\n  },\n  {\n    query: \"office buildings in Ikoyi Lagos\",\n    category: \"Commercial Office\",\n    priority: \"MEDIUM\"\n  }\n];\n\n// Return array of items\nreturn searchQueries.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        80
+      ],
+      "id": "a1566ac4-07aa-4282-81ca-1a568a776ff4",
+      "name": "Search Query List"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/maps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\": \"={{ $json.query }}\",\n  \"location\": \"Nigeria\",\n  \"num\": 20\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        80
+      ],
+      "id": "ca84b12a-cd1d-491e-a215-9ea72a80360e",
+      "name": "Serper Google Maps Search",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0iybDwfe8emXIHUX",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items[0].json.places || [];\nconst searchQuery = items[0].json.searchParameters?.q || '';\nconst category = $('Search Query List').item.json.category;\nconst priority = $('Search Query List').item.json.priority;\n\nif (results.length === 0) {\n  return [];\n}\n\n// Process each result\nconst processed = results.map((place, index) => {\n  // Extract phone number (clean format)\n  let phone = place.phoneNumber || place.phone || '';\n  \n  // Extract website\n  let website = place.website || '';\n  \n  // Generate prospect ID\n  const prospectId = `PEL-LEAD-${Date.now()}-${index}`;\n  \n  return {\n    json: {\n      prospectId: prospectId,\n      companyName: place.title || place.name || 'Unknown',\n      businessType: place.type || category,\n      phone: phone,\n      address: place.address || '',\n      city: place.city || extractCity(place.address),\n      website: website,\n      googleRating: place.rating || 0,\n      reviewsCount: place.reviews || 0,\n      description: place.description || '',\n      latitude: place.latitude || '',\n      longitude: place.longitude || '',\n      leadSource: `Google Maps - ${searchQuery}`,\n      opportunityScore: priority,\n      timestamp: new Date().toISOString()\n    }\n  };\n});\n\n// Helper function to extract city from address\nfunction extractCity(address) {\n  if (!address) return 'Lagos';\n  if (address.includes('Lagos')) return 'Lagos';\n  if (address.includes('Abuja')) return 'Abuja';\n  if (address.includes('Port Harcourt')) return 'Port Harcourt';\n  return 'Nigeria';\n}\n\nreturn processed;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        80
+      ],
+      "id": "dd3f4016-030e-4cbc-88ff-44fd24e1caf8",
+      "name": "Process Serper Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "const newProspects = $('Process Serper Results').all();\nconst existingProspects = $('Get Existing Prospects').all();\n\n// Get list of existing company names (lowercase for comparison)\nconst existingNames = existingProspects.map(item => \n  (item.json['Company Name'] || '').toLowerCase().trim()\n);\n\n// Filter out duplicates and clean data\nconst uniqueProspects = newProspects.filter(prospect => {\n  const companyName = (prospect.json.companyName || '').toLowerCase().trim();\n  \n  // Skip if company name is empty or already exists\n  if (!companyName || companyName === 'unknown') return false;\n  if (existingNames.includes(companyName)) return false;\n  \n  return true;\n}).map(prospect => {\n  // Clean phone number format\n  let phone = prospect.json.phone;\n  if (phone) {\n    // Remove spaces, dashes, parentheses\n    phone = phone.replace(/[\\s\\-\\(\\)]/g, '');\n    // Ensure it starts with +234\n    if (phone.startsWith('0')) {\n      phone = '+234' + phone.substring(1);\n    } else if (!phone.startsWith('+')) {\n      phone = '+234' + phone;\n    }\n  }\n  \n  return {\n    json: {\n      ...prospect.json,\n      phone: phone,\n      email: '', // Will be enriched later\n      contactPerson: '' // Will be enriched later\n    }\n  };\n});\n\n// Return only unique new prospects\nreturn uniqueProspects;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        80
+      ],
+      "id": "db7ce186-1e18-4a5b-8df7-04848bc9f0a1",
+      "name": "Filter Out Duplicates"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        800,
+        80
+      ],
+      "id": "1ebbb2dc-a1d1-4bd9-ade7-cfbda161634e",
+      "name": "Get Existing Prospects",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this prospect for elevator installation opportunity:\n\nCompany Name: {{ $json.companyName }}\nBusiness Type: {{ $json.businessType }}\nAddress: {{ $json.address }}\nCity: {{ $json.city }}\nWebsite: {{ $json.website }}\nGoogle Rating: {{ $json.googleRating }}\nNumber of Reviews: {{ $json.reviewsCount }}\nDescription: {{ $json.description }}\nLead Source: {{ $json.leadSource }}\n\nBased on this information, provide your complete sales intelligence analysis in the specified JSON format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a B2B sales intelligence expert for Pradit Elevators, a Nigerian elevator installation company. Your job is to analyze potential business prospects and determine their likelihood of needing elevator services.\n\nAnalyze the prospect based on:\n1. Business type (construction, property development, hotels, hospitals = HIGH potential)\n2. Location (Lagos, Abuja, Port Harcourt = more development)\n3. Google rating and reviews (higher = more established = bigger projects)\n4. Business description (look for keywords: construction, building, development, renovation, expansion, multi-story, floors)\n\nProvide your analysis in this EXACT JSON format:\n{\n  \"opportunityScore\": \"HIGH/MEDIUM/LOW\",\n  \"priorityLevel\": 1-5,\n  \"estimatedBuildingFloors\": \"estimated number or range\",\n  \"likelyNeed\": \"New installation/Modernization/Maintenance/Unknown\",\n  \"approachAngle\": \"brief suggestion on how to pitch\",\n  \"decisionMakerTitle\": \"who to contact (CEO, Facilities Manager, Project Manager, etc.)\",\n  \"estimatedProjectValue\": \"estimated in Naira (e.g., ₦15M-₦30M)\",\n  \"keyInsights\": \"2-3 sentence analysis of opportunity\",\n  \"redFlags\": \"any concerns or reasons to deprioritize\"\n}\n\nScoring criteria:\n- HIGH: Construction/development companies, hospitals, large hotels, 8+ floors likely, clear expansion\n- MEDIUM: Mid-size offices, smaller hotels, schools, 4-7 floors likely, established business\n- LOW: Single-story businesses, unclear need, very small scale\n\nBe realistic about Nigerian business context and building sizes."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1216,
+        80
+      ],
+      "id": "7a86c446-bd11-4f1f-bc81-552e3cb7e683",
+      "name": "AI Prospect Analysis"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        304
+      ],
+      "id": "d5395d74-e039-42a2-ac1e-021cd147c38e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"opportunityScore\": \"HIGH/MEDIUM/LOW\",\n  \"priorityLevel\": 1,\n  \"estimatedBuildingFloors\": \"estimated number or range\",\n  \"likelyNeed\": \"New installation/Modernization/Maintenance/Unknown\",\n  \"approachAngle\": \"brief suggestion on how to pitch\",\n  \"decisionMakerTitle\": \"who to contact (CEO, Facilities Manager, Project Manager, etc.)\",\n  \"estimatedProjectValue\": \"estimated in Naira (e.g., ₦15M-₦30M)\",\n  \"keyInsights\": \"2-3 sentence analysis of opportunity\",\n  \"redFlags\": \"any concerns or reasons to deprioritize\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1392,
+        288
+      ],
+      "id": "32a178d5-dce7-4ad4-943f-787681db43f2",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prospect = $('Filter Out Duplicates').item.json;\n\n// Structured Output Parser returns data directly in json\n// No need to parse from message.content\nlet analysis;\n\ntry {\n  // Check different possible locations for the parsed data\n  if (items[0].json.output) {\n    // Some versions put it in 'output'\n    analysis = items[0].json.output;\n  } else if (items[0].json.text) {\n    // Some versions put it in 'text'\n    analysis = JSON.parse(items[0].json.text);\n  } else if (items[0].json.opportunityScore) {\n    // Already parsed at root level\n    analysis = items[0].json;\n  } else {\n    // Fallback: entire json is the analysis\n    analysis = items[0].json;\n  }\n  \n  // Validate that we have the expected fields\n  if (!analysis.opportunityScore) {\n    throw new Error('Missing opportunityScore in parsed output');\n  }\n  \n} catch (e) {\n  console.error('Parsing error:', e);\n  // Fallback to default values\n  analysis = {\n    opportunityScore: \"MEDIUM\",\n    priorityLevel: 3,\n    estimatedBuildingFloors: \"Unknown\",\n    likelyNeed: \"Unknown\",\n    approachAngle: \"General introduction\",\n    decisionMakerTitle: \"Business Owner\",\n    estimatedProjectValue: \"₦15M-₦30M\",\n    keyInsights: \"Requires manual review - parsing failed\",\n    redFlags: \"AI analysis structure error\"\n  };\n}\n\n// Combine original prospect data with AI analysis\nreturn {\n  json: {\n    prospectId: prospect.prospectId,\n    companyName: prospect.companyName,\n    businessType: prospect.businessType,\n    contactPerson: '',\n    phone: prospect.phone,\n    email: '',\n    address: prospect.address,\n    city: prospect.city,\n    website: prospect.website,\n    googleRating: prospect.googleRating,\n    reviewsCount: prospect.reviewsCount,\n    description: prospect.description,\n    leadSource: prospect.leadSource,\n    opportunityScore: analysis.opportunityScore,\n    estimatedValue: analysis.estimatedProjectValue,\n    status: 'New - Not Contacted',\n    firstContactDate: '',\n    lastContactDate: '',\n    nextFollowupDate: '',\n    emailSequenceStage: '0',\n    responseReceived: 'No',\n    notes: `AI Analysis: ${analysis.keyInsights}\\n\\nApproach: ${analysis.approachAngle}\\n\\nDecision Maker: ${analysis.decisionMakerTitle}\\n\\nLikely Need: ${analysis.likelyNeed}\\n\\nEstimated Floors: ${analysis.estimatedBuildingFloors}\\n\\nRed Flags: ${analysis.redFlags || 'None'}`,\n    timestamp: prospect.timestamp,\n    // Store full AI analysis for reference\n    aiAnalysis: analysis\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        80
+      ],
+      "id": "9b58c5ce-8d63-4b55-8f58-de96a36a0751",
+      "name": "Parse AI Analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "953e63f6-e7fb-46dd-b426-391c87700767",
+              "leftValue": "={{ $json.opportunityScore }}",
+              "rightValue": "HIGH",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        80
+      ],
+      "id": "4de5a535-f7a3-4a3c-ab61-8cf5a671cbef",
+      "name": "Filter HIGH Priority Only"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $json.prospectId }}",
+            "Company Name": "={{ $json.companyName }}",
+            "Business Type": "={{ $json.businessType }}",
+            "Contact Person": "={{ $json.contactPerson }}",
+            "Phone": "={{ $json.phone }}",
+            "Email": "={{ $json.email }}",
+            "Address": "={{ $json.address }}",
+            "City": "={{ $json.city }}",
+            "Website": "={{ $json.website }}",
+            "Google Rating": "={{ $json.googleRating }}",
+            "Reviews Count": "={{ $json.reviewsCount }}",
+            "Description": "={{ $json.description }}",
+            "Lead Source": "={{ $json.leadSource }}",
+            "Status": "={{ $json.status }}",
+            "Estimated Value": "={{ $json.estimatedValue }}",
+            "Opportunity Score": "={{ $json.opportunityScore }}",
+            "First Contact Date": "={{ $json.firstContactDate }}",
+            "Last Contact Date": "={{ $json.lastContactDate }}",
+            "Next Follow-up Date": "={{ $json.nextFollowupDate }}",
+            "Email Sequence Stage": "={{ $json.emailSequenceStage }}",
+            "Response Received": "={{ $json.responseReceived }}",
+            "Notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Google Rating",
+              "displayName": "Google Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunity Score",
+              "displayName": "Opportunity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Value",
+              "displayName": "Estimated Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Contact Date",
+              "displayName": "First Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sequence Stage",
+              "displayName": "Email Sequence Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response Received",
+              "displayName": "Response Received",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2048,
+        -16
+      ],
+      "id": "09d8ed8b-4a90-4130-a9cb-2f2fe201d67b",
+      "name": "Add to Prospect Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a personalized cold email for this prospect:\n\nCompany Name: {{ $json['Company Name'] }}\nBusiness Type: {{ $json['Business Type'] }}\nLocation: {{ $json.City }}\nAddress: {{ $json.Address }}\nGoogle Rating: {{ $json['Google Rating'] }} stars ({{ $json['Reviews Count'] }} reviews)\nDescription: {{ $json.Description }}\n\nAI Insights: {{ $('Parse AI Analysis').item.json.aiAnalysis.keyInsights }}\nDecision Maker to Target: {{ $('Parse AI Analysis').item.json.aiAnalysis.decisionMakerTitle }}\nLikely Need: {{ $('Parse AI Analysis').item.json.aiAnalysis.likelyNeed }}\n\nContext:\n- This is a {{ $json['Opportunity Score'] }} priority lead\n- Estimated project value: {{ $json['Estimated Value'] }}\n- This is the FIRST cold email (not a follow-up)\n\nGenerate the email now. Make it sound natural and genuinely interested in helping their business.\n\n",
+        "options": {
+          "systemMessage": "=You are a senior B2B sales development representative for Pradit Elevators, a professional elevator installation company in Nigeria. Your job is to write personalized, compelling cold outreach emails to potential business clients.\n\nWriting Guidelines:\n- Professional but warm and conversational tone\n- Keep it concise (200-250 words max)\n- Personalize to their specific business type and location\n- Lead with value, not with selling\n- Show you've done research on their company\n- Include soft call-to-action (not pushy)\n- Use Nigerian business context appropriately\n- Sound like a real person, not a template\n\nEmail Structure:\n1. Personalized opening (reference their company/industry specifically)\n2. Brief credibility statement (Pradit Elevators' expertise)\n3. Value proposition relevant to their business type\n4. Soft CTA (open to discussion, free consultation, etc.)\n5. Professional closing\n\nApproach Angle to Use: {{ $('Parse AI Analysis').item.json.aiAnalysis.approachAngle }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        2208,
+        -16
+      ],
+      "id": "c936bdd9-52c2-462e-a50d-bce8cecfee2f",
+      "name": "Generate Cold Email"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d1908df-2b80-4a9f-92f3-6b4d9e129dfa",
+              "leftValue": "={{ $('Parse AI Analysis').item.json.website }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2064,
+        256
+      ],
+      "id": "ef367fdd-eeaa-408d-be5e-2f44a81a04c9",
+      "name": "Has Website?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Parse AI Analysis').item.json.website }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        416
+      ],
+      "id": "8ae35dde-9e6f-43ed-b974-fc707faa3c30",
+      "name": "Fetch Website Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "const websiteContent = items[0].json;\nconst prospect = $('Parse AI Analysis').item.json;\n\n// Email regex patterns\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\n\n// Extract all emails from content\nlet emails = [];\nif (typeof websiteContent === 'string') {\n  emails = websiteContent.match(emailRegex) || [];\n}\n\n// Filter out common non-business emails\nconst excludePatterns = ['example.com', 'test.com', 'gmail.com', 'yahoo.com', 'hotmail.com'];\nconst businessEmails = emails.filter(email => {\n  const domain = email.split('@')[1];\n  return !excludePatterns.some(pattern => domain.includes(pattern));\n});\n\n// Prioritize certain email types\nconst priority = ['info@', 'contact@', 'sales@', 'admin@', 'hello@'];\nlet primaryEmail = '';\n\nfor (const prefix of priority) {\n  const found = businessEmails.find(email => email.toLowerCase().startsWith(prefix));\n  if (found) {\n    primaryEmail = found;\n    break;\n  }\n}\n\n// If no priority email, take first business email\nif (!primaryEmail && businessEmails.length > 0) {\n  primaryEmail = businessEmails[0];\n}\n\n// If still no email, generate likely pattern from domain\nif (!primaryEmail && prospect.website) {\n  const domain = prospect.website.replace(/^https?:\\/\\//, '').replace(/^www\\./, '').split('/')[0];\n  primaryEmail = `info@${domain}`;\n}\n\nreturn {\n  json: {\n    ...prospect,\n    email: primaryEmail,\n    extractedEmails: businessEmails.join(', ')\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        416
+      ],
+      "id": "be9d4a85-09e5-4127-ade7-005a0e0bb785",
+      "name": "Extract Email from Website"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        416
+      ],
+      "id": "e9a30c07-1e29-43e3-89de-2c0e914b7930",
+      "name": "Wait",
+      "webhookId": "4e181716-f97a-4197-8ad3-b70d46032c32"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Elevator Solutions for {{ $json.companyName }}",
+        "emailType": "text",
+        "message": "={{ $('Generate Cold Email').item.json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        416
+      ],
+      "id": "f0c3ee92-0326-497c-a263-561f37b09276",
+      "name": "Send Cold Email #1",
+      "webhookId": "eaf4090a-bbe0-494a-aa67-5262878d087e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prospect = $('Parse AI Analysis').item.json;\nconst today = new Date().toISOString().split('T')[0];\nconst followUpDate = new Date();\nfollowUpDate.setDate(followUpDate.getDate() + 3); // Follow up in 3 days\n\nreturn {\n  json: {\n    prospectId: prospect.prospectId,\n    email: prospect.email || $('Extract Email from Website').first().json.email,\n    status: 'Contacted - Awaiting Response',\n    firstContactDate: today,\n    lastContactDate: today,\n    nextFollowupDate: followUpDate.toISOString().split('T')[0],\n    emailSequenceStage: '1'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        416
+      ],
+      "id": "d5a7ed44-338f-40d5-87f4-513cafa81bae",
+      "name": "Update CRM After Sending"
+    },
+    {
+      "parameters": {
+        "sendTo": "salesteam email",
+        "subject": "=New Prospects Added - {{ $now.toFormat('yyyy-MM-dd') }}",
+        "message": "={{ $json.htmlEmail }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1456,
+        416
+      ],
+      "id": "a284872a-7e76-4a02-9b84-126514f043aa",
+      "name": "Send Daily Summary",
+      "webhookId": "1dfa5171-18a4-4bf2-98c9-8ba565c9db9a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allProspects = $('Parse AI Analysis').all();\nconst highPriorityProspects = $('Filter HIGH Priority Only').all();\nconst emailsSent = $('Send Cold Email #1').all();\n\n// Build the prospects table HTML\nlet prospectsTableHTML = '';\n\nallProspects.forEach(item => {\n  const prospect = item.json;\n  const emailSent = prospect.email && prospect.email !== $input.first().json.Email ? 'Yes ✅' : 'No email found ❌';\n  \n  prospectsTableHTML += `\n    <tr>\n      <td>${prospect.companyName || 'N/A'}</td>\n      <td>${prospect.businessType || 'N/A'}</td>\n      <td>${prospect.city || 'N/A'}</td>\n      <td>${prospect.opportunityScore || 'N/A'}</td>\n      <td>${prospect.estimatedValue || 'N/A'}</td>\n      <td>${emailSent}</td>\n    </tr>\n  `;\n});\n\n// Build the complete HTML email\nconst htmlEmail = `\n<h2>📊 Daily Prospect Generation Report</h2>\n\n<p><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { \n  weekday: 'long', \n  year: 'numeric', \n  month: 'long', \n  day: 'numeric' \n})}</p>\n\n<h3>Summary:</h3>\n<ul>\n  <li><strong>Total Prospects Processed:</strong> ${allProspects.length}</li>\n  <li><strong>New HIGH Priority Prospects:</strong> ${highPriorityProspects.length}</li>\n  <li><strong>Cold Emails Sent:</strong> ${emailsSent.length}</li>\n</ul>\n\n<h3>Prospects Added Today:</h3>\n<table border=\"1\" cellpadding=\"10\" style=\"border-collapse: collapse; width: 100%;\">\n  <tr style=\"background-color: #f0f0f0;\">\n    <th>Company Name</th>\n    <th>Business Type</th>\n    <th>City</th>\n    <th>Score</th>\n    <th>Est. Value</th>\n    <th>Email Sent</th>\n  </tr>\n  ${prospectsTableHTML}\n</table>\n\n<hr>\n<p style=\"color: #666; font-size: 12px;\">Check the Google Sheet for full details and AI insights.</p>\n`;\n\nreturn {\n  json: {\n    htmlEmail: htmlEmail,\n    totalProspects: allProspects.length,\n    highPriority: highPriorityProspects.length,\n    emailsSent: emailsSent.length\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        416
+      ],
+      "id": "8d880c45-3535-4588-bfbd-3d2e3ead23e5",
+      "name": "Generate Report HTML"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "includeSpamTrash": false,
+          "labelIds": [
+            "INBOX"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        848
+      ],
+      "id": "7f1b472d-08be-4f36-967b-4e62e1aaa32f",
+      "name": "Watch for Replies",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = items[0].json;\nconst prospects = $('Get All Prospects').all();\n\n// Extract sender email\nconst fromEmail = email.from?.toLowerCase() || $('Watch for Replies').first().json.from.value[0].address;\n\n// Find matching prospect\nconst matchedProspect = prospects.find(p => {\n  const prospectEmail = (p.json.Email || '').toLowerCase();\n  return fromEmail.includes(prospectEmail) || prospectEmail.includes(fromEmail);\n});\n\nif (!matchedProspect) {\n  // Not from a prospect, skip\n  return [];\n}\n\n// Extract email content\nconst emailSubject = email.subject || $('Watch for Replies').first().json.subject;\nconst emailBody = email.plainText || email.snippet || $('Watch for Replies').first().json.text;\n\n// Simple sentiment analysis\nconst positiveKeywords = ['interested', 'yes', 'please', 'more information', 'call me', 'schedule', 'meeting', 'quote', 'proposal'];\nconst negativeKeywords = ['not interested', 'no thanks', 'remove', 'unsubscribe', 'stop'];\n\nconst bodyLower = emailBody.toLowerCase();\nconst isPositive = positiveKeywords.some(keyword => bodyLower.includes(keyword));\nconst isNegative = negativeKeywords.some(keyword => bodyLower.includes(keyword));\n\nlet sentiment = 'Neutral';\nif (isPositive) sentiment = 'Positive';\nif (isNegative) sentiment = 'Negative';\n\nreturn {\n  json: {\n    prospectId: matchedProspect.json['Prospect ID'],\n    companyName: matchedProspect.json['Company Name'],\n    email: matchedProspect.json.Email,\n    fromEmail: fromEmail,\n    subject: emailSubject,\n    body: emailBody,\n    sentiment: sentiment,\n    receivedAt: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        848
+      ],
+      "id": "8134162f-7da6-460a-8acb-19b0d1aae637",
+      "name": "Match Email to Prospect"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        32,
+        848
+      ],
+      "id": "30eea572-892c-4151-814a-ffbe32e17731",
+      "name": "Get All Prospects",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $json.prospectId }}",
+            "Email": "={{ $json.email }}",
+            "Status": "={{ $json.status }}",
+            "First Contact Date": "={{ $json.firstContactDate }}",
+            "Last Contact Date": "={{ $json.lastContactDate }}",
+            "Next Follow-up Date": "={{ $json.nextFollowupDate }}",
+            "Email Sequence Stage": "={{ $json.emailSequenceStage }}"
+          },
+          "matchingColumns": [
+            "Prospect ID"
+          ],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Google Rating",
+              "displayName": "Google Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunity Score",
+              "displayName": "Opportunity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Value",
+              "displayName": "Estimated Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Contact Date",
+              "displayName": "First Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sequence Stage",
+              "displayName": "Email Sequence Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response Received",
+              "displayName": "Response Received",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1040,
+        416
+      ],
+      "id": "0d6df96e-ee79-45ab-ae80-354810a21778",
+      "name": "Update Prospect Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $json.prospectId }}",
+            "Status": "={{ $json.sentiment }}",
+            "Response Received": "Yes",
+            "Notes": "=RESPONSE RECEIVED ({{ $json.sentiment }}): {{ $json.body.substring(0, 200) }}...",
+            "Last Contact Date": "={{ $now.toFormat('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "Prospect ID"
+          ],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Google Rating",
+              "displayName": "Google Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunity Score",
+              "displayName": "Opportunity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Value",
+              "displayName": "Estimated Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Contact Date",
+              "displayName": "First Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sequence Stage",
+              "displayName": "Email Sequence Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response Received",
+              "displayName": "Response Received",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        448,
+        848
+      ],
+      "id": "92aa72ce-4a32-4340-be4d-dfd1da7c779c",
+      "name": "Update Response Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "222f14c5-4d1c-4c12-82ce-606b2c2de9fb",
+              "leftValue": "={{ $('Match Email to Prospect').item.json.sentiment }}",
+              "rightValue": "Positive",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        848
+      ],
+      "id": "e7683846-b9d4-497b-b605-078b37977f37",
+      "name": "Is Positive Response?"
+    },
+    {
+      "parameters": {
+        "sendTo": "salesteam email",
+        "subject": "=🔥 POSITIVE RESPONSE: {{ $('Get All Prospects').item.json['Company Name'] }}",
+        "message": "=<h2 style=\"color: #4CAF50;\">🎉 Positive Response Received!</h2>  <table border=\"1\" cellpadding=\"10\" style=\"border-collapse: collapse;\">   <tr>     <td><strong>Company:</strong></td>     <td>{{ $('Get All Prospects').item.json['Company Name'] }}</td>   </tr>   <tr>     <td><strong>From:</strong></td>     <td><a href=\"mailto:{{ $('Match Email to Prospect').item.json.fromEmail }}\">{{ $('Match Email to Prospect').item.json.fromEmail }}</a></td>   </tr>   <tr>     <td><strong>Subject:</strong></td>     <td>{{ $('Match Email to Prospect').item.json.subject }}</td>   </tr>   <tr>     <td><strong>Received:</strong></td>     <td>{{ $('Match Email to Prospect').item.json.receivedAt }}</td>   </tr> </table>  <h3>Their Message:</h3> <div style=\"background-color: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50;\"> {{ $('Match Email to Prospect').item.json.body }} </div>  <p><strong>⚡ ACTION REQUIRED: Reply to this lead within 2 hours!</strong></p>  <hr> <p style=\"font-size: 12px; color: #666;\">CRM updated automatically. Check Google Sheet for full prospect details.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        864,
+        752
+      ],
+      "id": "8ec72034-7dbd-489b-bc7e-b5d9f6656223",
+      "name": "Alert Sales - HOT Response",
+      "webhookId": "18fff1d2-a396-412d-97d7-f496c9dce43d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Booking"
+        },
+        "additionalFields": {
+          "attendees": [
+            "example@email.com"
+          ],
+          "description": "=POSITIVE RESPONSE RECEIVED - IMMEDIATE ACTION REQUIRED  Company: {{ $('Match Email to Prospect').item.json.companyName }} Contact Email: {{ $('Match Email to Prospect').item.json.fromEmail }} Prospect ID: {{ $('Match Email to Prospect').item.json.prospectId }}  Their Response: {{ $('Match Email to Prospect').item.json.body }}  TASK: Reply within 2 hours with next steps (call scheduling, proposal, site visit, etc.)  Original Email Subject: {{ $('Match Email to Prospect').item.json.subject }} Response Received: {{ $('Match Email to Prospect').item.json.receivedAt }}",
+          "summary": "=🔥 URGENT: Follow up with {{ $('Match Email to Prospect').item.json.companyName }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        832
+      ],
+      "id": "f971f1d7-ae72-44a4-b1a5-22ee75c461aa",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        1344
+      ],
+      "id": "37686e22-e538-44a6-8f1c-a2e0611c9160",
+      "name": "Daily Follow-up Check"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        144,
+        1344
+      ],
+      "id": "472d0a86-b19b-4852-bce7-2dde4d54fbb2",
+      "name": "Get All Prospects1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date().toISOString().split('T')[0];\nconst prospects = items;\n\n// Filter prospects that need follow-up today\nconst dueFollowUps = prospects.filter(item => {\n  const followUpDate = item.json['Next Follow-up Date'];\n  const status = item.json['Status'] || '';\n  const responseReceived = item.json['Response Received'] || $input.first().json['Response Received'];\n  const emailStage = parseInt(item.json['Email Sequence Stage'] || '0');\n  \n  // Skip if no follow-up date\n  if (!followUpDate) return false;\n  \n  // Check if follow-up is due today\n  const dueDate = new Date(followUpDate).toISOString().split('T')[0];\n  \n  // Only follow up if:\n  // - Follow-up date is today or past\n  // - Status is not Won/Lost/Not Interested\n  // - No response received\n  // - Email stage is less than 4 (max 3 follow-ups)\n  \n  return dueDate <= today && \n         !status.includes('Won') && \n         !status.includes('Lost') &&\n         !status.includes('Not Interested') &&\n         responseReceived === 'No' &&\n         emailStage < 4;\n});\n\nif (dueFollowUps.length === 0) {\n  console.log('No follow-ups due today');\n  return [];\n}\n\nreturn dueFollowUps;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        1344
+      ],
+      "id": "e93a6008-3ac6-4cf4-a00d-ccd741df06d1",
+      "name": "Filter Due Follow-ups",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1552
+      ],
+      "id": "eabc1d9a-242b-439e-874b-fc6568df3058",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write follow-up email #{{ $('Filter Due Follow-ups').item.json['Email Sequence Stage'] }} for:\n\nCompany Name: {{ $('Get All Prospects1').item.json['Company Name'] }}\nBusiness Type: {{ $('Get All Prospects1').item.json['Business Type'] }}\nOpportunity Score: {{ $('Get All Prospects1').item.json['Opportunity Score'] }}\nFirst Contact Date: {{ $('Get All Prospects1').item.json['First Contact Date'] }}\nLast Contact Date: {{ $('Get All Prospects1').item.json['Last Contact Date'] }}\nCurrent Email Stage: {{ $('Get All Prospects1').item.json['Email Sequence Stage'] }}\n\nContext from AI Analysis (from Notes field):\n{{ $('Get All Prospects1').item.json.Notes }}\n\nThis is follow-up #{{ $('Get All Prospects1').item.json['Email Sequence Stage'] }} after the initial email. They haven't responded yet. Create an appropriate follow-up that adds value and increases chances of response.",
+        "options": {
+          "systemMessage": "=You are writing follow-up emails for Pradit Elevators. This is email #{{ $('Filter Due Follow-ups').item.json['Email Sequence Stage'] }} in the sequence (after the initial cold email).\n\nFollow-up Email Guidelines:\n- Keep it even shorter than the first email (150-200 words max)\n- Reference the previous email naturally but briefly\n- Add NEW value (don't just repeat the first email)\n- Be persistent but respectful\n- Each follow-up should have a slightly different angle\n- Stay professional and helpful, never pushy or desperate\n\nFollow-up Strategy by Stage:\n- Email #2 (Day 3): Gentle bump, assume they're busy, add a helpful resource or insight\n- Email #3 (Day 7): Different angle - share a case study or success story, show social proof\n- Email #4 (Day 14): Final attempt - offer something concrete (free assessment, limited availability), then close the loop\n\nTone: Professional, helpful, understanding of their busy schedule\n\nReturn ONLY the email body in plain text. No subject line, no HTML."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        1344
+      ],
+      "id": "c6f8960d-b6a2-469b-a3bb-8be4e34d52c4",
+      "name": "Generate Follow-up Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prospect = $('Filter Due Follow-ups').item.json;\nconst emailStage = parseInt(prospect['Email Sequence Stage'] || '1');\nconst companyName = prospect['Company Name'];\nconst businessType = prospect['Business Type'];\n\nlet subject = '';\n\n// Dynamic subject lines based on follow-up stage\nswitch(emailStage) {\n  case 1:\n    // First follow-up (Day 3)\n    const subjects1 = [\n      `Quick follow-up - ${companyName}`,\n      `Thought you might have missed this`,\n      `${companyName} - Elevator solutions`,\n      `Following up on my message`\n    ];\n    subject = subjects1[Math.floor(Math.random() * subjects1.length)];\n    break;\n    \n  case 2:\n    // Second follow-up (Day 7)\n    const subjects2 = [\n      `Success story for ${businessType} companies`,\n      `How we helped similar ${businessType} businesses`,\n      `${companyName} - Worth a conversation?`,\n      `Case study: ${businessType} elevator project`\n    ];\n    subject = subjects2[Math.floor(Math.random() * subjects2.length)];\n    break;\n    \n  case 3:\n    // Final follow-up (Day 14)\n    const subjects3 = [\n      `Last note about ${companyName}'s elevator needs`,\n      `Final follow-up - Free assessment offer`,\n      `Should I close your file?`,\n      `One last thing before I let you go`\n    ];\n    subject = subjects3[Math.floor(Math.random() * subjects3.length)];\n    break;\n    \n  default:\n    subject = `Following up - ${companyName}`;\n}\n\nreturn {\n  json: {\n    ...prospect,\n    subject: subject\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        1344
+      ],
+      "id": "1b29fc2b-78eb-491c-880e-1d08939c3874",
+      "name": "Generate Subject Line"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        1344
+      ],
+      "id": "2ff293a1-435a-41df-80ba-df652ebcd16b",
+      "name": "Wait1",
+      "webhookId": "5d33f04d-94d7-427c-8162-ff62b2ba8d19"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prospect = $('Generate Subject Line').item.json;\nconst currentStage = parseInt(prospect['Email Sequence Stage'] || '1');\nconst nextStage = currentStage + 1;\n\nconst today = new Date();\nlet nextFollowUpDate = null;\n\n// Calculate next follow-up date based on stage\nswitch(nextStage) {\n  case 2:\n    // After first follow-up, wait 4 days\n    nextFollowUpDate = new Date(today);\n    nextFollowUpDate.setDate(today.getDate() + 4);\n    break;\n  case 3:\n    // After second follow-up, wait 7 days\n    nextFollowUpDate = new Date(today);\n    nextFollowUpDate.setDate(today.getDate() + 7);\n    break;\n  case 4:\n    // After third follow-up, wait 30 days (long-term nurture)\n    nextFollowUpDate = new Date(today);\n    nextFollowUpDate.setDate(today.getDate() + 30);\n    break;\n  default:\n    // No more follow-ups after stage 4\n    nextFollowUpDate = null;\n}\n\nreturn {\n  json: {\n    prospectId: prospect['Prospect ID'],\n    emailSequenceStage: nextStage.toString(),\n    lastContactDate: today.toISOString().split('T')[0],\n    nextFollowupDate: nextFollowUpDate ? nextFollowUpDate.toISOString().split('T')[0] : '',\n    status: nextStage > 3 ? 'Contacted - No Response (Archive)' : 'Contacted - Awaiting Response'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        1344
+      ],
+      "id": "17a209c9-11fb-4c03-9e2b-7713ac9a8880",
+      "name": "Calculate Next Follow-up"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get All Prospects1').item.json.Email }}",
+        "subject": "={{ $('Generate Subject Line').item.json.subject }}",
+        "emailType": "text",
+        "message": "={{ $('Generate Follow-up Email').item.json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        1344
+      ],
+      "id": "d9757fe0-e291-45d5-bd41-4f11ef5e87e7",
+      "name": "Send Follow-up Email",
+      "webhookId": "68c7787c-3d43-4ff6-8f4c-7ab0fcd1d172",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prospect ID": "={{ $('Get All Prospects1').item.json['Prospect ID'] }}",
+            "Email Sequence Stage": "={{ $json.emailSequenceStage }}",
+            "Last Contact Date": "={{ $json.lastContactDate }}",
+            "Next Follow-up Date": "={{ $json.nextFollowupDate }}",
+            "Status": "={{ $json.status }}"
+          },
+          "matchingColumns": [
+            "Prospect ID"
+          ],
+          "schema": [
+            {
+              "id": "Prospect ID",
+              "displayName": "Prospect ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Google Rating",
+              "displayName": "Google Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunity Score",
+              "displayName": "Opportunity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Value",
+              "displayName": "Estimated Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Contact Date",
+              "displayName": "First Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Sequence Stage",
+              "displayName": "Email Sequence Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response Received",
+              "displayName": "Response Received",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1744,
+        1344
+      ],
+      "id": "53200218-6965-440b-b881-503456cc7e33",
+      "name": "Update Follow-up Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=Follow-up Report - {{ $now.toFormat('yyyy-MM-dd') }}",
+        "message": "={{ $json.htmlEmail }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        1344
+      ],
+      "id": "eadc76f7-8a6c-4cc5-9852-84861b5b7d1f",
+      "name": "Daily Follow-up Report",
+      "webhookId": "72384c84-758e-4201-b001-14e0a85ef0d3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all the data from previous nodes\nconst dueFollowups = $('Filter Due Follow-ups').all();\nconst followupsSent = $('Send Follow-up Email').all();\nconst nextFollowupData = $('Calculate Next Follow-up').all();\n\n// Count by stage\nconst stage1 = dueFollowups.filter(item => item.json['Email Sequence Stage'] === '1').length;\nconst stage2 = dueFollowups.filter(item => item.json['Email Sequence Stage'] === '2').length;\nconst stage3 = dueFollowups.filter(item => item.json['Email Sequence Stage'] === '3').length;\n\n// Build the follow-ups table HTML\nlet followupsTableHTML = '';\n\nnextFollowupData.forEach((item, index) => {\n  const followupData = item.json;\n  \n  // Get corresponding prospect data from the workflow\n  const prospectData = dueFollowups[index]?.json || {};\n  const companyName = prospectData['Company Name'] || followupData.prospectId || $('Get All Prospects1').first().json['Company Name'];\n  const firstContact = prospectData['First Contact Date'] || $('Get All Prospects1').first().json['First Contact Date'];\n  const nextFollowup = followupData.nextFollowupDate || $input.first().json['Next Follow-up Date'];\n  \n  followupsTableHTML += `\n    <tr>\n      <td>${companyName}</td>\n      <td>Stage ${followupData.emailSequenceStage}</td>\n      <td>${firstContact}</td>\n      <td>${nextFollowup}</td>\n    </tr>\n  `;\n});\n\n// Handle case where no follow-ups were sent\nif (followupsTableHTML === '') {\n  followupsTableHTML = `\n    <tr>\n      <td colspan=\"4\" style=\"text-align: center; color: #999;\">No follow-ups sent today</td>\n    </tr>\n  `;\n}\n\n// Build the complete HTML email\nconst htmlEmail = `\n<h2>📧 Daily Follow-up Activity Report</h2>\n\n<p><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { \n  weekday: 'long', \n  year: 'numeric', \n  month: 'long', \n  day: 'numeric' \n})}</p>\n\n<h3>Summary:</h3>\n<ul>\n  <li><strong>Follow-ups Sent Today:</strong> ${followupsSent.length}</li>\n  <li><strong>Stage 1 (Day 3):</strong> ${stage1}</li>\n  <li><strong>Stage 2 (Day 7):</strong> ${stage2}</li>\n  <li><strong>Stage 3 (Day 14+):</strong> ${stage3}</li>\n</ul>\n\n<h3>Follow-ups Sent:</h3>\n<table border=\"1\" cellpadding=\"8\" style=\"border-collapse: collapse; width: 100%;\">\n  <tr style=\"background-color: #f0f0f0;\">\n    <th>Company</th>\n    <th>Email Stage</th>\n    <th>First Contact</th>\n    <th>Next Follow-up</th>\n  </tr>\n  ${followupsTableHTML}\n</table>\n\n<hr>\n<p style=\"color: #666; font-size: 12px;\">Check the CRM for complete prospect details.</p>\n`;\n\nreturn {\n  json: {\n    htmlEmail: htmlEmail,\n    totalFollowups: followupsSent.length,\n    stage1Count: stage1,\n    stage2Count: stage2,\n    stage3Count: stage3\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        1344
+      ],
+      "id": "84dda287-daa5-4daf-8b96-3440be3e0a3c",
+      "name": "Generate Follow-up Report HTML"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        2064
+      ],
+      "id": "e7e4b8c2-f130-49b5-9204-f5ea5ca881f3",
+      "name": "Weekly Report Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        448,
+        2064
+      ],
+      "id": "9c81569f-75b2-4981-bed5-6320d69813c8",
+      "name": "Get All Prospects2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\nconst prospects = items;\n\n// Date calculations\nconst today = new Date();\nconst sevenDaysAgo = new Date(today);\nsevenDaysAgo.setDate(today.getDate() - 7);\nconst sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];\n\n// Initialize counters\nconst metrics = {\n  totalProspects: prospects.length,\n  newThisWeek: 0,\n  highPriority: 0,\n  mediumPriority: 0,\n  lowPriority: 0,\n  contacted: 0,\n  responseReceived: 0,\n  positiveResponses: 0,\n  notInterested: 0,\n  awaitingResponse: 0,\n  byCity: {},\n  byBusinessType: {},\n  totalEstimatedValue: 0,\n  averageResponseRate: 0\n};\n\nprospects.forEach(p => {\n  const prospect = p.json;\n  const firstContact = prospect['First Contact Date'] || '';\n  const status = prospect['Status'] || '';\n  const opportunityScore = prospect['Opportunity Score'] || '';\n  const city = prospect['City'] || 'Unknown';\n  const businessType = prospect['Business Type'] || 'Unknown';\n  const estimatedValue = prospect['Estimated Value'] || '';\n  const responseReceived = prospect['Response Received'] || 'No';\n  \n  // Count new prospects this week\n  if (firstContact >= sevenDaysAgoStr) {\n    metrics.newThisWeek++;\n  }\n  \n  // Count by priority\n  if (opportunityScore === 'HIGH') metrics.highPriority++;\n  if (opportunityScore === 'MEDIUM') metrics.mediumPriority++;\n  if (opportunityScore === 'LOW') metrics.lowPriority++;\n  \n  // Count by status\n  if (status.includes('Contacted')) metrics.contacted++;\n  if (responseReceived === 'Yes') metrics.responseReceived++;\n  if (status.includes('Interested')) metrics.positiveResponses++;\n  if (status.includes('Not Interested')) metrics.notInterested++;\n  if (status.includes('Awaiting Response')) metrics.awaitingResponse++;\n  \n  // Group by city\n  metrics.byCity[city] = (metrics.byCity[city] || 0) + 1;\n  \n  // Group by business type\n  metrics.byBusinessType[businessType] = (metrics.byBusinessType[businessType] || 0) + 1;\n  \n  // Calculate estimated value (extract numbers from strings like \"₦15M-₦30M\")\n  const valueMatch = estimatedValue.match(/₦(\\d+)M/);\n  if (valueMatch) {\n    metrics.totalEstimatedValue += parseInt(valueMatch[1]) * 1000000;\n  }\n});\n\n// Calculate response rate\nif (metrics.contacted > 0) {\n  metrics.averageResponseRate = ((metrics.responseReceived / metrics.contacted) * 100).toFixed(1);\n}\n\n// Sort cities and business types by count\nconst topCities = Object.entries(metrics.byCity)\n  .sort((a, b) => b[1] - a[1])\n  .slice(0, 5);\n\nconst topBusinessTypes = Object.entries(metrics.byBusinessType)\n  .sort((a, b) => b[1] - a[1])\n  .slice(0, 5);\n\nreturn {\n  json: {\n    reportDate: today.toISOString().split('T')[0],\n    metrics: metrics,\n    topCities: topCities,\n    topBusinessTypes: topBusinessTypes\n  }\n};\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        2064
+      ],
+      "id": "443c6368-3292-45f1-aea6-30f4b3cdfe49",
+      "name": "Calculate Weekly Metrics"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this week's prospecting performance:\n\nOVERALL METRICS:\n- Total Prospects in Database: {{ $json.metrics.totalProspects }}\n- New Prospects This Week: {{ $json.metrics.newThisWeek }}\n- HIGH Priority: {{ $json.metrics.highPriority }}\n- MEDIUM Priority: {{ $json.metrics.mediumPriority }}\n- LOW Priority: {{ $json.metrics.lowPriority }}\n\nENGAGEMENT METRICS:\n- Prospects Contacted: {{ $json.metrics.contacted }}\n- Responses Received: {{ $json.metrics.responseReceived }}\n- Positive/Interested: {{ $json.metrics.positiveResponses }}\n- Not Interested: {{ $json.metrics.notInterested }}\n- Awaiting Response: {{ $json.metrics.awaitingResponse }}\n- Response Rate: {{ $json.metrics.averageResponseRate }}%\n\nPIPELINE VALUE:\n- Total Estimated Value: ₦{{ ($json.metrics.totalEstimatedValue / 1000000).toFixed(0) }}M\n\nTOP CITIES:\n{{ $json.topCities.map(c => `${c[0]}: ${c[1]} prospects`).join(', ') }}\n\nTOP BUSINESS TYPES:\n{{ $json.topBusinessTypes.map(b => `${b[0]}: ${b[1]} prospects`).join(', ') }}\n\nProvide your analysis and recommendations now.",
+        "options": {
+          "systemMessage": "You are a sales analytics expert analyzing weekly performance for Pradit Elevators' outbound prospecting campaign. Provide actionable insights and recommendations based on the metrics.\n\nYour analysis should include:\n1. Performance Summary (2-3 sentences on overall performance)\n2. Key Wins (what's working well)\n3. Areas for Improvement (what needs attention)\n4. Actionable Recommendations (3-5 specific actions to take)\n5. Forecast (realistic projection for next week)\n\nBe specific, data-driven, and practical. Keep total response under 300 words."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        864,
+        2064
+      ],
+      "id": "08e48505-a592-47c4-b994-408383d54ad4",
+      "name": "AI Performance Insights"
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=📊 Weekly Sales Report - Week of {{ $now.toFormat('MMM dd, yyyy') }}",
+        "message": "={{ $json.htmlEmail }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        2064
+      ],
+      "id": "75ed55d9-9cad-4916-8af7-ba33aee5cb3b",
+      "name": "Send Weekly Report",
+      "webhookId": "8e79e872-71da-4f27-8124-f1748fea9ad0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the metrics and AI insights\nconst metricsData = $('Calculate Weekly Metrics').item.json;\nconst aiInsights = $input.first().json.output;\n\nconst metrics = metricsData.metrics;\nconst topCities = metricsData.topCities;\nconst topBusinessTypes = metricsData.topBusinessTypes;\n\n// Build Top Cities HTML\nlet topCitiesHTML = '';\ntopCities.forEach(city => {\n  topCitiesHTML += `<li><strong>${city[0]}:</strong> ${city[1]} prospects</li>\\n`;\n});\n\n// If no cities data\nif (topCitiesHTML === '') {\n  topCitiesHTML = '<li>No city data available</li>';\n}\n\n// Build Top Business Types HTML\nlet topBusinessTypesHTML = '';\ntopBusinessTypes.forEach(type => {\n  topBusinessTypesHTML += `<li><strong>${type[0]}:</strong> ${type[1]} prospects</li>\\n`;\n});\n\n// If no business types data\nif (topBusinessTypesHTML === '') {\n  topBusinessTypesHTML = '<li>No business type data available</li>';\n}\n\n// Calculate report period\nconst today = new Date();\nconst sevenDaysAgo = new Date(today);\nsevenDaysAgo.setDate(today.getDate() - 7);\n\nconst reportPeriod = `${sevenDaysAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;\n\n// Build the complete HTML email\nconst htmlEmail = `\n<h1 style=\"color: #1976D2;\">📊 Pradit Elevators - Weekly Performance Report</h1>\n\n<p><strong>Report Period:</strong> ${reportPeriod}</p>\n\n<hr>\n\n<h2>📈 Key Metrics</h2>\n\n<table border=\"1\" cellpadding=\"12\" style=\"border-collapse: collapse; width: 100%; margin-bottom: 20px;\">\n  <tr style=\"background-color: #1976D2; color: white;\">\n    <th>Metric</th>\n    <th>Count</th>\n  </tr>\n  <tr>\n    <td><strong>Total Prospects in Database</strong></td>\n    <td><strong>${metrics.totalProspects}</strong></td>\n  </tr>\n  <tr style=\"background-color: #E3F2FD;\">\n    <td>New Prospects This Week</td>\n    <td>${metrics.newThisWeek}</td>\n  </tr>\n  <tr>\n    <td>HIGH Priority Prospects</td>\n    <td>🔥 ${metrics.highPriority}</td>\n  </tr>\n  <tr style=\"background-color: #E3F2FD;\">\n    <td>Prospects Contacted</td>\n    <td>${metrics.contacted}</td>\n  </tr>\n  <tr>\n    <td>Responses Received</td>\n    <td>✉️ ${metrics.responseReceived}</td>\n  </tr>\n  <tr style=\"background-color: #C8E6C9;\">\n    <td><strong>Positive/Interested Responses</strong></td>\n    <td><strong>✅ ${metrics.positiveResponses}</strong></td>\n  </tr>\n  <tr>\n    <td>Not Interested</td>\n    <td>❌ ${metrics.notInterested}</td>\n  </tr>\n  <tr style=\"background-color: #FFF9C4;\">\n    <td>Awaiting Response</td>\n    <td>⏳ ${metrics.awaitingResponse}</td>\n  </tr>\n  <tr style=\"background-color: #E1BEE7;\">\n    <td><strong>Response Rate</strong></td>\n    <td><strong>${metrics.averageResponseRate}%</strong></td>\n  </tr>\n</table>\n\n<h2>💰 Pipeline Value</h2>\n<p style=\"font-size: 24px; color: #4CAF50;\">\n  <strong>Total Estimated Value: ₦${(metrics.totalEstimatedValue / 1000000).toFixed(0)}M</strong>\n</p>\n\n<h2>📍 Top Cities</h2>\n<ul>\n${topCitiesHTML}\n</ul>\n\n<h2>🏢 Top Business Types</h2>\n<ul>\n${topBusinessTypesHTML}\n</ul>\n\n<hr>\n\n<h2>🤖 AI Insights & Recommendations</h2>\n<div style=\"background-color: #F5F5F5; padding: 20px; border-left: 4px solid #1976D2;\">\n${aiInsights}\n</div>\n\n<hr>\n\n<p style=\"color: #666; font-size: 12px;\">\n  This report was generated automatically by your N8N sales automation system.<br>\n  Check the Google Sheet CRM for detailed prospect information.\n</p>\n`;\n\nreturn {\n  json: {\n    htmlEmail: htmlEmail,\n    reportPeriod: reportPeriod,\n    totalProspects: metrics.totalProspects,\n    newThisWeek: metrics.newThisWeek\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        2064
+      ],
+      "id": "c5e08f3d-70d4-4708-9769-6a0e18cf54aa",
+      "name": "Generate Weekly Report HTML"
+    },
+    {
+      "parameters": {
+        "content": "# Lead Generation Workflow (Google Maps Scraper) \n# - Google Maps Prospect Finder\n",
+        "height": 704,
+        "width": 3248
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "56d96dea-af51-4da6-8056-ed1400d13113",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Email Response Monitoring Workflow\n\n# Monitor Email Replies",
+        "height": 384,
+        "width": 1888,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "2f70fe74-befe-4c31-b1bf-a8033fa17b83",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Automated Follow-up Sequence Workflow\n\n# Email Follow-up Automation",
+        "height": 496,
+        "width": 2720,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        1184
+      ],
+      "typeVersion": 1,
+      "id": "cdd8283e-2ce2-4185-b804-5fa9c06668f0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Weekly Performance Dashboard Workflow\n\n# Weekly Analytics & Reporting\n",
+        "height": 512,
+        "width": 2144
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        1840
+      ],
+      "typeVersion": 1,
+      "id": "23b861cc-02bd-491d-b186-d6c80624473f",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const timestamp = new Date().getTime();\nconst randomNum = Math.floor(Math.random() * 1000);\nconst leadId = `PEL-${timestamp}-${randomNum}`;\n\nreturn {\n  json: {\n    ...items[0].json,\n    leadId: leadId,\n    timestamp: new Date().toISOString()\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -1216
+      ],
+      "id": "4db9eb23-591a-4a48-9d79-444ee5701c5a",
+      "name": "Generate Lead ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this elevator installation lead:\n\nName: {{ $json.body.name }}\nCompany: {{ $json.body.company }}\nBuilding Type: {{ $json.body.building_type }}\nNumber of Floors: {{ $json.body.floors }}\nProject Timeline: {{ $json.body.timeline }}\nBudget Range: {{ $json.body.budget }}\nLead Source: {{ $json.body.source }}\nMessage: {{ $json.body.message }}\n\nPlease provide your complete analysis in the specified JSON format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a lead qualification expert for Pradit Elevators, an elevator installation company. Your job is to analyze incoming leads and provide:\n\n1. Lead Score: HOT, WARM, or COLD\n2. Priority Level: 1-5 (5 being highest)\n3. Recommended Action: Immediate call, Send proposal, Nurture campaign, or Disqualify\n4. Key Insights: Brief analysis of the opportunity\n5. Suggested Response Tone: Professional, Technical, Budget-conscious, or Luxury-focused\n\nScoring Criteria:\n- HOT: Immediate timeline (0-3 months), clear budget, commercial/hospital projects, 5+ floors\n- WARM: 3-12 month timeline, exploring options, 3+ floors, has budget indication\n- COLD: Research phase, 12+ months, unclear budget, residential small projects\n\nReturn your response in this exact JSON format:\n{\n  \"leadScore\": \"HOT/WARM/COLD\",\n  \"priorityLevel\": 1-5,\n  \"recommendedAction\": \"action here\",\n  \"keyInsights\": \"your analysis here\",\n  \"responseTone\": \"tone here\",\n  \"estimatedValue\": \"potential contract value estimate\",\n  \"concerns\": \"any red flags or concerns\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -160,
+        -1216
+      ],
+      "id": "6d111417-85d7-42da-8798-8f6af50f1a7f",
+      "name": "AI Lead Analysis"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -1008
+      ],
+      "id": "f20c51bb-37d8-47a3-991c-afc1c34760ed",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"leadScore\": \"HOT/WARM/COLD\",\n  \"priorityLevel\": 1,\n  \"recommendedAction\": \"action here\",\n  \"keyInsights\": \"your analysis here\",\n  \"responseTone\": \"tone here\",\n  \"estimatedValue\": \"potential contract value estimate\",\n  \"concerns\": \"any red flags or concerns\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        -1008
+      ],
+      "id": "3191e3d6-e3e9-4800-99cf-6034fee6bf9b",
+      "name": "Parse AI Analysis1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU",
+          "mode": "list",
+          "cachedResultName": "Pradit Elevators - Prospects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1190942694,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZW0tR7W0lJuyep8e-RLhiThHqUF-TwGqx7w3zzrswiU/edit#gid=1190942694"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Generate Lead ID').item.json.timestamp }}",
+            "Lead ID": "={{ $('Generate Lead ID').item.json.leadId }}",
+            "Name": "={{ $('Webhook').item.json.body.name }}",
+            "Phone": "={{ $('Webhook').item.json.body.phone }}",
+            "Email": "={{ $('Webhook').item.json.body.email }}",
+            "Company": "={{ $('Webhook').item.json.body.company }}",
+            "Number of Floors": "={{ $('Webhook').item.json.body.floors }}",
+            "Building Type": "={{ $('Webhook').item.json.body.building_type }}",
+            "Project Timeline": "={{ $('Webhook').item.json.body.timeline }}",
+            "Message": "={{ $('Webhook').item.json.body.message }}",
+            "Budget Range": "={{ $('Webhook').item.json.body.budget }}",
+            "Lead Score": "={{ $json.output.leadScore }}",
+            "Lead Source": "={{ $('Webhook').item.json.body.source }}",
+            "Status": "New",
+            "Assigned To": "Sales Team",
+            "Notes": "={{ $json.output.keyInsights }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Building Type",
+              "displayName": "Building Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Number of Floors",
+              "displayName": "Number of Floors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project Timeline",
+              "displayName": "Project Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow-up Date",
+              "displayName": "Next Follow-up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        192,
+        -1216
+      ],
+      "id": "4139e39b-bcfa-4326-b820-6d386b30ab39",
+      "name": "Add to CRM",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "89dcd446-904d-45c7-9076-6e0a4fad420e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9edc01da-d7b8-4727-9a00-76ce1b82921f",
+                    "leftValue": "",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "86da52df-0377-49c7-99a7-325732ded6a0",
+                    "leftValue": "",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        400,
+        -1216
+      ],
+      "id": "c9426fe2-2c79-4e42-994a-96e9c856fd80",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=🔥 HOT LEAD ALERT: {{ $('Webhook').item.json.body.company }} - {{ $('Generate Lead ID').item.json.leadId }}",
+        "message": "=<h2 style=\"color: #d32f2f;\">🔥 URGENT: High-Priority Lead Detected</h2>  <p><strong>This lead requires immediate attention within 1 hour!</strong></p>  <table style=\"border-collapse: collapse; width: 100%;\">   <tr style=\"background-color: #f5f5f5;\">     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Lead ID:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Generate Lead ID').item.json.leadId }}</td>   </tr>   <tr>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Contact Name:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.name }}</td>   </tr>   <tr style=\"background-color: #f5f5f5;\">     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Company:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.company }}</td>   </tr>   <tr>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Email:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><a href=\"mailto:{{ $('Webhook').item.json.body.email }}\">{{ $('Webhook').item.json.body.email }}</a></td>   </tr>   <tr style=\"background-color: #f5f5f5;\">     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Phone:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.phone }}</td>   </tr>   <tr>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Building Type:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.building_type }}</td>   </tr>   <tr style=\"background-color: #f5f5f5;\">     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Floors:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.floors }}</td>   </tr>   <tr>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Timeline:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.timeline }}</td>   </tr>   <tr style=\"background-color: #f5f5f5;\">     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Budget:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">{{ $('Webhook').item.json.body.budget }}</td>   </tr>   <tr>     <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Priority:</strong></td>     <td style=\"padding: 10px; border: 1px solid #ddd;\">⭐⭐⭐⭐⭐ Level {{ $('AI Lead Analysis').item.json.output.priorityLevel }}</td>   </tr> </table>  <h3>AI Analysis:</h3> <p><strong>Recommended Action:</strong> {{ $('AI Lead Analysis').item.json.output.recommendedAction }}</p> <p><strong>Key Insights:</strong> {{ $('AI Lead Analysis').item.json.output.keyInsights }}</p> <p><strong>Estimated Value:</strong> {{ $('AI Lead Analysis').item.json.output.estimatedValue }}</p> <p><strong>Response Tone:</strong> {{ $('AI Lead Analysis').item.json.output.responseTone }}</p>  <h3>Their Message:</h3> <p style=\"background-color: #f9f9f9; padding: 15px; border-left: 4px solid #2196F3;\"> {{ $('Webhook').item.json.body.message }} </p>  <hr> <p style=\"color: #666; font-size: 12px;\">Lead captured at {{ $('Generate Lead ID').item.json.timestamp }}</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        -1488
+      ],
+      "id": "bdc5ba4e-65c9-43ba-a459-8f079ccb440c",
+      "name": "Alert Sales Team - HOT Lead",
+      "webhookId": "905608df-bcd5-47c9-81d9-38aca9500db8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a personalized response email for this hot lead:\n\nClient Name: {{ $('Webhook').item.json.body.name }}\nCompany: {{ $('Webhook').item.json.body.company }}\nBuilding Type: {{ $('Webhook').item.json.body.building_type }}\nNumber of Floors: {{ $('Webhook').item.json.body.floors }}\nTimeline: {{ $('Webhook').item.json.body.timeline }}\nBudget Range: {{ $('Webhook').item.json.body.budget }}\nTheir Message: {{ $('Webhook').item.json.body.message }}\n\nAI Insights: {{ $('AI Lead Analysis').item.json.output.keyInsights }}\n\nAdditional Context:\n  - They are a {{ $('AI Lead Analysis').item.json.output.leadScore }} lead with priority {{ $('AI Lead Analysis').item.json.output.priorityLevel }}\n- Estimated project value: {{ $('AI Lead Analysis').item.json.output.estimatedValue }}\n\nGenerate the email now.",
+        "options": {
+          "systemMessage": "=You are a senior sales representative for Pradit Elevators, a premium elevator installation company. Your job is to write personalized, compelling response emails to hot leads.\n\nWriting Guidelines:\n- Be professional but warm and enthusiastic\n- Show immediate availability and eagerness to help\n- Demonstrate expertise without being technical-heavy\n- Include a clear call-to-action (schedule consultation)\n- Keep it concise (250-350 words)\n- Address their specific needs mentioned in their inquiry\n- Build trust by mentioning relevant experience\n\nTone: {{ $('AI Lead Analysis').item.json.output.responseTone }}\n\nThe email should:\n1. Thank them for reaching out\n2. Acknowledge their specific project details\n3. Briefly highlight why Pradit Elevators is the right choice\n4. Offer immediate next steps (consultation call)\n5. Provide direct contact information\n6. Create urgency without being pushy\n\nDo NOT include:\n- Generic template language\n- Pricing (mention \"customized quote\" instead)\n- Over-promising\n- Excessive formality\n\nReturn ONLY the email body in HTML format (no subject line). Use professional HTML formatting with proper spacing and emphasis where needed.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        -1488
+      ],
+      "id": "5d1a6440-5cdb-42a3-9aaa-fa1251122c6d",
+      "name": "Generate Client Response - HOT"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -1552
+      ],
+      "id": "cbf03009-66bf-4cb8-a906-35c770c38719",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=  Re: Your Elevator Installation Project for {{ $('Webhook').item.json.body.company }}",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        -1488
+      ],
+      "id": "76d59431-ed0e-498c-a221-ace8e4ec8da7",
+      "name": "Send Response - HOT Lead",
+      "webhookId": "fe194eb8-cf6f-4b41-84fc-8f10fcc3ae74",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Booking"
+        },
+        "start": "={{ $now }}{{ $now.plus(2, 'hours').toISO() }}",
+        "end": "={{ $now.plus(2.5, 'hours').toISO() }}",
+        "additionalFields": {
+          "description": "=CRITICAL HOT LEAD FOLLOW-UP  Lead ID: {{ $('Generate Lead ID').item.json.leadId }} Contact: {{ $('Webhook').item.json.body.name }} Company: {{ $('Webhook').item.json.body.company }} Phone: {{ $('Webhook').item.json.body.phone }} Email: {{ $('Webhook').item.json.body.email }}  Project Details: - Building Type: {{ $('Webhook').item.json.body.building_type }} - Floors: {{ $('Webhook').item.json.body.floors }} - Timeline: {{ $('Webhook').item.json.body.timeline }} - Budget: {{ $('Webhook').item.json.body.budget }}  TASK: If no response received, make direct phone call",
+          "summary": "=  🔥 FOLLOW-UP: {{ $('Webhook').item.json.body.company }} - {{ $('Webhook').item.json.body.name }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1408,
+        -1488
+      ],
+      "id": "680832c2-bda3-4b26-b826-d8008d14c5b1",
+      "name": "Schedule Follow-up - HOT",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Lead ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search Query List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Query List": {
+      "main": [
+        [
+          {
+            "node": "Serper Google Maps Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serper Google Maps Search": {
+      "main": [
+        [
+          {
+            "node": "Process Serper Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Serper Results": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Prospects": {
+      "main": [
+        [
+          {
+            "node": "Filter Out Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Out Duplicates": {
+      "main": [
+        [
+          {
+            "node": "AI Prospect Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Prospect Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Cold Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Prospect Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Prospect Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Filter HIGH Priority Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter HIGH Priority Only": {
+      "main": [
+        [
+          {
+            "node": "Add to Prospect Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Prospect Database": {
+      "main": [
+        [
+          {
+            "node": "Generate Cold Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cold Email": {
+      "main": [
+        [
+          {
+            "node": "Has Website?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Website?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Website Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Website Content": {
+      "main": [
+        [
+          {
+            "node": "Extract Email from Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email from Website": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send Cold Email #1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Cold Email #1": {
+      "main": [
+        [
+          {
+            "node": "Update CRM After Sending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM After Sending": {
+      "main": [
+        [
+          {
+            "node": "Update Prospect Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watch for Replies": {
+      "main": [
+        [
+          {
+            "node": "Get All Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Prospects": {
+      "main": [
+        [
+          {
+            "node": "Match Email to Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Email to Prospect": {
+      "main": [
+        [
+          {
+            "node": "Update Response Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Prospect Status": {
+      "main": [
+        [
+          {
+            "node": "Generate Report HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Response Status": {
+      "main": [
+        [
+          {
+            "node": "Is Positive Response?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Positive Response?": {
+      "main": [
+        [
+          {
+            "node": "Alert Sales - HOT Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Sales - HOT Response": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Follow-up Check": {
+      "main": [
+        [
+          {
+            "node": "Get All Prospects1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Prospects1": {
+      "main": [
+        [
+          {
+            "node": "Filter Due Follow-ups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Due Follow-ups": {
+      "main": [
+        [
+          {
+            "node": "Generate Follow-up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Follow-up Email",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Performance Insights",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Follow-up Email": {
+      "main": [
+        [
+          {
+            "node": "Generate Subject Line",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Subject Line": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Send Follow-up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up Email": {
+      "main": [
+        [
+          {
+            "node": "Calculate Next Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Next Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Update Follow-up Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Follow-up Status": {
+      "main": [
+        [
+          {
+            "node": "Generate Follow-up Report HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Follow-up Report HTML": {
+      "main": [
+        [
+          {
+            "node": "Daily Follow-up Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Prospects2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Prospects2": {
+      "main": [
+        [
+          {
+            "node": "Calculate Weekly Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Weekly Metrics": {
+      "main": [
+        [
+          {
+            "node": "AI Performance Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Performance Insights": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Report HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Report HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Lead ID": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Analysis": {
+      "main": [
+        [
+          {
+            "node": "Add to CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Analysis1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Lead Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to CRM": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Alert Sales Team - HOT Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "Alert Sales Team - HOT Lead": {
+      "main": [
+        [
+          {
+            "node": "Generate Client Response - HOT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Client Response - HOT": {
+      "main": [
+        [
+          {
+            "node": "Send Response - HOT Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Client Response - HOT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response - HOT Lead": {
+      "main": [
+        [
+          {
+            "node": "Schedule Follow-up - HOT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Follow-up - HOT": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4e7f6051-e0ef-400c-bd6a-a3352ae6a965",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "fqQkI73HhpP9MAAx",
+  "tags": []
+}

@@ -1,0 +1,141 @@
+{
+  "name": "Email task notification",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1Bc8ou2By2ctKPhPGcmdynXQBlIzuvJNkyBStEc7g3Cg",
+          "mode": "list",
+          "cachedResultName": "Email notification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Bc8ou2By2ctKPhPGcmdynXQBlIzuvJNkyBStEc7g3Cg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Bc8ou2By2ctKPhPGcmdynXQBlIzuvJNkyBStEc7g3Cg/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "31b85982-0e80-43ea-82dc-a7be875131e6",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "={{ $json.Subject }}",
+        "message": "=Email: {{$json[\"Email\"]}} \n\nTask: {{$json[\"Task\"]}}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        336,
+        0
+      ],
+      "id": "f3a12aed-e4d0-49d1-b72a-dd9b737ff45b",
+      "name": "Send a message",
+      "webhookId": "d0f26bb4-fa8c-4c30-ad63-913dad230e4b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4ba547c0-11ad-44a6-8692-391f00aae2a4",
+              "name": "Subject",
+              "value": "=New task added by {{ $json['Name '] }}",
+              "type": "string"
+            },
+            {
+              "id": "3ed9cdd8-573f-42cf-84c4-7a27ea25e67e",
+              "name": "Email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "2d83937b-0ea9-4989-8419-870101ada0f9",
+              "name": "Task",
+              "value": "={{ $json.Task }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        0
+      ],
+      "id": "0aad74d2-2e61-43f0-802f-e32ee65b9f46",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "879fb228-8641-4858-8083-820afdefe5e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "fNMpnEy1MR04OQmL",
+  "tags": []
+}

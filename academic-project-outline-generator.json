@@ -1,0 +1,1727 @@
+{
+  "name": "Academic Project Generator in n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "46e40724-83e6-4c7d-bf64-9becd5dea3bd",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6a0aaea5-48f0-401c-bc22-20f44ab08ceb",
+      "name": "Webhook",
+      "webhookId": "46e40724-83e6-4c7d-bf64-9becd5dea3bd"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Your project generation has started! You'll receive 6 emails over the next 15-20 minutes, one for each section.\",\n  \"email\": \"{{ $json.email }}\",\n  \"estimatedTime\": \"15-20 minutes\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2416,
+        1104
+      ],
+      "id": "1e3caa2c-e5bc-4d7c-aeb8-572935d4023e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "66ec69fc-10b8-456c-bbaf-0cc8b01ea57a",
+              "name": "fullName",
+              "value": "={{ $json.body.fullName }}",
+              "type": "string"
+            },
+            {
+              "id": "8919d9ae-215b-4829-9f9e-515a3ae29b0c",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "89d9050b-64d8-4ddf-a85d-846c59cdb652",
+              "name": "projectTopic",
+              "value": "={{ $json.body.projectTopic }}",
+              "type": "string"
+            },
+            {
+              "id": "5c8d3c32-594e-4f7b-ab57-a3f907cbd25c",
+              "name": "department",
+              "value": "={{ $json.body.department }}",
+              "type": "string"
+            },
+            {
+              "id": "ad80c8b1-1bd5-45cb-9a15-62f3da0acfd8",
+              "name": "matricNumber",
+              "value": "={{ $json.body.matricNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "81a22e04-7ff6-40f9-87d3-b21b68327d2c",
+              "name": "schoolName",
+              "value": "={{ $json.body.schoolName }}",
+              "type": "string"
+            },
+            {
+              "id": "39a8ba5a-6485-4344-94d7-a22c93b77bd0",
+              "name": "additionalInstructions",
+              "value": "={{ $json.body.additionalInstructions }}",
+              "type": "string"
+            },
+            {
+              "id": "10b5d160-8d9f-4a37-8c71-edd93ae81c88",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "312011a4-e09f-4f98-a299-8f98f43cbf8e",
+              "name": "projectId",
+              "value": "=PROJ-{{ $now.format('yyyyMMddHHmmss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "c20ca234-523b-4c1b-8f8c-8abb7d80fce9",
+      "name": "Extract Student Info"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fullName = $input.first().json.fullName;\nconst projectTopic = $input.first().json.projectTopic;\nconst department = $input.first().json.department;\nconst matricNumber = $input.first().json.matricNumber;\nconst schoolName = $input.first().json.schoolName;\nconst additionalInstructions = $input.first().json.additionalInstructions;\n\n// Create comprehensive context for all sections\nconst projectContext = {\n  studentName: fullName,\n  topic: projectTopic,\n  department: department,\n  matricNumber: matricNumber,\n  school: schoolName,\n  instructions: additionalInstructions,\n  \n  // This will be populated by each section\n  section1_content: \"\",\n  section2_content: \"\",\n  section3_content: \"\",\n  section4_content: \"\",\n  section5_content: \"\"\n};\n\nreturn [{\n  json: {\n    ...projectContext,\n    email: $input.first().json.email\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f71163c8-12fa-4914-ae50-1901318641b7",
+      "name": "Context Builder"
+    },
+    {
+      "parameters": {
+        "amount": "=5"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e776c9a7-cc4f-407e-a9a7-fc76d977a309",
+      "name": "Wait",
+      "webhookId": "64399958-7a2f-427f-81a0-8b8084103b0c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Section 1 (Front Matter) for a final year project with these details:\n\nStudent Name: {{ $json.studentName }}\nMatric Number: {{ $json.matricNumber }}\nSchool: {{ $json.school }}\nDepartment: {{ $json.department }}\nProject Topic: {{ $json.topic }}\nAdditional Instructions: {{ $json.instructions }}\n\nGenerate the following sections in proper academic format:\n\n1. DECLARATION PAGE\n- Standard declaration that the work is original\n- Include signature line for student\n- Include date line\n- Use formal academic language\n\n2. CERTIFICATION PAGE\n- Certification by supervisor that project was supervised\n- Include signature lines for:\n  * Project Supervisor\n  * Head of Department\n- Include date lines\n- Professional certification language\n\n3. APPROVAL PAGE\n- Approval for examination by panel\n- Include signature lines for:\n  * Internal Examiner 1\n  * Internal Examiner 2\n  * External Examiner\n- Include date lines\n- Formal approval language\n\n4. DEDICATION\n- Professional dedication (to family, God, mentors, etc.)\n- 1 short paragraph\n- Heartfelt but professional tone\n- Make it feel personal and authentic\n\n5. ACKNOWLEDGEMENT\n- Thank supervisor by name (use \"my supervisor\" if name not provided)\n- Thank family, colleagues, friends\n- Thank institution/department\n- 2-3 paragraphs\n- Professional and grateful tone\n- Make it sound genuine, not generic\n\n6. ABSTRACT\n- Write 250-300 words\n- Structure:\n  * Background (2 sentences) - Context of the problem\n  * Problem statement (2 sentences) - Specific issue addressed\n  * Methodology (2-3 sentences) - Approach taken\n  * Key findings/expected outcomes (2-3 sentences) - Results or expected results\n  * Conclusion (1-2 sentences) - Significance and impact\n- Include 5-7 relevant keywords at the end\n- Be specific to the project topic and  {{ $json.department }} field\n- Use past tense for completed work, future tense for expected outcomes\n\nFORMATTING REQUIREMENTS:\n- Use proper academic formatting\n- Include page numbers (Roman numerals: I, II, III, IV, V, VI)\n- Use formal academic language\n- Be specific to the project topic and department\n- Make it sound authentic and personalized (not generic AI text)\n- Avoid overly complex or flowery language\n- Write in a way that sounds like a real {{ $json.department }} student\n\nIMPORTANT GUIDELINES:\n- Write authentically - sound like a real student, not AI\n- Be specific to {{ $json.department }}\n- Reference the actual project topic throughout\n- Use appropriate technical terminology for the field\n- Make dedication and acknowledgment feel personal\n- Abstract should be detailed and specific, not vague\n\nReturn the complete text in a structured format with clear section headings and proper page numbers.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert academic writer specializing in university-level research project documentation. You write in a natural, authentic academic style that sounds like a real student wrote it, not AI. You follow proper academic formatting standards and create personalized, contextually appropriate content\n\n\n{\n  \"section1Content\": \"Full combined text of all front matter sections: Declaration + Certification + Approval + Dedication + Acknowledgement + Abstract with proper page numbering (I, II, III, IV, V, VI)\",\n  \n  \"section1Title\": \"Section 1 - Front Matter (Declaration to Abstract)\",\n  \n  \"section1Summary\": \"Generated front matter including Declaration, Certification, Approval, Dedication, Acknowledgement, and Abstract for project: [Project Topic] in [Department]\",\n  \n  \"abstract\": \"ABSTRACT\\n\\nThis study focuses on... [250-300 words summarizing background, problem, methodology, findings, and conclusion]\\n\\nKeywords: keyword1, keyword2, keyword3, keyword4, keyword5\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "93e85e69-58aa-427a-9d81-17b47a948165",
+      "name": "AI Node - Section 1 (Preliminaries)"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        816,
+        160
+      ],
+      "id": "726c86f8-b8ce-48d3-ba77-90ffa195b570",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"section1Content\": \"string\",\n  \"section1Title\": \"string\",\n  \"section1Summary\": \"string\",\n  \"abstract\": \"string\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        128
+      ],
+      "id": "0360b525-2a95-44c2-8c6a-c9fc5a0d05e5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e341bcd5-3a92-4455-bc71-e5e2d32bd5ce",
+              "name": "section1Content",
+              "value": "={{ $json.output.section1Content }}",
+              "type": "string"
+            },
+            {
+              "id": "b96b695d-4aab-48b7-a7c4-da5e433511b2",
+              "name": "section1Title",
+              "value": "={{ $json.output.section1Title }}",
+              "type": "string"
+            },
+            {
+              "id": "65522556-facb-4f39-8736-661f614c8516",
+              "name": "section1Summary",
+              "value": "={{ $json.output.section1Summary }}",
+              "type": "string"
+            },
+            {
+              "id": "27bb9f91-c066-43f8-bea5-fc8752945c00",
+              "name": "abstractText",
+              "value": "={{ $json.output.abstract }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "2cda7b5b-a17e-40b4-aef0-46e6ecb58caa",
+      "name": "Parse Section 1 Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Parse Section 1 Content').item.json;\n\nconst content = data.section1Content;\nconst abstract = data.abstractText || '';\n\nconst studentName = $('Extract Student Info').item.json.fullName;\nconst projectTopic = $('Extract Student Info').item.json.projectTopic;\nconst projectId = $('Extract Student Info').item.json.projectId;\nconst department = $('Extract Student Info').item.json.department;\n\n// Header\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 1: FRONT MATTER\n(Declaration - Certification - Approval - Dedication - Acknowledgement - Abstract)\n\n═══════════════════════════════════════════════════════════════\n`;\n\n// Combine content + abstract\nconst fullDocument =\n  documentHeader +\n  \"\\n\\n\" +\n  content +\n  \"\\n\\n\" +\n  \"ABSTRACT\\n\" +\n  abstract;\n\n// Base64\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_1_Front_Matter_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 1\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "321f64c3-af7d-4b8d-a878-0321e811dd60",
+      "name": "Create Section 1 Text File"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        240
+      ],
+      "id": "92fac661-4345-4456-8bf3-ca9533154e4e",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"section2Content\": \"string\",\n  \"backgroundOfStudy\": \"string\",\n  \"section2Title\": \"string\",\n  \"section2Summary\": \"string\",\n  \"objectives\": \"string\",\n  \"problemStatement\": \"string\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        736,
+        400
+      ],
+      "id": "0d8af274-7038-4bb1-9114-062f2a2c1305",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        240
+      ],
+      "id": "568c4193-d706-40d2-a140-00c012dab7e3",
+      "name": "Wait1",
+      "webhookId": "c3c9a59a-7faf-4990-a3a7-16a2ea438e53"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Chapter 1 (INTRODUCTION) for this final year project.\n\nPROJECT DETAILS:\nProject Topic: {{ $('Extract Student Info').item.json.projectTopic }}\nDepartment: {{ $('Context Builder').item.json.department }}\nStudent: {{ $('Context Builder').item.json.studentName }}\nAdditional Context: {{ $('Context Builder').item.json.instructions }}\n\nCONTEXT FROM PREVIOUS SECTION:\nAbstract: {{ $('Parse Section 1 Content').item.json.abstractText }}\nAbstract Summary: {{ $('Parse Section 1 Content').item.json.section1Summary }} \n\nGenerate a complete Chapter 1 with these subsections:\n\n1.1 BACKGROUND OF STUDY (2-3 pages, approximately 800-1200 words)\n- Start broad with the general field context\n- Narrow down to the specific topic area\n- Discuss evolution and current state of the field\n- Explain why this topic is important and relevant now\n- Connect to real-world applications and industry needs\n- Build context for your specific project\n- Include 3-5 relevant citations in (Author, Year) format\n- Be specific to {{ $('Extract Student Info').item.json.department }}\n- Use appropriate technical terminology\n\n1.2 PROBLEM STATEMENT (1-2 pages, approximately 600-900 words)\n- Clearly identify the specific problem being addressed\n- Explain current limitations or gaps in existing solutions\n- Describe the consequences of not solving this problem\n- Quantify the problem where possible (statistics, impact)\n- Make it specific to {{ $('Extract Student Info').item.json.department }} context\n- Connect directly to the project topic\n- Explain who is affected by this problem\n- Build urgency and importance\n\n1.3 AIMS AND OBJECTIVES (1 page, approximately 400-500 words)\n\nAIM:\n- Write ONE clear, overarching aim (1-2 sentences)\n- Should directly address the problem statement\n- Example format: \"The aim of this project is to design and implement...\"\n\nOBJECTIVES:\n- List 4-6 specific, measurable objectives\n- Use action verbs: design, develop, implement, evaluate, analyze, test, create\n- Each objective should be achievable within project scope\n- Objectives should directly address the problem\n- Be specific and measurable\n- Example format:\n  * To design a system architecture for...\n  * To implement core functionalities including...\n  * To evaluate the performance against...\n  * To analyze the results and compare with...\n\n1.4 SCOPE OF WORK (1 page, approximately 400-500 words)\n- Define clear boundaries of the project\n- What IS INCLUDED in this research:\n  * Specific features or components\n  * Technologies/methods to be used\n  * Target users or systems\n  * Geographic or demographic scope\n- What IS NOT INCLUDED (out of scope):\n  * Features excluded and why\n  * Limitations on coverage\n- Timeline considerations\n- Resource considerations\n- Be realistic and specific\n\n1.5 LIMITATIONS OF STUDY (1 page, approximately 400-500 words)\n- Identify 4-5 realistic limitations\n- Categories to consider:\n  * Time constraints (project duration)\n  * Resource constraints (budget, equipment, access)\n  * Technical limitations (technology, tools, expertise)\n  * Scope boundaries (what's deliberately excluded)\n  * Data limitations (availability, quality, size)\n- Be honest but don't undermine the project value\n- Explain how you'll work within these limitations\n- Professional academic tone\n\n1.6 SIGNIFICANCE OF THE STUDY (1-2 pages, approximately 600-900 words)\n- Explain the contribution to knowledge in {{ $('Extract Student Info').item.json.department }}\n- Discuss practical applications and benefits\n- Identify who benefits:\n  * Industry/businesses\n  * Students/researchers\n  * End users/customers\n  * Society at large\n- Potential impact on {{ $('Extract Student Info').item.json.department }} field\n- How this advances current understanding or practice\n- Future research opportunities this creates\n- Long-term implications\n\nOVERALL CHAPTER REQUIREMENTS:\n- Total length: 8-12 pages (approximately 3500-5000 words)\n- Use formal academic writing style\n- Include in-text citations in (Author, Year) format throughout\n- Number pages starting from page 1\n- Use proper headings and sub-headings (1.1, 1.2, etc.)\n- Write specifically for {{ $('Extract Student Info').item.json.department }} field\n- Reference the project topic throughout all sections\n- Make sections flow logically into each other\n- Use technical terminology appropriate to the field\n- Include examples where relevant\n\nWRITING STYLE GUIDELINES:\n- Write authentically - sound like a real {{ $('Extract Student Info').item.json.department }} student\n- Avoid overly complex or AI-sounding language\n- Be specific and detailed, not vague or generic\n- Use active voice where appropriate\n- Vary sentence structure\n- Include transitional phrases between sections\n- Make objectives SMART (Specific, Measurable, Achievable, Relevant, Time-bound)\n- Ensure all sections connect logically to each other\n\nReturn complete Chapter 1 text with clear section headings, proper formatting, and page numbers indicated.\n\n\n\n\n\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert academic writer specializing in {{ $json.department }} research projects. You write comprehensive, well-structured academic chapters that sound authentic and natural. You understand the academic standards for final year projects and write at an appropriate level for undergraduate/graduate students. You include relevant technical details and cite appropriately.\n\n{\n  \"section2Content\": \"CHAPTER ONE: INTRODUCTION\\n\\n1.1 BACKGROUND OF STUDY\\n[2-3 pages of background content]\\n\\n1.2 PROBLEM STATEMENT\\n[1-2 pages of problem content]\\n\\n1.3 AIMS AND OBJECTIVES\\nAIM: [Single aim statement]\\nOBJECTIVES:\\n• To design...\\n• To develop...\\n• To implement...\\n• To evaluate...\\n\\n1.4 SCOPE OF WORK\\n[Boundaries and coverage]\\n\\n1.5 LIMITATIONS OF STUDY\\n[Constraints and limitations]\\n\\n1.6 SIGNIFICANCE OF THE STUDY\\n[Importance and contributions]\",\n  \n  \"section2Title\": \"Section 2 - Chapter 1 (Introduction)\",\n  \n  \"section2Summary\": \"Generated Chapter 1 including Background, Problem Statement, Aims and Objectives, Scope, Limitations, and Significance for project: [Project Topic]\",\n  \n  \"objectives\": \"To design a comprehensive system architecture for student performance prediction\\nTo develop machine learning models using classification algorithms\\nTo implement a user-friendly web-based interface for educators\\nTo evaluate system performance using accuracy, precision, and recall metrics\\nTo validate the system through real-world testing with academic data\",\n  \n  \"problemStatement\": \"1.2 PROBLEM STATEMENT\\n\\nMany tertiary institutions struggle with early identification of students at risk of academic failure. Traditional methods rely on reactive measures after performance decline. Current systems lack predictive capabilities and real-time insights. This results in delayed interventions, increased dropout rates, and wasted resources. Statistics show 30% of first-year students fail or drop out. Manual tracking is time-consuming and inefficient. There is need for an automated, intelligent system that can predict student performance early, enabling timely interventions and personalized support strategies.\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        592,
+        240
+      ],
+      "id": "6af94067-b84d-4b4a-8b26-832e2a8726cb",
+      "name": "AI Node - Section 2 (Chapter 1)"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        592,
+        400
+      ],
+      "id": "a4a09338-4224-4bd5-95a9-2636a32e0044",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5458b724-2e22-478e-ac8d-5b618a5ec497",
+              "name": "section2Content",
+              "value": "={{ $json.output.section2Content }}",
+              "type": "string"
+            },
+            {
+              "id": "91fc600d-d1b4-4ffd-bdc5-97119b6cd111",
+              "name": "section2Title",
+              "value": "={{ $json.output.section2Title }}",
+              "type": "string"
+            },
+            {
+              "id": "73e3dc5f-b04b-4977-b943-910b1e28ffed",
+              "name": "section2Summary",
+              "value": "={{ $json.output.section2Summary }}",
+              "type": "string"
+            },
+            {
+              "id": "ebdf37bb-6eff-4b43-9da3-db64c594802c",
+              "name": "objectives",
+              "value": "={{ $json.output.objectives }}",
+              "type": "string"
+            },
+            {
+              "id": "8b87666a-591a-4bf1-bbcc-f6fde6d15414",
+              "name": "problemStatement",
+              "value": "={{ $json.output.problemStatement }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        240
+      ],
+      "id": "b7306e59-d108-4fa8-a263-008fddd4836a",
+      "name": "Parse Section 2 Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $('Parse Section 2 Content').item.json.section2Content;\nconst studentName = $('Extract Student Info').item.json.fullName;\nconst projectTopic = $('Extract Student Info').item.json.projectTopic;\nconst projectId = $('Extract Student Info').item.json.projectId;\nconst department = $('Extract Student Info').item.json.department;\n\n// Create document header\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 2: CHAPTER ONE - INTRODUCTION\n\n═══════════════════════════════════════════════════════════════\n\n`;\n\nconst fullDocument = documentHeader + \"\\n\\n\" + content;\n\n// Convert to base64\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_2_Chapter_1_Introduction_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content: base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 2\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        240
+      ],
+      "id": "6a5760f3-824a-42f0-a750-581ed8ff304a",
+      "name": "Create Section 2 Text File"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1216,
+        240
+      ],
+      "id": "b4a283a0-7a42-4515-a28c-b8be54756e75",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 1/6] Front Matter - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n    <div style=\"background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;\">\n        <h1 style=\"color: white; margin: 0;\">📄 Section 1 Ready!</h1>\n    </div>\n    \n    <div style=\"padding: 30px;\">\n        <h2 style=\"color: #1e40af;\">Front Matter Complete</h2>\n        \n        <p>Hi {{ $('Extract Student Info').item.json.fullName }},</p>\n        \n        <p>Your <strong>Section 1 (Front Matter)</strong> is ready and attached to this email!</p>\n        \n        <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">\n            <p style=\"margin: 0; color: #065f46;\"><strong>✓ This section includes:</strong></p>\n            <ul style=\"color: #065f46; margin: 10px 0;\">\n                <li>Declaration Page</li>\n                <li>Certification Page</li>\n                <li>Approval Page</li>\n                <li>Dedication</li>\n                <li>Acknowledgement</li>\n                <li>Abstract</li>\n            </ul>\n        </div>\n        \n        <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n            <p style=\"margin: 0; color: #92400e;\"><strong>⚠️ IMPORTANT - Next Steps:</strong></p>\n            <ol style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">\n                <li>Download the attached document</li>\n                <li>Review all content carefully</li>\n                <li>Personalize the dedication and acknowledgement sections</li>\n                <li>Verify the abstract accurately represents your project</li>\n                <li>Edit any sections that need your specific touch</li>\n                <li>Add proper formatting in your word processor</li>\n            </ol>\n        </div>\n        \n        <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n            <p style=\"margin: 0; color: #1e40af;\"><strong>📊 Progress:</strong> 1 of 5 sections complete ✓</p>\n            <p style=\"margin: 10px 0 0 0; color: #1e40af;\">The remaining sections will arrive shortly as they're generated.</p>\n        </div>\n        \n        <p><strong>Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}</p>\n        \n        <p>Best regards,<br><strong>Academic Project Generator</strong></p>\n    </div>\n    \n    <div style=\"background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;\">\n        <p style=\"margin: 0;\">Remember: This is draft content. Review and personalize before submission.</p>\n    </div>\n</div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        240
+      ],
+      "id": "3e07c952-cac6-4ee3-b463-d6c909d4878f",
+      "name": "Email Section 1 to Student",
+      "webhookId": "f7b5ca5f-91e3-46bb-886a-caee262c00ba",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 2/6] Chapter 1 - Introduction - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">     <div style=\"background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;\">         <h1 style=\"color: white; margin: 0;\">📄 Section 2 Ready!</h1>     </div>          <div style=\"padding: 30px;\">         <h2 style=\"color: #1e40af;\">Chapter 1: Introduction Complete</h2>                  <p>Hi {{ $('Extract Student Info').item.json.fullName }},</p>                  <p>Your <strong>Section 2 (Chapter 1 - Introduction)</strong> is ready and attached!</p>                  <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">             <p style=\"margin: 0; color: #065f46;\"><strong>✓ This chapter includes:</strong></p>             <ul style=\"color: #065f46; margin: 10px 0;\">                 <li>1.1 Background of Study</li>                 <li>1.2 Problem Statement</li>                 <li>1.3 Aims and Objectives</li>                 <li>1.4 Scope of Work</li>                 <li>1.5 Limitations of Study</li>                 <li>1.6 Significance of the Study</li>             </ul>         </div>                  <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #92400e;\"><strong>⚠️ Review Checklist:</strong></p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">                 <li>Verify all objectives are achievable for your project</li>                 <li>Ensure problem statement accurately reflects your research</li>                 <li>Add specific statistics or data to strengthen arguments</li>                 <li>Personalize scope and limitations to your actual constraints</li>                 <li>Add relevant citations and references</li>                 <li>Check that all sections flow logically</li>             </ol>         </div>                  <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #1e40af;\"><strong>📊 Progress:</strong> 2 of 5 sections complete ✓</p>             <p style=\"margin: 10px 0 0 0; color : #1e40af;\">Next up: Chapter 2 (Literature Review) - arriving soon!</p>\n</div>\n    <p><strong>Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}</p>\n    \n    <p>Best regards,<br><strong>Academic Project Generator</strong></p>\n</div>\n\n<div style=\"background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;\">\n    <p style=\"margin: 0;\">Remember: Review, edit, and add your specific research details.</p>\n</div>\n</div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        240
+      ],
+      "id": "ffe4c9c5-f3f4-4761-a2eb-c62c786be6b7",
+      "name": "Email Section 2 to Student",
+      "webhookId": "50d7ab67-1be4-436d-82e5-b6110e32fca7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        528
+      ],
+      "id": "2bc6f2df-324f-4b10-8f6e-ebdf57047e4f",
+      "name": "Wait2",
+      "webhookId": "b7c565d4-4366-40a0-97be-4e90e3c76306"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Chapter 2 (LITERATURE REVIEW) for this final year project.\n\nPROJECT DETAILS:\nProject Topic: {{ $('Extract Student Info').item.json.projectTopic }}\nDepartment: {{ $('Extract Student Info').item.json.department }}\n\nCONTEXT FROM PREVIOUS CHAPTERS:\nAbstract: {{ $('Parse Section 1 Content').item.json.section1Summary }}\nChapter 1 Summary: {{ $('Parse Section 2 Content').item.json.section2Summary }}\nObjectives: {{ $('Parse Section 2 Content').item.json.objectives }}\nProblem Statement: {{ $('Parse Section 2 Content').item.json.problemStatement }}\n\nGenerate a complete Chapter 2 with these subsections:\n\n2.1 THEORETICAL BACKGROUND (3-4 pages, approximately 1200-1600 words)\n- Define all key concepts and terminology relevant to the project\n- Explain fundamental principles underlying the research area\n- Discuss relevant theories, frameworks, or models\n- Build theoretical foundation needed to understand the research\n- Cover foundational concepts in {{ $('Extract Student Info').item.json.department }}\n- Include 8-12 citations from established sources\n- Structure by themes or concepts, not chronologically\n- Examples of what to cover:\n  * Core concepts and definitions\n  * Relevant theories or models\n  * Fundamental principles\n  * Theoretical frameworks\n  * Established methodologies in the field\n\n2.2 REVIEW OF PAST WORK (5-7 pages, approximately 2000-2800 words)\n- Review 12-18 related research papers, projects, or systems\n- For EACH work reviewed, discuss:\n  * Author(s) and year\n  * What problem they addressed\n  * Their methodology/approach\n  * Key findings or results\n  * Strengths of their approach\n  * Limitations or gaps identified\n  * Relevance to your project\n\n- Organize reviews by themes or categories, such as:\n  * Similar systems or solutions\n  * Different methodologies used\n  * Various technologies applied\n  * Different contexts or applications\n\n- Include diverse sources:\n  * Academic journal papers (2018-2024)\n  * Conference proceedings\n  * Books and book chapters\n  * Technical reports\n  * Relevant industry solutions\n  * Similar final year projects (if applicable)\n\n- Use past tense: \"Smith (2020) developed...\"\n- Compare and contrast different approaches\n- Identify patterns and trends\n- Note contradictions or debates in literature\n- Citations in (Author, Year) format\n\n2.3 SUMMARY OF REVIEWED WORK (1-2 pages, approximately 500-800 words)\n- Synthesize key findings from all reviewed work\n- Identify common themes across reviewed literature\n- Note areas of agreement and consensus\n- Highlight contradictions or unresolved debates\n- Discuss evolution of approaches over time\n- Identify what has been well-studied\n- Note emerging trends in the field\n- Summarize the current state of knowledge\n- Connect findings back to your project objectives\n\n2.4 RESEARCH GAP (1-2 pages, approximately 500-800 words)\n- Clearly identify what's missing in existing research\n- Explain limitations in current solutions/approaches\n- Describe what hasn't been adequately addressed\n- Connect gaps directly to your problem statement\n- Explain how your project fills this gap\n- Justify why your approach is needed and timely\n- Show how your objectives address these gaps\n- Build strong justification for your research\n- Make it specific to {{ $('Extract Student Info').item.json.department }} context\n\nOVERALL CHAPTER REQUIREMENTS:\n- Total length: 12-18 pages (approximately 5000-7000 words)\n- Use formal academic writing style\n- Include 25-40 in-text citations throughout\n- Citations in (Author, Year) format\n- Number pages continuing from Chapter 1\n- Use proper headings (2.1, 2.2, 2.3, 2.4)\n- Write specifically for {{ $('Extract Student Info').item.json.department }}\n- Reference actual technologies, methods, tools used in the field\n- Create smooth transitions between subsections\n\nCITATION GUIDELINES:\n- Use realistic author names and years (2018-2024 for recent sources)\n- Format: (Author, Year) or Author (Year) stated that...\n- Include variety: journal articles, conferences, books\n- Mix foundational sources (older) with recent research\n- Cite appropriately - don't over-cite or under-cite\n- Make citations feel natural, not forced\n\nWRITING STYLE:\n- Use past tense for completed research\n- Present tense for established facts or theories\n- Write critically - identify strengths AND limitations\n- Compare and contrast different approaches\n- Show depth of understanding\n- Avoid simply listing studies - synthesize and analyze\n- Sound like a knowledgeable {{ $('Extract Student Info').item.json.department }} researcher\n- Make connections between different works\n- Build logical argument toward research gap\n\nIMPORTANT:\n- All reviewed work should relate to the project topic\n- Research gap should clearly justify YOUR project\n- Make it specific to {{ $('Extract Student Info').item.json.department }} field\n- Include appropriate technical depth\n- Citations should feel realistic and well-integrated\n- Gap identification should be convincing and clear\n\nReturn complete Chapter 2 text with clear section headings and proper formatting.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert academic researcher and writer specializing in comprehensive literature reviews for {{ $('Extract Student Info').item.json.department }} projects. You understand how to synthesize research, identify gaps, and build a strong theoretical foundation. You cite appropriately and write in an authentic academic style. You know how to review past work critically and identify research gaps that justify new research.\n\n{\n  \"section3Content\": \"CHAPTER TWO\\nLITERATURE REVIEW\\n\\n2.1 THEORETICAL BACKGROUND\\n[3-4 pages covering key concepts, definitions, theories, frameworks, and foundational knowledge with 8-12 citations]\\n\\n2.2 REVIEW OF PAST WORK\\n[5-7 pages reviewing 12-18 related studies, organized by themes, each discussing author/year, problem addressed, methodology, findings, strengths, limitations, and relevance]\\n\\n2.3 SUMMARY OF REVIEWED WORK\\n[1-2 pages synthesizing key findings, common themes, agreements, contradictions, and current state of knowledge]\\n\\n2.4 RESEARCH GAP\\n[1-2 pages identifying what's missing, limitations in current solutions, and how this project addresses the gap]\",\n  \n  \"section3Title\": \"Section 3 - Chapter 2 (Literature Review)\",\n  \n  \"section3Summary\": \"Generated Chapter 2 including Theoretical Background, Review of Past Work, Summary, and Research Gap for project: [Project Topic]\",\n  \n  \"researchGap\": \"2.4 RESEARCH GAP\\n\\nDespite extensive research in educational data mining and student performance prediction, several gaps persist. Most existing systems focus solely on final grade prediction without considering semester-by-semester progression. Limited research addresses the Nigerian tertiary education context with its unique challenges. Few systems integrate real-time data collection with predictive analytics. Current solutions often require extensive technical expertise, limiting adoption by non-technical educators. There's insufficient research on combining multiple machine learning algorithms for improved accuracy in resource-constrained environments. This project addresses these gaps by developing a context-appropriate, user-friendly system that provides early warnings, progressive monitoring, and actionable insights specifically designed for Nigerian universities.\",\n  \n  \"theoreticalFramework\": \"2.1 THEORETICAL BACKGROUND\\n\\nMachine learning is a subset of artificial intelligence that enables systems to learn from data without explicit programming (Mitchell, 1997). Supervised learning involves training models on labeled datasets to predict outcomes for new data. Classification algorithms categorize data into predefined classes. Random Forest is an ensemble learning method that constructs multiple decision trees and merges their predictions (Breiman, 2001). Support Vector Machines (SVM) find optimal hyperplanes to separate classes in high-dimensional space (Cortes & Vapnik, 1995). Educational Data Mining (EDM) applies data mining techniques to educational contexts to discover patterns in student behavior and performance (Romero & Ventura, 2010). Predictive analytics uses historical data, statistical algorithms, and machine learning to forecast future outcomes. Feature engineering involves selecting and transforming variables to improve model performance. Model evaluation metrics include accuracy, precision, recall, and F1-score.\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        224,
+        528
+      ],
+      "id": "caa2f888-3c98-4efe-8755-9b6e17eaf93d",
+      "name": "AI - Generate Section 3 Chapter 2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        224,
+        688
+      ],
+      "id": "364e5472-634c-48eb-b9f8-b22a835ccfe8",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"section3Content\": \"string\",\n  \"section3Title\": \"string\",\n  \"section3Summary\": \"string\",\n  \"researchGap\": \"string\",\n  \"theoreticalFramework\": \"string\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        688
+      ],
+      "id": "42d32801-8ef6-447c-9555-195e9a0f3616",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "71b9dba8-72fe-4162-8c3f-e8cd562471e8",
+              "name": "section3Content",
+              "value": "={{ $json.output.section3Content }}",
+              "type": "string"
+            },
+            {
+              "id": "dc941ff6-aead-42a9-9c59-0c59e0676652",
+              "name": "section3Title",
+              "value": "={{ $json.output.section3Title }}",
+              "type": "string"
+            },
+            {
+              "id": "a02db199-8fc9-4043-89c7-221fa3fc81ad",
+              "name": "section3Summary",
+              "value": "={{ $json.output.section3Summary }}",
+              "type": "string"
+            },
+            {
+              "id": "7f88e7c4-c4bc-4d88-a56d-7c2f25a2fd43",
+              "name": "researchGap",
+              "value": "={{ $json.output.researchGap }}",
+              "type": "string"
+            },
+            {
+              "id": "dd316b4c-dbdd-484a-ad77-338987637fee",
+              "name": "theoreticalFramework",
+              "value": "={{ $json.output.theoreticalFramework }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        528
+      ],
+      "id": "1938e64f-414d-41d5-883d-8d7922cc409b",
+      "name": "Parse Section 3 Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Parse Section 3 Content').item.json;\n\nconst theoreticalFramework = data.theoreticalFramework || '';\nconst summaryOfReviewedWorks = data.section3Content || '';\nconst researchGap = data.researchGap || '';\n\nconst studentName = $('Extract Student Info').item.json.fullName;\nconst projectTopic = $('Extract Student Info').item.json.projectTopic;\nconst projectId = $('Extract Student Info').item.json.projectId;\nconst department = $('Extract Student Info').item.json.department;\n\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 3: CHAPTER TWO - LITERATURE REVIEW\n\n═══════════════════════════════════════════════════════════════\n`;\n\n// Academic structure — ORDER MATTERS\nconst fullDocument =\n  documentHeader +\n  \"\\n\\n\" +\n  \"2.1 THEORETICAL FRAMEWORK\\n\" +\n  theoreticalFramework +\n  \"\\n\\n\" +\n  \"2.3 SUMMARY OF REVIEWED WORKS\\n\" +\n  summaryOfReviewedWorks +\n  \"\\n\\n\" +\n  \"2.4 RESEARCH GAP\\n\" +\n  researchGap;\n\n// Encode\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_3_Chapter_2_Literature_Review_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 3\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        528
+      ],
+      "id": "86d28abd-f408-43bd-90e5-288a5341f732",
+      "name": "Create Section 3 Text File"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        528
+      ],
+      "id": "eedd4b8a-711b-4f66-81af-f48f7800c0ec",
+      "name": "Convert to File2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 3/6] Chapter 2 - Literature Review - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">     <div style=\"background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;\">         <h1 style=\"color: white; margin: 0;\">📄 Section 3 Ready!</h1>     </div>          <div style=\"padding: 30px;\">         <h2 style=\"color: #1e40af;\">Chapter 2: Literature Review Complete</h2>                  <p>Hi {{ $('Extract Student Info').item.json.fullName }},</p>                  <p>Your <strong>Section 3 (Chapter 2 - Literature Review)</strong> is ready!</p>                  <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">             <p style=\"margin: 0; color: #065f46;\"><strong>✓ This chapter includes:</strong></p>             <ul style=\"color: #065f46; margin: 10px 0;\">                 <li>2.1 Theoretical Background</li>                 <li>2.2 Review of Past Work (12-18 sources reviewed)</li>                 <li>2.3 Summary of Reviewed Work</li>                 <li>2.4 Research Gap</li>             </ul>         </div>                  <div style=\"background-color: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #991b1b;\"><strong>⚠️ CRITICAL - Citations Required:</strong></p>             <p style=\"margin: 10px 0 0 0; color: #991b1b;\">This chapter contains citations in (Author, Year) format. You MUST:</p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #991b1b;\">                 <li>Verify all citations are real and accurate</li>                 <li>Replace with actual sources from your research</li>                 <li>Add a proper References section at the end</li>                 <li>Ensure all cited works actually exist</li>                 <li>Follow your school's citation style (APA, Harvard, etc.)</li>             </ol>         </div>                  <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #92400e;\"><strong>📚 Review Checklist:</strong></p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">                 <li>Read through all reviewed work sections</li>                 <li>Replace AI-generated citations with real sources</li>                 <li>Add your own research findings</li>                 <li>Ensure theoretical background matches your understanding</li>                 <li>Verify research gap accurately identifies what's missing</li>                 <li>Add more recent sources if available</li>             </ol>         </div>                  <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #1e40af;\"><strong>📊 Progress:</strong> 3 of 5 sections complete ✓</p>             <p style=\"margin: 10px 0 0 0; color: #1e40af;\">Next: Chapter 3 (Methodology) - arriving soon!</p>         </div>                  <p><strong>Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}</p>                  <p>Best regards,<br><strong>Academic Project Generator</strong></p>     </div> </div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        528
+      ],
+      "id": "03a33907-56fe-4ea6-9f13-a23bf8ed4a85",
+      "name": "Email Section 3 to Student",
+      "webhookId": "505e0512-57db-4195-a3c7-9624c51ba0fc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1392,
+        528
+      ],
+      "id": "535c270e-d616-46c8-9e62-6148311ccdc6",
+      "name": "Wait3",
+      "webhookId": "2c3f6aca-ebb9-47a9-9d7d-0647a55ef42d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        16,
+        944
+      ],
+      "id": "7cf5a701-33ca-444c-aa3f-e9e0a91c72a8",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Chapter 3 (RESEARCH METHODOLOGY) for this final year project.\n\nPROJECT DETAILS:\nProject Topic: {{ $('Extract Student Info').item.json.projectTopic }}\nDepartment: {{ $('Extract Student Info').item.json.department }}\n\nFULL CONTEXT FROM PREVIOUS CHAPTERS:\nObjectives: {{ $('Parse Section 2 Content').item.json.objectives }}\nProblem Statement: {{ $('Parse Section 2 Content').item.json.problemStatement }}\nResearch Gap: {{ $('Parse Section 3 Content').item.json.researchGap }}\nTheoretical Framework: {{ $('Parse Section 3 Content').item.json.theoreticalFramework }}\n\nGenerate a complete Chapter 3 that explains HOW you will conduct this research or build this system:\n\n3.1 RESEARCH DESIGN (1-2 pages, approximately 500-800 words)\n- State the type of research:\n  * Applied research (solving practical problem)\n  * Experimental research (testing hypothesis)\n  * Developmental research (building system/product)\n  * Design science research (creating artifacts)\n\n- Research approach:\n  * Quantitative (numerical data, statistics)\n  * Qualitative (descriptive, interpretive)\n  * Mixed methods (combination)\n\n- Research strategy:\n  * Case study\n  * Survey\n  * Experiment\n  * Design and creation\n  * Action research\n\n- Justify your choices based on:\n  * Nature of the problem\n  * Research objectives\n  * Type of data needed\n  * Resources available\n\n3.2 SYSTEM/PROJECT ARCHITECTURE AND DESIGN (2-3 pages, approximately 800-1200 words)\n- Overall system architecture or conceptual framework\n- Major components and their functions\n- How components interact with each other\n- System design approach (modular, layered, MVC, microservices, etc.)\n- Technologies chosen and why:\n  * Programming languages\n  * Frameworks and libraries\n  * Database systems\n  * Development tools\n  * Hardware/software platforms\n\n- Design considerations:\n  * Scalability\n  * Security\n  * Usability\n  * Performance\n  * Maintainability\n\n- Describe design diagrams (even if not drawn):\n  * System architecture diagram\n  * Data flow diagram\n  * Use case diagram\n  * Entity-relationship diagram (if database)\n  * Class diagram (if OOP)\n\n3.3 DATA COLLECTION AND SOURCES (1-2 pages, approximately 500-800 words)\n- If applicable to your project:\n  * What data is needed?\n  * Where will data come from?\n  * Primary vs secondary data\n  * Data collection methods (surveys, interviews, sensors, logs, etc.)\n  * Sample size and selection criteria\n  * Data types and formats\n  * Data validation approaches\n\n- For system projects:\n  * Input data requirements\n  * Data sources and APIs\n  * Training data (if ML/AI project)\n  * Test data preparation\n\n3.4 IMPLEMENTATION APPROACH (2-3 pages, approximately 800-1200 words)\n- Development methodology:\n  * Waterfall, Agile, Scrum, Iterative, Prototyping\n  * Justify choice based on project nature\n\n- Implementation phases:\n  * Phase 1: Requirements analysis and planning\n  * Phase 2: System design\n  * Phase 3: Implementation/coding\n  * Phase 4: Testing and validation\n  * Phase 5: Deployment and documentation\n\n- For each phase, describe:\n  * Activities involved\n  * Expected outputs/deliverables\n  * Timeline estimates\n  * Resources needed\n\n- Development environment:\n  * IDEs and tools\n  * Version control\n  * Collaboration tools\n  * Testing frameworks\n\n- Coding standards and best practices\n\n3.5 TESTING AND VALIDATION (1-2 pages, approximately 500-800 words)\n- Testing strategy and approach\n- Types of testing to be performed:\n  * Unit testing\n  * Integration testing\n  * System testing\n  * User acceptance testing\n  * Performance testing\n  * Security testing (if applicable)\n\n- Testing tools and frameworks\n- Test case design approach\n- Validation methods:\n  * How will you verify objectives are met?\n  * Success criteria and metrics\n  * Performance benchmarks\n  * Comparison with existing solutions\n\n- Quality assurance procedures\n\n3.6 ETHICAL CONSIDERATIONS (1 page, approximately 400-500 words)\n- Privacy and data protection:\n  * How user data will be handled\n  * Consent mechanisms\n  * Data anonymization\n\n- Security measures:\n  * Data encryption\n  * Access control\n  * Secure storage\n\n- Compliance requirements:\n  * GDPR, data protection laws\n  * Industry standards\n  * Institutional guidelines\n\n- Ethical approval (if required)\n- Participant rights (if human subjects)\n- Intellectual property considerations\n\nOVERALL CHAPTER REQUIREMENTS:\n- Total length: 10-14 pages (approximately 4000-5500 words)\n- Use present and future tense (what you WILL do)\n- Be specific to {{ $('Extract Student Info').item.json.department }}\n- Include technical details appropriate for the field\n- Justify all methodological choices\n- Make it clear, detailed, and implementable\n- Someone should be able to replicate your approach\n- Use proper academic writing style\n- Number pages continuing from previous chapters\n- Use proper headings (3.1, 3.2, etc.)\n\nWRITING GUIDELINES:\n- Be specific, not vague (mention actual tools, technologies)\n- Explain WHY you chose each approach\n- Connect methodology back to objectives\n- Show understanding of methodological concepts\n- Include enough detail for replication\n- Sound like a knowledgeable {{ $('Extract Student Info').item.json.department }} student\n- Avoid generic or copy-paste methodology\n- Make it specific to YOUR project\n- Use technical terminology correctly\n- Explain trade-offs in design decisions\n\nIMPORTANT:\n- Methodology should directly support achieving the objectives\n- All methods should be feasible and realistic\n- Technical choices should be appropriate for {{ $('Extract Student Info').item.json.department }}\n- Timeline should be reasonable for the project scope\n- Testing approach should be comprehensive\n- Ethical considerations should be thorough\n\nReturn complete Chapter 3 text with clear section headings and proper formatting.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert in research methodology and {{ $('Extract Student Info').item.json.department }} project implementation. You understand various research approaches, design methodologies, and implementation strategies. You write clear, detailed methodology chapters that explain exactly how research will be conducted or systems will be built. You understand the difference between various research designs and can justify methodological choices.\n\n\n{\n  \"section4Content\": \"CHAPTER THREE\\nRESEARCH METHODOLOGY\\n\\n3.1 RESEARCH DESIGN\\n[1-2 pages describing research type, approach, strategy, and justification]\\n\\n3.2 SYSTEM/PROJECT ARCHITECTURE AND DESIGN\\n[2-3 pages covering system architecture, components, interactions, technologies, design considerations, and diagrams descriptions]\\n\\n3.3 DATA COLLECTION AND SOURCES\\n[1-2 pages on data requirements, sources, collection methods, types, and validation]\\n\\n3.4 IMPLEMENTATION APPROACH\\n[2-3 pages detailing development methodology, phases, activities, timeline, environment, and standards]\\n\\n3.5 TESTING AND VALIDATION\\n[1-2 pages on testing strategy, types, tools, validation methods, and success criteria]\\n\\n3.6 ETHICAL CONSIDERATIONS\\n[1 page covering privacy, security, compliance, and ethical approval]\",\n  \n  \"section4Title\": \"Section 4 - Chapter 3 (Research Methodology)\",\n  \n  \"section4Summary\": \"Generated Chapter 3 including Research Design, System Architecture, Data Collection, Implementation Approach, Testing, and Ethical Considerations for project: [Project Topic]\",\n  \n  \"methodology\": \"3.1 RESEARCH DESIGN\\n\\nThis study adopts a developmental research approach focused on designing and building an AI-based student performance prediction system. The research is applied in nature, aimed at solving the practical problem of early student failure identification. A quantitative methodology is employed, utilizing numerical academic data for analysis and prediction. The research strategy follows a design science approach, creating a technological artifact (the prediction system) to address an identified problem. This choice is justified by the nature of the objectives, which require system development and performance evaluation. The study combines software engineering practices with machine learning techniques to develop a functional, validated solution.\",\n  \n  \"implementationPlan\": \"3.4 IMPLEMENTATION APPROACH\\n\\nThe project follows an Agile iterative development methodology with five main phases:\\n\\nPhase 1: Requirements Analysis (2 weeks)\\n- Gather detailed system requirements from stakeholders\\n- Define functional and non-functional requirements\\n- Create user stories and acceptance criteria\\n- Output: Requirements specification document\\n\\nPhase 2: System Design (3 weeks)\\n- Design system architecture (3-tier architecture)\\n- Design database schema and relationships\\n- Create UI/UX wireframes and mockups\\n- Output: Design documentation and prototypes\\n\\nPhase 3: Implementation/Development (6 weeks)\\n- Set up development environment (Python 3.9, Django, PostgreSQL)\\n- Implement backend API endpoints\\n- Develop machine learning models (Random Forest, SVM)\\n- Build frontend interface using React\\n- Integrate components and modules\\n- Output: Working system prototype\\n\\nPhase 4: Testing and Validation (3 weeks)\\n- Conduct unit, integration, and system testing\\n- Perform model accuracy evaluation\\n- Execute user acceptance testing\\n- Output: Test reports and validated system\\n\\nPhase 5: Deployment and Documentation (2 weeks)\\n- Deploy system to cloud platform (AWS/Heroku)\\n- Prepare user manuals and technical documentation\\n- Conduct user training\\n- Output: Deployed system and complete documentation\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        16,
+        816
+      ],
+      "id": "4b7630f4-95bd-47d7-a251-2095faf61779",
+      "name": "AI - Generate Section 4 Chapter 3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "addfd69a-cee7-4a1d-93be-7eaec9fabb90",
+              "name": "section4Content",
+              "value": "={{ $json.output.section4Content }}",
+              "type": "string"
+            },
+            {
+              "id": "e2f0e280-5a45-4fdb-9572-0024041b57dc",
+              "name": "section4Title",
+              "value": "={{ $json.output.section4Title }}",
+              "type": "string"
+            },
+            {
+              "id": "ff40e0c1-ed8b-40b0-af76-b8b3daf7c40c",
+              "name": "section4Summary",
+              "value": "={{ $json.output.section4Summary }}",
+              "type": "string"
+            },
+            {
+              "id": "fc228df5-3e9f-47ee-bfc0-3f015da3a254",
+              "name": "methodology",
+              "value": "={{ $json.output.methodology }}",
+              "type": "string"
+            },
+            {
+              "id": "103ac07e-5bc8-4e02-bffd-db0849930b7d",
+              "name": "implementationPlan",
+              "value": "={{ $json.output.implementationPlan }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        816
+      ],
+      "id": "149a7d3b-6949-4ade-a1f7-7c83601d8048",
+      "name": "Parse Section 4 Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $('Parse Section 4 Content').item.json.section4Content;\nconst studentName = $('Extract Student Info').item.json.fullName;\nconst projectTopic = $('Extract Student Info').item.json.projectTopic;\nconst projectId = $('Extract Student Info').item.json.projectId;\nconst department = $('Extract Student Info').item.json.department;\n\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 4: CHAPTER THREE - RESEARCH METHODOLOGY\n\n═══════════════════════════════════════════════════════════════\n\n`;\n\nconst fullDocument = documentHeader + \"\\n\\n\" + content;\n\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_4_Chapter_3_Methodology_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content: base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 4\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        816
+      ],
+      "id": "abd89d8f-fa1d-436e-9613-46f7e2691186",
+      "name": "Create Section 4 Text File"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        816
+      ],
+      "id": "7c24d60e-0c43-4f7d-8864-c8562856b579",
+      "name": "Convert to File3"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 4/6] Chapter 3 - Methodology - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">     <div style=\"background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;\">         <h1 style=\"color: white; margin: 0;\">📄 Section 4 Ready!</h1>     </div>          <div style=\"padding: 30px;\">         <h2 style=\"color: #1e40af;\">Chapter 3: Methodology Complete</h2>                  <p>Hi {{ $('Extract Student Info').item.json.fullName }},</p>                  <p>Your <strong>Section 4 (Chapter 3 - Research Methodology)</strong> is ready!</p>                  <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">             <p style=\"margin: 0; color: #065f46;\"><strong>✓ This chapter includes:</strong></p>             <ul style=\"color: #065f46; margin: 10px 0;\">                 <li>3.1 Research Design</li>                 <li>3.2 System/Project Architecture and Design</li>                 <li>3.3 Data Collection and Sources</li>                 <li>3.4 Implementation Approach</li>                 <li>3.5 Testing and Validation</li>                 <li>3.6 Ethical Considerations</li>             </ul>         </div>                  <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #92400e;\"><strong>🔧 Customization Required:</strong></p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">                 <li>Verify all tools and technologies match what you'll actually use</li>                 <li>Adjust implementation timeline to your real schedule</li>                 <li>Add specific technical details for your implementation</li>                 <li>Include actual design diagrams if possible</li>                 <li>Customize testing approach to your project needs</li>                 <li>Update ethical considerations based on your data handling</li>             </ol>         </div>                  <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #1e40af;\"><strong>📊 Progress:</strong> 4 of 5 sections complete ✓</p>             <p style=\"margin: 10px 0 0 0; color: #1e40af;\">Final section: Chapters 4 & 5 (Results and Conclusion) - arriving soon!</p>         </div>                  <p><strong>Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}</p>                  <p>Best regards,<br><strong>Academic Project Generator</strong></p>     </div> </div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        816
+      ],
+      "id": "94b874aa-351c-4645-8f3b-3dd5d861287b",
+      "name": "Email Section 4 to Student",
+      "webhookId": "821be4dc-744a-4c7d-92ff-6cc31c26bc71",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        816
+      ],
+      "id": "43e6d5b5-f35f-407a-a444-b82202b84f7d",
+      "name": "Wait4",
+      "webhookId": "d141740c-210f-44ae-8dac-9d58c562804c"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        976
+      ],
+      "id": "41779bb3-8ca6-4d26-8bec-2c8611ccd9eb",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.item.json.output || $input.item.json.text || $input.item.json;\n\nlet fullContent = '';\nif (typeof aiResponse === 'string') {\n  fullContent = aiResponse;\n} else if (aiResponse.content) {\n  fullContent = aiResponse.content;\n} else if (aiResponse.output) {\n  fullContent = aiResponse.output;\n}\n\n// Extract implementation section\nconst implMatch = fullContent.match(/4\\.1\\s*SYSTEM IMPLEMENTATION[\\s\\S]*?(?=4\\.2|$)/i);\nconst implementation = implMatch ? implMatch[0] : '';\n\n// Extract challenges section\nconst challengesMatch = fullContent.match(/4\\.2\\s*CHALLENGES[\\s\\S]*?(?=4\\.3|$)/i);\nconst challenges = challengesMatch ? challengesMatch[0] : '';\n\n// Extract individual challenges\nconst challengesList = [];\nconst challengePattern = /\\*\\*Challenge\\s+\\d+:.*?\\*\\*([\\s\\S]*?)(?=\\*\\*Challenge\\s+\\d+:|\\*\\*|4\\.3|$)/gi;\nlet match;\nwhile ((match = challengePattern.exec(challenges)) !== null) {\n  challengesList.push(match[0].trim());\n}\n\n// Extract testing and results section\nconst resultsMatch = fullContent.match(/4\\.3\\s*TESTING AND RESULTS[\\s\\S]*?(?=4\\.4|$)/i);\nconst results = resultsMatch ? resultsMatch[0] : '';\n\n// Extract discussion section\nconst discussionMatch = fullContent.match(/4\\.4\\s*DISCUSSION OF RESULTS[\\s\\S]*?(?=CHAPTER 5|$)/i);\nconst discussion = discussionMatch ? discussionMatch[0] : '';\n\n// Extract technologies/tools mentioned\nconst technologies = [];\nconst techPattern = /(?:using|with|implemented in|built with|developed using)\\s+([A-Z][a-zA-Z0-9+#\\s.]+?)(?:\\s+(?:and|,|to|for|was|were)|\\.|$)/gi;\nwhile ((match = techPattern.exec(implementation)) !== null) {\n  const tech = match[1].trim();\n  if (tech.length < 30 && !technologies.includes(tech)) {\n    technologies.push(tech);\n  }\n}\n\n// Count test results mentioned\nconst testCount = (fullContent.match(/test\\s+case|unit\\s+test|integration\\s+test/gi) || []).length;\n\nreturn {\n  json: {\n    chapter4Content: fullContent,\n    implementation: implementation,\n    challenges: challenges,\n    challengesList: challengesList,\n    challengeCount: challengesList.length,\n    results: results,\n    discussion: discussion,\n    technologies: technologies,\n    testCount: testCount,\n    pageCount: 14, // Estimated 12-15 pages\n    chapterNumber: 4\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        1104
+      ],
+      "id": "c10c47a3-eb32-4500-b72c-1b63b00b5e52",
+      "name": "Parse Chapter 4 AI Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely get parsed Chapter 4 data with fallbacks\nlet implementation = $input.first().json.implementation;\nlet challenges = $input.first().json.challenges;\nlet results = $input.first().json.results;\nlet discussion = $input.first().json.discussion;\nlet chapter4Content = $input.first().json.chapter4Content;\n\ntry {\n  const data = $('Parse Chapter 4 Content').item.json;\n  implementation = data.implementation || '';\n  challenges = data.challenges || '';\n  results = data.results || '';\n  discussion = data.discussion || '';\n  chapter4Content = data.chapter4Content || '';\n} catch (error) {\n  // If node doesn't exist, try alternate node name or use empty strings\n  console.log('Parse Chapter 4 Content node not found, using fallbacks');\n}\n\n// Safely get student info with fallbacks\nlet studentName = 'Student Name';\nlet projectTopic = 'Project Topic';\nlet projectId = 'PROJECT_ID';\nlet department = 'Department';\n\ntry {\n  const studentInfo = $('Extract Student Info').item.json;\n  studentName = studentInfo.fullName || 'Student Name';\n  projectTopic = studentInfo.projectTopic || 'Project Topic';\n  projectId = studentInfo.projectId || 'PROJECT_ID';\n  department = studentInfo.department || 'Department';\n} catch (error) {\n  console.log('Extract Student Info node not found, using defaults');\n}\n\n// Create document header\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 4A: CHAPTER FOUR - IMPLEMENTATION AND RESULTS\n\n═══════════════════════════════════════════════════════════════\n`;\n\n// Academic structure — ORDER MATTERS\nconst fullDocument =\n  documentHeader +\n  \"\\n\\n\" +\n  \"CHAPTER 4: IMPLEMENTATION AND RESULTS\\n\\n\" +\n  \"4.1 SYSTEM IMPLEMENTATION\\n\" +\n  implementation +\n  \"\\n\\n\" +\n  \"4.2 CHALLENGES ENCOUNTERED AND SOLUTIONS\\n\" +\n  challenges +\n  \"\\n\\n\" +\n  \"4.3 TESTING AND RESULTS\\n\" +\n  results +\n  \"\\n\\n\" +\n  \"4.4 DISCUSSION OF RESULTS\\n\" +\n  discussion;\n\n// Encode\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_4A_Chapter_4_Implementation_Results_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 4,\n    chapterNumber: 4\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        1104
+      ],
+      "id": "45e3f0c2-c2ba-4125-a6ae-2fca4fa6a1b1",
+      "name": "Create Chapter 4 Text File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3eacb1b4-efec-44df-b953-92e6accfd866",
+              "name": "chapter4Content",
+              "value": "={{ $json.chapter4Content }}",
+              "type": "string"
+            },
+            {
+              "id": "700cf374-1db4-4676-b6c0-7338db8c6230",
+              "name": "implementation",
+              "value": "={{ $json.implementation }}",
+              "type": "string"
+            },
+            {
+              "id": "70f864e6-a853-41da-809e-c33bcc07e4c8",
+              "name": "challenges",
+              "value": "={{ $json.challenges }}",
+              "type": "string"
+            },
+            {
+              "id": "dd459fd3-7564-41e4-a5b7-6cfdf24c298f",
+              "name": "results",
+              "value": "={{ $json.results }}",
+              "type": "string"
+            },
+            {
+              "id": "4ead908c-f872-488a-8e7f-97d2fd5563d3",
+              "name": "discussion",
+              "value": "={{ $json.discussion }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        1104
+      ],
+      "id": "a9ffdd9c-4b3f-4232-8d83-0b047aef20f9",
+      "name": "Parse Section 5 Content"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        1104
+      ],
+      "id": "5052ee33-f9eb-4e45-9b2b-dccbb954d890",
+      "name": "Convert to File4"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 5/6] Chapter 4 - Implementation & Results - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">     <div style=\"background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); padding: 30px; text-align: center;\">         <h1 style=\"color: white; margin: 0; font-size: 28px;\">📊 Chapter 4 Ready!</h1>     </div>          <div style=\"padding: 30px; background-color: #ffffff;\">         <h2 style=\"color: #1e40af; margin-top: 0;\">Chapter 4: Implementation and Results</h2>                  <p style=\"font-size: 16px; line-height: 1.6;\">Hi <strong>{{ $('Extract Student Info').item.json.fullName }}</strong>,</p>                  <p style=\"font-size: 16px; line-height: 1.6;\">Your <strong>Chapter 4 (Implementation and Results)</strong> has been generated and is attached to this email!</p>                  <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">             <p style=\"margin: 0 0 10px 0; color: #065f46; font-weight: bold;\">✅ This chapter includes:</p>             <ul style=\"color: #065f46; margin: 10px 0; padding-left: 20px; line-height: 1.8;\">                 <li><strong>4.1 System Implementation</strong> - Detailed technical implementation steps</li>                 <li><strong>4.2 Challenges Encountered</strong> - Problems faced and solutions applied</li>                 <li><strong>4.3 Testing and Results</strong> - Comprehensive test outcomes and metrics</li>                 <li><strong>4.4 Discussion of Results</strong> - Critical analysis of findings</li>             </ul>         </div>                  <div style=\"background-color: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;\">             <p style=\"margin: 0 0 10px 0; color: #991b1b; font-weight: bold;\">⚠️ CRITICAL - Personalization Required:</p>             <ol style=\"color: #991b1b; margin: 10px 0; padding-left: 20px; line-height: 1.8;\">                 <li>Replace generic implementation details with <strong>YOUR actual implementation process</strong></li>                 <li>Add <strong>YOUR specific code snippets</strong> and technical details (5-15 lines each)</li>                 <li>Update challenges with <strong>REAL problems YOU faced</strong> during development</li>                 <li>Include <strong>YOUR actual test results</strong>, metrics, and performance data</li>                 <li>Add screenshots or diagrams of <strong>YOUR system interfaces</strong></li>                 <li>Ensure all technologies mentioned match what <strong>YOU actually used</strong></li>                 <li>Verify all objective achievements from Chapter 1 are addressed</li>             </ol>         </div>                  <div style=\"background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;\">             <p style=\"margin: 0 0 10px 0; color: #92400e; font-weight: bold;\">📋 What to Verify:</p>             <ul style=\"color: #92400e; margin: 10px 0; padding-left: 20px; line-height: 1.8;\">                 <li>All objectives from Chapter 1 are addressed in results section</li>                 <li>Test results clearly demonstrate project success</li>                 <li>Challenges described are realistic and solutions are clear</li>                 <li>Discussion connects findings back to literature review (Chapter 2)</li>                 <li>Technical depth is appropriate for {{ $('Extract Student Info').item.json.department }}</li>                 <li>Implementation details match your methodology (Chapter 3)</li>             </ul>         </div>                  <div style=\"background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;\">             <p style=\"margin: 0; color: #1e40af; font-size: 16px;\">                 <strong>📊 Progress:</strong> Chapter 4 Complete ✓             </p>             <p style=\"margin: 10px 0 0 0; color: #1e40af;\">                 <strong>Next:</strong> Chapter 5 (Conclusion and Recommendations) - arriving soon!             </p>         </div>                  <div style=\"background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #374151; font-size: 14px;\">                 <strong>📁 Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}             </p>             <p style=\"margin: 5px 0 0 0; color: #374151; font-size: 14px;\">                 <strong>📧 Email:</strong> {{ $('Extract Student Info').item.json.email }}             </p>         </div>                  <p style=\"font-size: 16px; line-height: 1.6; margin-top: 30px;\">             Best regards,<br>             <strong style=\"color: #7c3aed;\">Academic Project Generator Team</strong>         </p>     </div>          <div style=\"background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;\">         <p style=\"margin: 0; font-size: 12px; color: #6b7280; line-height: 1.5;\">             ⚠️ This is AI-generated draft content. You MUST personalize it with your actual implementation details, real test results, and genuine challenges before submission.         </p>         <p style=\"margin: 10px 0 0 0; font-size: 12px; color: #6b7280;\">             Add your code snippets, screenshots, and data to make it authentically yours!         </p>     </div> </div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        1104
+      ],
+      "id": "bfb71cf6-c55f-4ecb-9150-754053b1486a",
+      "name": "Email Section 5 to Student",
+      "webhookId": "4524d5a2-6d87-4942-9b3d-b2fafd59e5ac",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        1104
+      ],
+      "id": "cfc9f009-63f3-4eea-acf9-52fb747be178",
+      "name": "Wait5",
+      "webhookId": "5f84e464-ea22-49a5-917a-3282870d8155"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Chapter 5 (CONCLUSION AND RECOMMENDATIONS) for this final year project.\n\nPROJECT DETAILS:\nProject Topic: {{ $('Extract Student Info').item.json.projectTopic }}\nDepartment: {{ $('Extract Student Info').item.json.department }}\nStudent: {{ $('Extract Student Info').item.json.fullName }}\n\nCOMPLETE PROJECT CONTEXT:\nObjectives: {{ $('Parse Section 2 Content').item.json.objectives }}\nProblem Statement: {{ $('Parse Section 2 Content').item.json.problemStatement }}\nResearch Gap: {{ $('Parse Section 3 Content').item.json.researchGap }}\nImplementation Summary: {{ $('Parse Chapter 4 AI Output').item.json.implementation }}\nChallenges Faced: {{ $('Parse Chapter 4 AI Output').item.json.challengesList }}\nResults Achieved: {{ $('Parse Chapter 4 AI Output').item.json.results }}\nTechnologies Used: {{ $('Parse Chapter 4 AI Output').item.json.technologies }}\n\nGenerate a complete Chapter 5 with these subsections:\n\n═══════════════════════════════════════════════════════════════\nCHAPTER 5: CONCLUSION AND RECOMMENDATIONS\n═══════════════════════════════════════════════════════════════\n\n5.1 SUMMARY AND CONCLUSION (2-3 pages, approximately 800-1200 words)\n\n**Recap of the Research Problem:**\n- Restate the problem that motivated this research\n- Remind reader of the significance and urgency\n- Brief context from Chapter 1\n- Why this problem needed to be solved\n\n**Overview of Approach Taken:**\n- Brief summary of methodology used (from Chapter 3)\n- Key design decisions\n- Technologies and tools employed: {{ $('Parse Chapter 4 AI Output').item.json.technologies }}\n- Implementation strategy\n- Testing and validation approach\n\n**Achievement of Objectives:**\nFor each objective from Chapter 1, provide a clear statement:\n\n*Objective 1: [Restate objective]*\n✓ Achievement: [Explain how this was accomplished]\n✓ Evidence: [Reference specific results from Chapter 4]\n✓ Outcome: [What was delivered]\n\n*Objective 2: [Restate objective]*\n✓ Achievement: [Explain how this was accomplished]\n✓ Evidence: [Reference specific results]\n✓ Outcome: [What was delivered]\n\n[Continue for all objectives]\n\n**Key Findings and Results:**\n- Summarize major findings from Chapter 4\n- Highlight performance achievements\n- Note validation results\n- Quantify success where possible\n- Mention successful test outcomes\n\n**How Research Gap Was Addressed:**\n- Recall the gap identified in Chapter 2\n- Explain specifically how this project filled that gap\n- New knowledge or capability created\n- Improvement over existing solutions\n- Contribution to closing the gap\n\n**Resolution of Problem Statement:**\n- Return to the original problem statement\n- Explain how the implemented solution addresses it\n- Impact of the solution\n- Effectiveness demonstrated\n\n**Overall Project Assessment:**\n- Honest evaluation of project success\n- What worked exceptionally well\n- What met expectations\n- What fell short and why\n- Overall satisfaction with outcomes\n\n**Significance of the Work:**\n- Why this work matters\n- Who benefits from it\n- Broader implications\n- Long-term value\n\n5.2 CONTRIBUTIONS TO KNOWLEDGE AND INDUSTRY (2 pages, approximately 700-900 words)\n\n**Theoretical Contributions:**\n\n*Advancement of Knowledge in {{ $('Extract Student Info').item.json.department }}:*\n- New insights generated about [topic area]\n- Validation or challenge of existing theories/approaches\n- Novel methodologies or techniques introduced\n- Enhanced understanding of [specific aspect]\n- Addition to academic literature\n\n*Conceptual Contributions:*\n- New models or frameworks proposed\n- Innovative approaches to problem-solving\n- Creative applications of existing techniques\n- Synthesis of disparate concepts\n- Theoretical implications of findings\n\n*Research Methodology Contributions:*\n- Novel research or development approaches\n- Improvements to existing methodologies\n- New ways of testing or validation\n- Replicable procedures established\n\n**Practical/Industry Contributions:**\n\n*Immediate Applications:*\n- Ready-to-use system/tool/solution delivered\n- Specific problems solved\n- Processes improved or automated\n- Cost savings potential\n- Efficiency gains demonstrated\n\n*Industry Relevance:*\n- How [specific industry] can benefit\n- Real-world implementation potential\n- Scalability for commercial use\n- Market opportunities\n- Competitive advantages offered\n\n*Technological Contributions:*\n- New features or capabilities developed\n- Integration of technologies in novel ways\n- Performance improvements achieved\n- Technical innovations introduced\n- Open-source contributions (if applicable)\n\n**Beneficiaries of This Work:**\n\n*Academic Community:*\n- Future researchers in {{ $('Extract Student Info').item.json.department }}\n- Students learning about [topic area]\n- Educators teaching related subjects\n- Basis for further research\n\n*Industry Professionals:*\n- [Specific profession] practitioners\n- Companies in [specific sector]\n- Technology developers\n- System administrators/users\n\n*End Users:*\n- Who will directly use this solution\n- How their experience improves\n- Problems solved for them\n- Benefits they receive\n\n*Society at Large:*\n- Broader social impact\n- Environmental considerations (if applicable)\n- Economic implications\n- Quality of life improvements\n\n**Potential Impact Metrics:**\n- Estimated time savings\n- Cost reduction potential\n- Improved accuracy/performance rates\n- User base potential\n- Scalability projections\n\n5.3 LIMITATIONS AND CONSTRAINTS (1-2 pages, approximately 500-700 words)\n\n**Acknowledge Project Limitations:**\n\nDiscuss 5-7 specific limitations experienced:\n\n*1. [Limitation Category]:*\n- What was limited\n- How it affected the project\n- Why it couldn't be overcome\n- Impact on results or scope\n\nExamples:\n- Time constraints (academic calendar limitations)\n- Resource limitations (budget, equipment, access)\n- Technical limitations (tool capabilities, expertise level)\n- Data limitations (availability, quality, quantity, access)\n- Scope boundaries (what was intentionally excluded)\n- Methodological limitations (approach constraints)\n- Generalizability limits (specific context only)\n\n**Validity Considerations:**\n- Factors that may affect result interpretation\n- Assumptions made and their implications\n- External validity concerns\n- Internal validity considerations\n\n**What Was Not Achieved:**\n- Original aspirations not fully realized\n- Features planned but not implemented\n- Tests not completed\n- Objectives partially met\n\n**Honest Reflection:**\n- Realistic assessment without undermining value\n- Professional acknowledgment of constraints\n- Lessons about project scope management\n- What would be different with more resources/time\n\n5.4 RECOMMENDATIONS (2-3 pages, approximately 900-1300 words)\n\nProvide specific, actionable recommendations in these categories:\n\n**A. Recommendations for System Improvement (4-5 items):**\n\n*Recommendation 1: [Clear, Specific Title]*\n- Current limitation: [What needs improvement]\n- Proposed enhancement: [Specific improvement]\n- Expected benefit: [What this would achieve]\n- Implementation approach: [How to do it]\n- Priority: [High/Medium/Low]\n\n[Continue with more system improvements]\n\nExamples:\n- Implement additional features\n- Improve performance/optimization\n- Enhance user interface\n- Add security measures\n- Increase scalability\n- Improve data handling\n\n**B. Recommendations for Future Research (4-5 items):**\n\n*Recommendation 1: [Research Direction]*\n- Research gap identified: [What's still unknown]\n- Proposed investigation: [What to study]\n- Potential methodology: [How to study it]\n- Expected contribution: [What would be learned]\n- Relevance: [Why it matters]\n\n[Continue with more research directions]\n\nExamples:\n- Extension to other domains\n- Application to different contexts\n- Investigation of related problems\n- Testing with larger datasets\n- Comparative studies needed\n- Longitudinal studies\n- Advanced techniques to explore\n\nC. Recommendations for Practitioners/Industry (3-4 items):\nRecommendation 1: [Practical Application]\n\nContext: [Where/when to apply]\nImplementation steps: [How to implement]\nExpected outcomes: [Benefits to achieve]\nConsiderations: [Things to watch for]\n\nExamples:\n\nAdoption strategies\nIntegration approaches\nBest practices for implementation\nTraining recommendations\nChange management advice\nResource allocation suggestions\n\nD. Recommendations for Academia (2-3 items):\nExamples:\n\nCurriculum implications\nTeaching approaches\nLaboratory setups\nStudent project ideas\nResearch collaboration opportunities\nResource development needs\n\nE. Scalability and Expansion Recommendations (2-3 items):\nRecommendation: [Scale-up Strategy]\n\nCurrent scale: [Present capabilities]\nExpansion proposal: [Larger-scale vision]\nRequirements: [What would be needed]\nChallenges anticipated: [Obstacles to overcome]\nPotential impact: [Benefits at scale]\n\nExamples:\n\nCloud deployment strategies\nMulti-user/multi-tenant architectures\nEnterprise-level features\nGeographic expansion\nCross-platform support\nMobile applications\n\nF. Technology Evolution Recommendations (2-3 items):\nExamples:\n\nEmerging technologies to incorporate\nFramework upgrades\nAlternative architectures to explore\nModern tools to leverage\nPerformance optimization techniques\n\nPrioritization of Recommendations:\n\nGroup into immediate (0-6 months), short-term (6-12 months), long-term (1+ years)\nIndicate relative importance\nConsider dependencies\nResource requirements for each\n\nImplementation Feasibility:\n\nTechnical feasibility assessment\nResource requirements\nSkill requirements\nTimeline estimates\nRisk considerations\n\n5.5 FUTURE WORK (1-2 pages, approximately 500-800 words)\nImmediate Next Steps:\n\nWhat should be done first to advance this work\nQuick wins available\nLow-hanging fruit\nCritical improvements needed\n\nShort-term Future Work (6-12 months):\n\nNatural extensions of current work\nImprovements that build on foundation\nAdditional features to implement\nEnhanced testing to conduct\nUser feedback to gather and act on\n\nLong-term Vision (1-3 years):\n\nMajor expansions possible\nTransformative enhancements\nNew directions to explore\nIntegration opportunities\nEcosystem development\n\nResearch Trajectories:\n\nFollow-on research questions\nUnexplored areas discovered\nNew hypotheses generated\nRelated domains to investigate\nInterdisciplinary opportunities\n\nCollaboration Opportunities:\n\nPotential research partnerships\nIndustry collaborations\nOpen-source community engagement\nCross-institutional projects\nInternational cooperation possibilities\n\nInnovation Opportunities:\n\nNovel applications of this work\nCreative extensions\nDisruptive possibilities\nMarket opportunities\nPatent potential (if applicable)\n\n5.6 FINAL CONCLUSION (1-2 pages, approximately 500-700 words)\nWrite a powerful, memorable closing:\nRestatement of Core Contribution:\n\nIn one powerful paragraph, state what was achieved\nThe essential value created\nThe problem solved\nThe knowledge advanced\n\nProject Success Summary:\n\nConfident statement of successful completion\nKey achievements highlighted\nObjectives fulfilled\nQuality of work delivered\n\nSignificance Emphasis:\n\nWhy this work matters NOW\nRelevance to current challenges in {{ $('Extract Student Info').item.json.department }}\nTimeliness of the contribution\nAddressing contemporary needs\n\nImpact Statement:\n\nWho benefits immediately\nLong-term beneficiaries\nRipple effects of this work\nPotential for lasting impact\n\nPersonal Reflection (Professional Tone):\n\nWhat made this project valuable\nSkills and knowledge gained\nChallenges that led to growth\nPride in accomplishment\nGratitude for opportunity\n\nForward-Looking Perspective:\n\nOptimism about future directions\nExcitement about possibilities\nCall to action (implicit)\nVision for how this work continues\n\nClosing Statement:\n\nMemorable final sentence\nConfident and impactful\nTies everything together\nLeaves reader with clear understanding of value\nProfessional yet inspiring tone\n\nExample closing approaches:\n\n\"This project demonstrates that [key achievement] is not only possible but practical, paving the way for [future impact].\"\n\"By successfully [main accomplishment], this work contributes meaningfully to [field], offering both immediate solutions and a foundation for future innovation.\"\n\"The journey from [problem] to [solution] has yielded valuable insights and a functional system that addresses real needs in [domain], with promising avenues for continued development.\"\n\nOVERALL CHAPTER 5 REQUIREMENTS:\n\nTotal length: 10-14 pages (approximately 4500-6000 words)\nUse past tense for what was done\nUse present/future tense for recommendations and future work\nBe specific and actionable in recommendations\nMaintain confident yet humble tone\nReference all previous chapters appropriately\nNumber pages continuing from Chapter 4\nUse proper headings (5.1, 5.2, 5.3, 5.4, 5.5, 5.6)\nWrite specifically for {{ $('Extract Student Info').item.json.department }}\nEnd on a strong, memorable note\n\nWRITING GUIDELINES:\n\nBe concise yet comprehensive\nAvoid repetition from earlier chapters\nSynthesize rather than summarize\nShow maturity and critical thinking\nBalance optimism with realism\nMake recommendations specific and actionable\nDemonstrate deep understanding of field\nShow awareness of broader implications\nWrite with confidence and authority\nEnd strongly and memorably\n\nCRITICAL REQUIREMENTS:\n\nAll conclusions must be supported by Chapter 4 results\nRecommendations must be realistic and relevant\nFuture work must be feasible and valuable\nContributions must be clearly articulated\nFinal conclusion must be impactful\nOverall tone must be professional and academic\nMust leave examiner/reader impressed\n\nReturn complete Chapter 5 text with clear section headings, proper formatting, and strong, impactful writing that brings the entire project to a satisfying and impressive conclusion.",
+        "options": {
+          "systemMessage": "=You are an expert academic writer specializing in writing compelling, comprehensive conclusions for {{ $('Extract Student Info').item.json.department }} research projects. You understand how to synthesize findings, articulate contributions, provide meaningful recommendations, and write impactful closing statements that leave lasting impressions on readers and examiners."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1232,
+        1104
+      ],
+      "id": "8b042a9e-e8ee-49eb-8855-c18dee888033",
+      "name": "AI - Generate Chapter 5 Conclusion"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate Chapter 4 (IMPLEMENTATION AND RESULTS) for this final year project.\n\nPROJECT DETAILS:\nProject Topic: {{ $('Extract Student Info').item.json.projectTopic }}\nDepartment: {{ $('Extract Student Info').item.json.department }}\nStudent: {{ $('Extract Student Info').item.json.fullName }}\n\nFULL PROJECT CONTEXT:\nObjectives: {{ $('Parse Section 2 Content').item.json.objectives }}\nProblem Statement: {{ $('Parse Section 2 Content').item.json.problemStatement }}\nResearch Gap: {{ $('Parse Section 3 Content').item.json.researchGap }}\nMethodology Used: {{ $('Parse Section 4 Content').item.json.methodology }}\nImplementation Plan: {{ $('Parse Section 4 Content').item.json.implementationPlan }}\n\n\nGenerate a complete Chapter 4 with these subsections:\n\n═══════════════════════════════════════════════════════════════\nCHAPTER 4: IMPLEMENTATION AND RESULTS\n═══════════════════════════════════════════════════════════════\n\n4.1 SYSTEM IMPLEMENTATION (3-4 pages, approximately 1200-1600 words)\n\nProvide comprehensive implementation details:\n\n**Development Environment Setup:**\n- Operating system and version used\n- Development tools and IDEs installed\n- Version control setup (Git, GitHub, etc.)\n- Package managers and dependencies\n- Database installation and configuration\n- Server setup (local/cloud)\n\n**System Architecture Implementation:**\n- How the architecture from Chapter 3 was realized\n- Component-by-component implementation\n- Module structure and organization\n- Directory structure and file organization\n- Configuration files created\n\n**Core Functionality Implementation:**\nFor each major module/component:\n- Module name and purpose\n- Key functions/methods implemented\n- Input/output specifications\n- Error handling approaches\n- Integration with other modules\n\n**Database Implementation (if applicable):**\n- Database schema created\n- Tables and relationships implemented\n- Data models and entities\n- Indexes and constraints\n- Sample SQL queries or ORM usage\n\n**User Interface Development (if applicable):**\n- Frontend framework used\n- Page/screen structure\n- Navigation implementation\n- Forms and input validation\n- Responsive design approach\n- User experience considerations\n\n**Backend/API Development (if applicable):**\n- API endpoints created\n- Request/response formats\n- Authentication/authorization implementation\n- Data processing logic\n- Third-party API integrations\n\n**Key Algorithms Implemented:**\n- Algorithm name and purpose\n- Pseudocode or code snippets for critical sections\n- Input parameters and output\n- Time/space complexity considerations\n- Optimization techniques used\n\n**Code Quality Measures:**\n- Coding standards followed\n- Documentation approach\n- Code commenting practices\n- Modular design implementation\n- Reusability considerations\n\nBe specific to {{ $('Extract Student Info').item.json.department }} - include:\n- Actual technologies used (specific versions)\n- Real code snippets (5-15 lines for key functions)\n- Technical decisions and justifications\n- Screenshots or detailed descriptions of interfaces\n- Deployment process (if applicable)\n\n4.2 CHALLENGES ENCOUNTERED AND SOLUTIONS (2-3 pages, approximately 800-1200 words)\n\nDocument 6-8 significant challenges faced during implementation. For each:\n\n**Challenge [Number]: [Clear Title]**\n\n*Nature of the Problem:*\n- Detailed description of what went wrong\n- When in the development process it occurred\n- Technical specifics of the issue\n- Why it was significant\n\n*Impact on Project:*\n- Time lost or delays caused\n- Scope affected\n- Resources required\n- Objectives at risk\n\n*Solution Implemented:*\n- Approach taken to solve it\n- Alternative solutions considered\n- Why this solution was chosen\n- Steps taken to implement solution\n- Tools or techniques used\n\n*Lessons Learned:*\n- What you learned from this experience\n- How you would approach it differently\n- Prevention strategies for future\n- Skills or knowledge gained\n\n**Challenge Categories to Cover:**\n1. Technical/coding challenges (bugs, logic errors, integration issues)\n2. Design challenges (architecture decisions, scalability issues)\n3. Resource challenges (time constraints, tool limitations)\n4. Data challenges (data quality, availability, processing)\n5. Testing challenges (test case failures, edge cases)\n6. Deployment challenges (environment differences, configuration)\n7. Performance challenges (speed, memory, optimization)\n8. Compatibility challenges (browser, OS, device differences)\n\n**Writing Approach:**\n- Be honest and specific\n- Show problem-solving skills\n- Demonstrate technical understanding\n- Explain decision-making process\n- Maintain professional tone\n- Focus on learning and growth\n\n4.3 TESTING AND RESULTS (3-4 pages, approximately 1200-1600 words)\n\nPresent comprehensive testing results:\n\n**Testing Environment:**\n- Hardware specifications used for testing\n- Software environment (OS, browsers, devices)\n- Test data sources and size\n- Testing tools and frameworks used\n\n**Unit Testing Results:**\n- Number of unit tests created\n- Test coverage percentage\n- Modules/functions tested\n- Pass/fail summary\n- Example test cases and results\n- Critical functions validated\n\n**Integration Testing Results:**\n- Components tested together\n- Integration points verified\n- Data flow testing results\n- API testing results (if applicable)\n- Database integration testing\n\n**System Testing Results:**\n- End-to-end functionality tests\n- Test scenarios executed\n- User workflow testing\n- Input validation testing\n- Error handling verification\n\n**Performance Testing Results:**\n- Response time measurements\n- Load testing results (if applicable)\n- Resource utilization (CPU, memory, network)\n- Scalability testing outcomes\n- Bottlenecks identified\n- Performance benchmarks met/missed\n\n**Usability Testing (if applicable):**\n- User testing methodology\n- Number of users involved\n- Tasks tested\n- User feedback summary\n- Usability issues identified\n- User satisfaction metrics\n\n**Functional Results:**\nFor each objective from Chapter 1:\n- Objective statement\n- How it was tested\n- Results achieved\n- Success criteria met (Yes/No)\n- Evidence of completion\n\n**Quantitative Results:**\nPresent measurable outcomes:\n- Accuracy rates (if applicable)\n- Success rates\n- Error rates\n- Performance metrics\n- Comparative data (before/after, your solution vs existing)\n\nDescribe results using tables and figures:\n- Table 4.1: Test Case Results Summary\n- Table 4.2: Performance Metrics\n- Figure 4.1: System Response Times\n- Figure 4.2: User Satisfaction Scores\n(Describe what these would contain)\n\n**Validation Results:**\n- How objectives were validated\n- Comparison with success criteria\n- Benchmark comparisons\n- Expected vs actual results\n\n4.4 DISCUSSION OF RESULTS (2-3 pages, approximately 800-1200 words)\n\nAnalyze and interpret the results:\n\n**Achievement of Objectives:**\nFor each objective:\n- Restate the objective\n- Present evidence of achievement\n- Discuss level of success (fully/partially/not achieved)\n- Explain any shortfalls\n\n**Interpretation of Results:**\n- What do the results mean?\n- How do they answer the research question?\n- Are results as expected? Why or why not?\n- Unexpected findings and possible explanations\n\n**Comparison with Existing Solutions:**\n- How does your solution compare to existing approaches?\n- What are the improvements?\n- What are the trade-offs?\n- Competitive advantages identified\n\n**Alignment with Literature:**\n- How do results compare with literature review findings?\n- Confirmation or contradiction of previous research\n- Novel contributions identified\n- How results fit into existing body of knowledge\n\n**Performance Analysis:**\n- Evaluation of system performance\n- Strengths of the implementation\n- Weaknesses or limitations observed\n- Areas of excellence\n\n**Addressing the Research Gap:**\n- How results fill the gap identified in Chapter 2\n- Evidence that problem statement was addressed\n- Contribution to solving the stated problem\n\n**Quality Assessment:**\n- Overall quality of the solution\n- Robustness and reliability\n- Maintainability considerations\n- Security considerations (if applicable)\n\n**Limitations of Results:**\n- Constraints that affected results\n- Scope limitations impact\n- Technical limitations encountered\n- Generalizability of findings\n- Factors that could affect interpretation\n\n**Statistical Significance (if applicable):**\n- Statistical tests performed\n- Confidence levels\n- Margin of error\n- Significance of findings\n\n**Critical Analysis:**\n- Honest assessment of what worked well\n- What could have been done better\n- Impact of design decisions\n- Theoretical vs practical outcomes\n\nOVERALL CHAPTER 4 REQUIREMENTS:\n- Total length: 12-15 pages (approximately 5000-6500 words)\n- Use past tense (what WAS done, what WAS found)\n- Be specific and detailed with technical information\n- Include numerical data and metrics\n- Reference objectives throughout\n- Use tables and figures extensively (describe them)\n- Maintain academic writing style\n- Number pages continuing from Chapter 3\n- Use proper headings (4.1, 4.2, 4.3, 4.4)\n- Include code snippets where relevant (5-15 lines)\n- Be specific to {{ $('Extract Student Info').item.json.department }}\n\nWRITING GUIDELINES:\n- Write in active voice where appropriate\n- Use technical terminology correctly\n- Be precise with measurements and results\n- Support claims with evidence\n- Compare quantitatively when possible\n- Explain technical concepts clearly\n- Balance depth with readability\n- Show critical thinking in analysis\n- Connect back to Chapter 1 objectives\n- Reference methodology from Chapter 3\n- Sound like a knowledgeable {{ $('Extract Student Info').item.json.department }} professional\n\nCRITICAL REQUIREMENTS:\n- All results must be plausible for {{ $('Extract Student Info').item.json.projectTopic }}\n- Testing approach must match methodology from Chapter 3\n- Challenges should be realistic and relevant\n- Discussion should demonstrate deep understanding\n- Results should clearly show objective achievement\n- Implementation details should be technically sound\n- Analysis should be critical and balanced\n\nReturn complete Chapter 4 text with clear section headings, proper formatting, and appropriate technical depth for {{ $('Extract Student Info').item.json.department }}.",
+        "options": {
+          "systemMessage": "=You are an expert in {{ $('Extract Student Info').item.json.department }} project implementation and results presentation. You write detailed, technical chapters that explain implementation processes, present results clearly, and analyze findings critically. You understand how to document technical work, present data, and discuss results in an academic context.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        816
+      ],
+      "id": "0ef35b0a-4ec0-44fa-a3e0-4aefd0a4ea01",
+      "name": "AI - Generate Chapter 4 Implementation Results"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        1248
+      ],
+      "id": "e0089c92-2155-4728-a8d0-a703844ce2d2",
+      "name": "Google Gemini Chat Model5",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DY4TpjBf1256KLx0",
+          "name": "web"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.item.json.output || $input.item.json.text || $input.item.json;\n\nlet fullContent = '';\nif (typeof aiResponse === 'string') {\n  fullContent = aiResponse;\n} else if (aiResponse.content) {\n  fullContent = aiResponse.content;\n} else if (aiResponse.output) {\n  fullContent = aiResponse.output;\n}\n\n// Extract summary section\nconst summaryMatch = fullContent.match(/5\\.1\\s*SUMMARY AND CONCLUSION[\\s\\S]*?(?=5\\.2|$)/i);\nconst summary = summaryMatch ? summaryMatch[0] : '';\n\n// Extract contributions section\nconst contribMatch = fullContent.match(/5\\.2\\s*CONTRIBUTIONS[\\s\\S]*?(?=5\\.3|$)/i);\nconst contributions = contribMatch ? contribMatch[0] : '';\n\n// Extract limitations section\nconst limMatch = fullContent.match(/5\\.3\\s*LIMITATIONS[\\s\\S]*?(?=5\\.4|$)/i);\nconst limitations = limMatch ? limMatch[0] : '';\n\n// Extract recommendations section\nconst recsMatch = fullContent.match(/5\\.4\\s*RECOMMENDATIONS[\\s\\S]*?(?=5\\.5|$)/i);\nconst recommendations = recsMatch ? recsMatch[0] : '';\n\n// Extract future work section\nconst futureMatch = fullContent.match(/5\\.5\\s*FUTURE WORK[\\s\\S]*?(?=5\\.6|$)/i);\nconst futureWork = futureMatch ? futureMatch[0] : '';\n\n// Extract final conclusion\nconst finalMatch = fullContent.match(/5\\.6\\s*FINAL CONCLUSION[\\s\\S]*$/i);\nconst finalConclusion = finalMatch ? finalMatch[0] : '';\n\n// Extract all recommendations into a list\nconst recsList = [];\nconst recsPattern = /\\*Recommendation\\s+\\d+:([^\\*]+?)(?=\\*Recommendation|\\*\\*|5\\.|$)/gis;\nlet match;\nwhile ((match = recsPattern.exec(recommendations)) !== null) {\n  const recText = match[1].trim();\n  if (recText.length > 50) {\n    recsList.push(recText);\n  }\n}\n\n// Categorize recommendations\nconst systemImprovements = [];\nconst futureResearch = [];\nconst practitionerRecs = [];\n\nrecommendations.split(/\\*\\*[A-Z]\\./).forEach(section => {\n  if (section.includes('System Improvement')) {\n    systemImprovements.push(section.trim());\n  } else if (section.includes('Future Research')) {\n    futureResearch.push(section.trim());\n  } else if (section.includes('Practitioners')) {\n    practitionerRecs.push(section.trim());\n  }\n});\n\nreturn {\n  json: {\n    chapter5Content: fullContent,\n    summary: summary,\n    contributions: contributions,\n    limitations: limitations,\n    recommendations: recommendations,\n    futureWork: futureWork,\n    finalConclusion: finalConclusion,\n    recommendationsList: recsList,\n    recommendationCount: recsList.length,\n    systemImprovements: systemImprovements,\n    futureResearchAreas: futureResearch,\n    practitionerRecommendations: practitionerRecs,\n    chapterNumber: 5\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        1104
+      ],
+      "id": "0150c37b-42aa-4d48-b62e-dddf72146d5b",
+      "name": "Parse Chapter 5 AI Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get parsed Chapter 5 data\nconst data = $('Parse Chapter 5 Content').item.json;\nconst summary = data.summary || '';\nconst contributions = data.contributions || '';\nconst limitations = data.limitations || '';\nconst recommendations = data.recommendations || '';\nconst futureWork = data.futureWork || '';\n\n// Get student info\nconst studentName = $('Extract Student Info').item.json.fullName;\nconst projectTopic = $('Extract Student Info').item.json.projectTopic;\nconst projectId = $('Extract Student Info').item.json.projectId;\nconst department = $('Extract Student Info').item.json.department;\n\n// Create document header\nconst documentHeader = `\n═══════════════════════════════════════════════════════════════\n${projectTopic.toUpperCase()}\n═══════════════════════════════════════════════════════════════\n\nBy: ${studentName}\nDepartment: ${department}\nProject ID: ${projectId}\n\nSECTION 4B: CHAPTER FIVE - CONCLUSION AND RECOMMENDATIONS\n\n═══════════════════════════════════════════════════════════════\n`;\n\n// Academic structure — ORDER MATTERS\nconst fullDocument =\n  documentHeader +\n  \"\\n\\n\" +\n  \"CHAPTER 5: CONCLUSION AND RECOMMENDATIONS\\n\\n\" +\n  \"5.1 SUMMARY AND CONCLUSION\\n\" +\n  summary +\n  \"\\n\\n\" +\n  \"5.2 CONTRIBUTIONS TO KNOWLEDGE AND INDUSTRY\\n\" +\n  contributions +\n  \"\\n\\n\" +\n  \"5.3 LIMITATIONS AND CONSTRAINTS\\n\" +\n  limitations +\n  \"\\n\\n\" +\n  \"5.4 RECOMMENDATIONS\\n\" +\n  recommendations +\n  \"\\n\\n\" +\n  \"5.5 FUTURE WORK\\n\" +\n  futureWork;\n\n// Encode\nconst base64Content = Buffer.from(fullDocument).toString('base64');\n\nreturn {\n  json: {\n    fileName: `Section_4B_Chapter_5_Conclusion_${projectId}.txt`,\n    fileContent: fullDocument,\n    base64Content,\n    mimeType: 'text/plain',\n    sectionNumber: 5,\n    chapterNumber: 5\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        1104
+      ],
+      "id": "dce6da38-2444-42e7-a2c1-9c2a313dfb52",
+      "name": "Create Chapter 5 Text File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ed34caa2-a080-4d2f-a751-32f0e7331da5",
+              "name": "chapter5Content",
+              "value": "={{ $json.chapter5Content }}",
+              "type": "string"
+            },
+            {
+              "id": "d1c528e4-5c42-4e56-bc2e-f4ef795dac9c",
+              "name": "summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "4fbc5649-8275-4d72-897e-eeaff533adc9",
+              "name": "contributions",
+              "value": "={{ $json.contributions }}",
+              "type": "string"
+            },
+            {
+              "id": "864f4859-08d1-450d-a68c-425a3772875f",
+              "name": "limitations",
+              "value": "={{ $json.limitations }}",
+              "type": "string"
+            },
+            {
+              "id": "703cdc21-3bce-4897-9657-d637530ddace",
+              "name": "recommendations",
+              "value": "={{ $json.recommendations }}",
+              "type": "string"
+            },
+            {
+              "id": "a5cc0d2c-4992-4cb6-b501-45b6ae506c1d",
+              "name": "futureWork",
+              "value": "={{ $json.futureWork }}",
+              "type": "string"
+            },
+            {
+              "id": "4fa30115-57d2-4a77-9cbb-2172b7295161",
+              "name": "finalConclusion",
+              "value": "={{ $json.finalConclusion }}",
+              "type": "string"
+            },
+            {
+              "id": "91890941-77e3-4a6e-81ac-3a6e9b1741fc",
+              "name": "recommendationsList",
+              "value": "={{ $json.recommendationsList }}",
+              "type": "array"
+            },
+            {
+              "id": "45894c52-8396-4db9-853f-8bcef55a6d10",
+              "name": "systemImprovements",
+              "value": "={{ $json.systemImprovements }}",
+              "type": "array"
+            },
+            {
+              "id": "c737a26a-6a84-476b-8a0b-0e772e639b05",
+              "name": "futureResearchAreas",
+              "value": "={{ $json.futureResearchAreas }}",
+              "type": "array"
+            },
+            {
+              "id": "4f389f30-20d4-4c18-b4e8-f817ebfc853f",
+              "name": "practitionerRecommendations",
+              "value": "={{ $json.practitionerRecommendations }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1696,
+        1104
+      ],
+      "id": "88e4b4ce-870a-445a-887c-71a294d1e1b8",
+      "name": "Parse Chapter 5 Content"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64Content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        1104
+      ],
+      "id": "7b32a820-e7e4-4d79-b6e6-34e0543e632b",
+      "name": "Convert to File5"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Student Info').item.json.email }}",
+        "subject": "=[Section 6/6] Chapter 5 - Conclusion - {{ $('Extract Student Info').item.json.projectTopic }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">     <div style=\"background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;\">         <h1 style=\"color: white; margin: 0;\">📄 Chapter 5 Ready!</h1>     </div>          <div style=\"padding: 30px;\">         <h2 style=\"color: #1e40af;\">Chapter 5: Conclusion and Recommendations Complete</h2>                  <p>Hi {{ $('Extract Student Info').item.json.fullName }},</p>                  <p>Your <strong>Chapter 5 (Conclusion and Recommendations)</strong> is ready and attached!</p>                  <div style=\"background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;\">             <p style=\"margin: 0; color: #065f46;\"><strong>✓ This chapter includes:</strong></p>             <ul style=\"color: #065f46; margin: 10px 0;\">                 <li>5.1 Summary and Conclusion</li>                 <li>5.2 Contributions to Knowledge and Industry</li>                 <li>5.3 Limitations and Constraints</li>                 <li>5.4 Recommendations (detailed and actionable)</li>                 <li>5.5 Future Work</li>             </ul>         </div>                  <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #92400e;\"><strong>⚠️ Personalization Required:</strong></p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #92400e;\">                 <li>Verify all objectives are correctly marked as achieved</li>                 <li>Ensure contributions accurately reflect YOUR work</li>                 <li>Add specific, realistic recommendations</li>                 <li>Personalize limitations based on YOUR experience</li>                 <li>Make future work suggestions feasible and relevant</li>                 <li>Strengthen the final conclusion with your voice</li>             </ol>         </div>                  <div style=\"background-color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #065f46;\"><strong>🎉 PROJECT COMPLETE!</strong></p>             <p style=\"margin: 10px 0 0 0; color: #065f46;\">You now have all 5 sections of your project. Next steps:</p>             <ol style=\"margin: 10px 0; padding-left: 20px; color: #065f46;\">                 <li>Review all sections thoroughly</li>                 <li>Personalize with your actual work</li>                 <li>Add proper citations and references</li>                 <li>Format according to your school's guidelines</li>                 <li>Add diagrams, charts, and figures</li>                 <li>Proofread for consistency</li>             </ol>         </div>                  <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">             <p style=\"margin: 0; color: #1e40af;\"><strong>📊 Final Progress:</strong> 5 of 5 sections complete ✓✓✓</p>             <p style=\"margin: 10px 0 0 0; color: #1e40af;\">All chapters delivered successfully!</p>         </div>                  <p><strong>Project ID:</strong> {{ $('Extract Student Info').item.json.projectId }}</p>                  <p>Best regards,<br><strong>Academic Project Generator</strong></p>     </div>          <div style=\"background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;\">         <p style=\"margin: 0;\">Remember: Review, personalize, and add your unique touch before submission!</p>     </div> </div>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2256,
+        1104
+      ],
+      "id": "5d9d94b6-cae2-4e10-a0a0-12469ff3b792",
+      "name": "Email Chapter 5 to Student",
+      "webhookId": "76e177ea-04bf-40e0-9bb0-f803b88d7432",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \n\"section4Content\": \"string\", \"section4Title\": \"string\", \"section4Summary\": \"string\", \n\"methodology\": \"string\", \"implementationPlan\": \"string\" \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        944
+      ],
+      "id": "544881ce-f164-4c80-9f3d-1e4796371ca8",
+      "name": "Structured Output Parser3"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Student Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Student Info": {
+      "main": [
+        [
+          {
+            "node": "Context Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context Builder": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Node - Section 1 (Preliminaries)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Node - Section 1 (Preliminaries)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Node - Section 1 (Preliminaries)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Node - Section 1 (Preliminaries)": {
+      "main": [
+        [
+          {
+            "node": "Parse Section 1 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Section 1 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Section 1 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Section 1 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Email Section 1 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Node - Section 2 (Chapter 1)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "AI Node - Section 2 (Chapter 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Node - Section 2 (Chapter 1)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Node - Section 2 (Chapter 1)": {
+      "main": [
+        [
+          {
+            "node": "Parse Section 2 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Section 2 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Section 2 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Section 2 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Section 1 to Student": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Email Section 2 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Section 2 to Student": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Section 3 Chapter 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Section 3 Chapter 2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI - Generate Section 3 Chapter 2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Section 3 Chapter 2": {
+      "main": [
+        [
+          {
+            "node": "Parse Section 3 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Section 3 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Section 3 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Section 3 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Email Section 3 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Section 3 to Student": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Section 4 Chapter 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Section 4 Chapter 3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Section 4 Chapter 3": {
+      "main": [
+        [
+          {
+            "node": "Parse Section 4 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Section 4 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Section 4 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Section 4 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File3": {
+      "main": [
+        [
+          {
+            "node": "Email Section 4 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Section 4 to Student": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Chapter 4 Implementation Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Chapter 4 Implementation Results",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Chapter 4 AI Output": {
+      "main": [
+        [
+          {
+            "node": "Parse Section 5 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Section 5 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Chapter 4 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Chapter 4 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File4": {
+      "main": [
+        [
+          {
+            "node": "Email Section 5 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Section 5 to Student": {
+      "main": [
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Chapter 5 Conclusion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Chapter 4 Implementation Results": {
+      "main": [
+        [
+          {
+            "node": "Parse Chapter 4 AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Chapter 5 Conclusion",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Chapter 5 Conclusion": {
+      "main": [
+        [
+          {
+            "node": "Parse Chapter 5 AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Chapter 5 AI Output": {
+      "main": [
+        [
+          {
+            "node": "Parse Chapter 5 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Chapter 5 Content": {
+      "main": [
+        [
+          {
+            "node": "Create Chapter 5 Text File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Chapter 5 Text File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File5": {
+      "main": [
+        [
+          {
+            "node": "Email Chapter 5 to Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Chapter 5 to Student": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI - Generate Section 4 Chapter 3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "55e912c4-967b-459d-a391-6b101e66a3fb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "A3EPDT1Jth8l9Vg3",
+  "tags": []
+}

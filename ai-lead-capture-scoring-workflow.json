@@ -1,0 +1,652 @@
+{
+  "name": "SmartLead AI",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "16564c2d-0211-4e57-836f-775e7a4cae7a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M",
+          "mode": "list",
+          "cachedResultName": " Lead Capture (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1898120992,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit#gid=1898120992"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        224,
+        -160
+      ],
+      "id": "f9a0069a-937d-4742-a053-0e7655f410ff",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const leadData = $json;\n\nconst cleanedData = {\n  leadId: leadData.Lead_ID || `LEAD_${Date.now()}`,\n  name: leadData.Name || $input.first().json['Name '],\n  email: leadData.Email || $input.first().json['  Email  '],\n  company: leadData.Company || $input.first().json['  Company  '],\n  budget: leadData.Budget || $input.first().json['  Budget  '],\n  timeline: leadData.Timeline || $input.first().json.Timeline,\n  source: leadData.Source || $input.first().json['  Source  '],\n  notes: leadData.Notes || $input.first().json['  Notes  '],\n  rowNumber: leadData.__rowNumber\n};\n\nreturn [{ json: cleanedData }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -160
+      ],
+      "id": "6794421e-428f-4df8-b290-1954668dfdd9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        704,
+        64
+      ],
+      "id": "5d796982-aacf-44d7-bee2-4bdcff29dec3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"budget_score\": 8,\n  \"urgency_score\": 9, \n  \"interest_score\": 7,\n  \"decision_maker_bonus\": 0.5,\n  \"reasoning\": \"High budget range with immediate timeline and specific technical needs. Key influencer role adds decision weight. Strong conversion potential based on detailed requirements and professional presentation.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        64
+      ],
+      "id": "8fc4e99a-547f-4aae-8c1a-e1646b8d4d2f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// COMPLETE ERROR-PROOF CODE FOR n8n CODE NODE\n// This handles all possible node reference issues\n\nfunction calculateLeadScore(aiResponse, leadData) {\n  try {\n    // Parse AI response\n    let scores;\n    if (typeof aiResponse === 'string') {\n      // Extract JSON from AI response if it's wrapped in text\n      const jsonMatch = aiResponse.match(/\\{[\\s\\S]*\\}/);\n      scores = jsonMatch ? JSON.parse(jsonMatch[0]) : null;\n    } else {\n      scores = aiResponse;\n    }\n    \n    if (!scores || typeof scores !== 'object') {\n      throw new Error(\"Could not parse AI response\");\n    }\n    \n    // Extract scores with validation\n    const budgetScore = Math.max(1, Math.min(10, scores.budget_score || 5));\n    const urgencyScore = Math.max(1, Math.min(10, scores.urgency_score || 5));\n    const interestScore = Math.max(1, Math.min(10, scores.interest_score || 5));\n    const decisionBonus = scores.decision_maker_bonus || 0;\n    \n    // Weighted calculation\n    const baseScore = (\n      (budgetScore * 0.40) + \n      (urgencyScore * 0.35) + \n      (interestScore * 0.25)\n    );\n    \n    // Apply decision maker bonus\n    const finalScore = Math.min(10, Math.round(baseScore + decisionBonus));\n    \n    // Determine category\n    let category = '🔵 Cold';\n    let priority = 'Low';\n    let nextAction = 'Add to nurture sequence';\n    \n    if (finalScore >= 9) {\n      category = '🔥 Hot';\n      priority = 'Immediate';\n      nextAction = 'Call within 2 hours';\n    } else if (finalScore >= 7) {\n      category = '🟡 Warm'; \n      priority = 'High';\n      nextAction = 'Call within 24 hours';\n    } else if (finalScore >= 5) {\n      category = '🟢 Qualified';\n      priority = 'Medium';\n      nextAction = 'Email follow-up within 48 hours';\n    } else if (finalScore >= 3) {\n      category = '🔵 Cold';\n      priority = 'Low';\n      nextAction = 'Add to nurture sequence';\n    } else {\n      category = '❌ Unqualified';\n      priority = 'None';\n      nextAction = 'Disqualify or long-term nurture';\n    }\n    \n    // Calculate follow-up date\n    const followUpDate = new Date();\n    switch(priority) {\n      case 'Immediate': followUpDate.setHours(followUpDate.getHours() + 2); break;\n      case 'High': followUpDate.setDate(followUpDate.getDate() + 1); break;\n      case 'Medium': followUpDate.setDate(followUpDate.getDate() + 2); break;\n      case 'Low': followUpDate.setDate(followUpDate.getDate() + 7); break;\n      default: followUpDate.setDate(followUpDate.getDate() + 30);\n    }\n    \n    return {\n      // Individual scores\n      budgetScore,\n      urgencyScore, \n      interestScore,\n      decisionBonus,\n      \n      // Final results\n      finalScore,\n      category,\n      priority,\n      nextAction,\n      followUpDate: followUpDate.toISOString().split('T')[0],\n      \n      // Analysis from AI\n      reasoning: scores.reasoning || 'AI analysis unavailable',\n      confidence: scores.confidence_level || (finalScore >= 7 ? 'High' : finalScore >= 4 ? 'Medium' : 'Low'),\n      redFlags: scores.red_flags || [],\n      positiveSignals: scores.positive_signals || [],\n      recommendedAction: scores.recommended_next_action || nextAction,\n      closeProbability: scores.estimated_close_probability || (finalScore * 10),\n      \n      // Metadata\n      scoredAt: new Date().toISOString(),\n      leadId: leadData.leadId || leadData.Lead_ID || `LEAD_${Date.now()}`,\n      \n      // Quality indicators\n      qualityFlags: {\n        hasPhone: !!(leadData.phone || leadData.Phone),\n        hasBudget: !(leadData.budget || leadData.Budget || '').toLowerCase().includes('not yet determined'),\n        hasUrgency: !(leadData.timeline || leadData.Timeline || '').toLowerCase().includes('just researching'),\n        isDecisionMaker: (leadData.role || leadData.Role || '').includes('Final decision maker'),\n        hasSpecificNeeds: (leadData.needs || leadData.Notes || '').length > 50\n      }\n    };\n    \n  } catch (error) {\n    console.error('AI scoring failed, using fallback:', error);\n    return fallbackScoring(leadData);\n  }\n}\n\n// Fallback scoring when AI fails\nfunction fallbackScoring(leadData) {\n  let budgetScore = 5;\n  let urgencyScore = 5; \n  let interestScore = 5;\n  let decisionBonus = 0;\n  \n  // Get budget data (handle different field names)\n  const budget = (leadData.budget || leadData.Budget || '').toLowerCase();\n  if (budget.includes('500,000') || budget.includes('over')) budgetScore = 9;\n  else if (budget.includes('100,000')) budgetScore = 8;\n  else if (budget.includes('50,000')) budgetScore = 7;\n  else if (budget.includes('10,000')) budgetScore = 6;\n  else if (budget.includes('under') || budget.includes('not yet')) budgetScore = 3;\n  \n  // Get timeline data (handle different field names)\n  const timeline = (leadData.timeline || leadData.Timeline || '').toLowerCase();\n  if (timeline.includes('immediately') || timeline.includes('1 month')) urgencyScore = 9;\n  else if (timeline.includes('short-term') || timeline.includes('1-3')) urgencyScore = 7;\n  else if (timeline.includes('medium-term') || timeline.includes('3-6')) urgencyScore = 5;\n  else if (timeline.includes('long-term') || timeline.includes('6+')) urgencyScore = 3;\n  else if (timeline.includes('researching')) urgencyScore = 2;\n  \n  // Get needs/notes data (handle different field names)\n  const needs = leadData.needs || leadData.Notes || leadData.notes || '';\n  if (needs.length > 200) interestScore = 8;\n  else if (needs.length > 100) interestScore = 6;\n  else if (needs.length > 50) interestScore = 4;\n  else interestScore = 3;\n  \n  // Get role data (handle different field names)\n  const role = leadData.role || leadData.Role || '';\n  if (role.includes('Final decision maker')) decisionBonus = 1;\n  else if (role.includes('Key influencer')) decisionBonus = 0.5;\n  \n  const baseScore = (budgetScore * 0.4) + (urgencyScore * 0.35) + (interestScore * 0.25);\n  const finalScore = Math.min(10, Math.round(baseScore + decisionBonus));\n  \n  let category = '🔵 Cold';\n  if (finalScore >= 8) category = '🔥 Hot';\n  else if (finalScore >= 6) category = '🟡 Warm';\n  else if (finalScore >= 4) category = '🟢 Qualified';\n  \n  return {\n    budgetScore,\n    urgencyScore,\n    interestScore, \n    decisionBonus,\n    finalScore,\n    category,\n    priority: finalScore >= 7 ? 'High' : finalScore >= 4 ? 'Medium' : 'Low',\n    nextAction: finalScore >= 7 ? 'Call within 24 hours' : 'Email follow-up within 48 hours',\n    reasoning: 'Fallback scoring used - AI evaluation unavailable',\n    confidence: 'Medium',\n    redFlags: [],\n    positiveSignals: [],\n    scoredAt: new Date().toISOString(),\n    leadId: leadData.leadId || leadData.Lead_ID || `LEAD_${Date.now()}`\n  };\n}\n\n// MAIN EXECUTION - HANDLES ALL POSSIBLE INPUT SCENARIOS\ntry {\n  // Get lead data from current input\n  const currentInput = $input.first().json;\n  \n  console.log('DEBUG - Current Input:', JSON.stringify(currentInput, null, 2));\n  \n  // Get AI response from current input or previous AI call\n  let aiResponse;\n  \n  // Try to extract AI response from different possible formats\n  if (currentInput.choices && currentInput.choices[0]) {\n    // OpenAI format\n    aiResponse = currentInput.choices[0].message.content;\n  } else if (currentInput.response) {\n    // Ollama format\n    aiResponse = currentInput.response;\n  } else if (currentInput.candidates && currentInput.candidates[0]) {\n    // Gemini format\n    aiResponse = currentInput.candidates[0].content.parts[0].text;\n  } else if (currentInput.budget_score) {\n    // Direct AI scoring response - THIS IS YOUR CASE\n    aiResponse = currentInput;\n  } else if (currentInput.output && currentInput.output.budget_score) {\n    // AI response nested in output field\n    aiResponse = currentInput.output;\n  } else {\n    // Use the whole input as AI response\n    aiResponse = currentInput;\n  }\n  \n  console.log('DEBUG - AI Response extracted:', JSON.stringify(aiResponse, null, 2));\n  \n  // For lead data, if we have AI scores in current input, we need original lead data\n  let leadData;\n  \n  if (currentInput.budget_score || (currentInput.output && currentInput.output.budget_score)) {\n    // Current input IS the AI response, try to get lead data from workflow context\n    try {\n      // Try different node names - replace with your actual node names\n      leadData = $('Google Sheets Trigger').first().json ||\n                 $('Webhook').first().json ||\n                 $('Manual Trigger').first().json ||\n                 $('Form Trigger').first().json ||\n                 $('When clicking \"Test workflow\"').first().json ||\n                 currentInput; // fallback to current input\n    } catch (nodeError) {\n      console.log('DEBUG - Could not find lead data in previous nodes, using current input');\n      leadData = currentInput;\n    }\n  } else {\n    // Use current input as lead data\n    leadData = currentInput;\n  }\n  \n  console.log('DEBUG - Lead Data:', JSON.stringify(leadData, null, 2));\n  \n  // Calculate the score\n  const result = calculateLeadScore(aiResponse, leadData);\n  \n  console.log('DEBUG - Final Result:', JSON.stringify(result, null, 2));\n  \n  // Return the result\n  return [{ json: result }];\n  \n} catch (error) {\n  console.error('DEBUG - Execution failed:', error);\n  \n  // Emergency fallback - return basic scoring\n  const basicData = $input.first().json;\n  const fallbackResult = fallbackScoring(basicData);\n  \n  return [{ \n    json: {\n      ...fallbackResult,\n      error: 'Scoring calculation failed, using basic fallback',\n      errorDetails: error.message,\n      debugInfo: {\n        inputData: basicData\n      }\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -160
+      ],
+      "id": "3212feb4-01b5-40f5-afae-d85fc696555b",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M",
+          "mode": "list",
+          "cachedResultName": " Lead Capture (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1898120992,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit#gid=1898120992"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Category": "={{ $json.category }}",
+            "AI_Reasoning": "={{ $json.reasoning }}",
+            "Last Updated": "={{ $json.followUpDate }}",
+            "Lead_Score": "={{ $json.finalScore }}",
+            "Timestamp": "={{ $('Get row(s) in sheet').item.json.Timestamp }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Email  ",
+              "displayName": "  Email  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Company  ",
+              "displayName": "  Company  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Budget  ",
+              "displayName": "  Budget  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Source  ",
+              "displayName": "  Source  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "  Notes  ",
+              "displayName": "  Notes  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead_Score",
+              "displayName": "Lead_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI_Reasoning",
+              "displayName": "AI_Reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1296,
+        -160
+      ],
+      "id": "a6845305-0036-422e-b998-b2e950afde16",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M",
+          "mode": "list",
+          "cachedResultName": " Lead Capture (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 176690950,
+          "mode": "list",
+          "cachedResultName": "Scoring log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A02fN6rgF2AlVbVl4DpC4g5jWmo5LD5zb4LluROPx6M/edit#gid=176690950"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead_ID": "={{ $('Code1').item.json.leadId }}",
+            "Timestamp": "={{ $json.Timestamp }}",
+            "Budget_Score": "={{ $('Code1').item.json.budgetScore }}",
+            "Urgency_Score": "={{ $('Code1').item.json.urgencyScore }}",
+            "Interest_Score": "={{ $('Code1').item.json.interestScore }}",
+            "Final_Score": "={{ $('Code1').item.json.finalScore }}",
+            "Category": "={{ $('Code1').item.json.category }}",
+            "AI_Reasoning": "={{ $('Code1').item.json.reasoning }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead_ID",
+              "displayName": "Lead_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget_Score",
+              "displayName": "Budget_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency_Score",
+              "displayName": "Urgency_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interest_Score",
+              "displayName": "Interest_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Final_Score",
+              "displayName": "Final_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI_Reasoning",
+              "displayName": "AI_Reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1520,
+        -160
+      ],
+      "id": "9f9ec02f-b318-4a1e-a3b1-feb18829185d",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        64
+      ],
+      "id": "df2b8d93-aac4-4d22-a393-c4af165b11bb",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"to\": \"sales-team@company.com\",\n  \"subject\": \"🚀 New Lead Detected: {{ $json['Name'] }}\",\n  \"body\": \"Hello Team,\\n\\nA new lead has just been detected in the CRM.............\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1904,
+        64
+      ],
+      "id": "7efc4599-34ed-41bc-baac-71d5ec7d58da",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "sendTo": "Email",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2144,
+        -160
+      ],
+      "id": "476d13ba-c7e8-49ff-8292-51350d58810c",
+      "name": "Send a message",
+      "webhookId": "b2fc4002-7fce-4275-8900-24afc57613ee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nSCORING FRAMEWORK:\nEvaluate each lead on three dimensions (1-10 scale):\n\nBUDGET SCORE (Weight: 40%):\n- 9-10: Budget >$100K, enterprise-level, approved budget\n- 7-8: Budget $50K-$100K, has budget authority/approval\n- 5-6: Budget $10K-$50K, budget likely available\n- 3-4: Budget <$10K or \"budget not determined\" but shows intent\n- 1-2: No budget mentioned, price shopping, unrealistic expectations\n\n⚡ URGENCY SCORE (Weight: 35%):\n- 9-10: Immediate need (<1 month), critical business pain, deadline pressure\n- 7-8: Short-term (1-3 months), strong business case, management pressure\n- 5-6: Medium-term (3-6 months), planned initiative, some pressure\n- 3-4: Long-term (6+ months), exploratory, no immediate pressure\n- 1-2: Just researching, no timeline, information gathering\n\n INTEREST/FIT SCORE (Weight: 25%):\n- 9-10: Perfect solution fit, mentions specific features, engaged tone\n- 7-8: Good fit, understands value prop, specific use cases mentioned\n- 5-6: Moderate fit, some relevant needs, general interest\n- 3-4: Questionable fit, vague needs, may not be ideal customer\n- 1-2: Poor fit, unrealistic expectations, likely not our target market\n\nDECISION MAKER BONUS:\n- Add +1 to final score if \"Final decision maker\"\n- Add +0.5 if \"Key influencer\"\n- No bonus for researchers/end users\n\nANALYSIS INSTRUCTIONS:\n1. Read the lead data carefully\n2. Look for explicit and implicit signals\n3. Consider industry context and company size\n4. Pay attention to language sophistication and specific terminology\n5. Note any red flags or positive indicators\n\n{\n  \"budget_score\": [integer 1-10],\n  \"urgency_score\": [integer 1-10],\n  \"interest_score\": [integer 1-10], \n  \"decision_maker_bonus\": [0, 0.5, or 1.0],\n  \"reasoning\": \"[2-3 sentences explaining key factors that influenced each score]\",\n  \"confidence_level\": [\"High\" | \"Medium\" | \"Low\"],\n  \"red_flags\": [\"array of any concerning signals or empty array\"],\n  \"positive_signals\": [\"array of encouraging indicators\"],\n  \"recommended_next_action\": \"[specific action recommendation]\",\n  \"estimated_close_probability\": [integer 1-100]\n}`\n\nLEAD TO EVALUATE:\nleadid: {{ $json.leadId }}\nName: {{ $json.name }}\nCompany: {{ $json.company }}\nEmail: {{ $json.email }}\nBudget Range: {{ $json.budget }}\nTimeline: {{ $json.timeline }}\nSource: {{ $json.source }}\nSpecific Needs: {{ $json.notes }}\n\n\nAnalyze this lead and return your scoring evaluation in the exact JSON format specified above.`;\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert B2B lead qualification specialist with 15+ years of experience in sales and marketing. Your job is to evaluate incoming leads and assign precise scores that predict conversion likelihood."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        -160
+      ],
+      "id": "59a21eb8-7b81-45e1-9578-8b080eaed043",
+      "name": "B2B lead qualification specialist"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\n\nTask:\nCompose an email to notify the sales team that a new lead has been detected in the CRM.\n\nDetails of the lead:\n- Name: {{ $('Code').item.json.name }}\n- Email: {{ $('Code').item.json.email }}\n- Budget: {{ $('Code').item.json.budget }}\n- Urgency: {{ $json.Urgency_Score }}\n- Interest Level: {{ $json.Interest_Score }}\n- Category: {{ $json.Category }}\n- priority: {{ $('Code1').item.json.priority }}\n\nTone: Professional, concise, clear. And include the details in a clean format\n\nremove the unnecessary  * ** and others. and oragnize the body properly to look professional\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an assistant that writes professional notification emails.\n\noutput with a html template format"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1744,
+        -160
+      ],
+      "id": "542feae2-683f-4ddd-a382-5885d3257703",
+      "name": "email"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "B2B lead qualification specialist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "B2B lead qualification specialist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "B2B lead qualification specialist",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B2B lead qualification specialist": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "efcddb9e-3142-47be-b4a9-1edae155ad2c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "S5jv39RPaboAaUbg",
+  "tags": []
+}

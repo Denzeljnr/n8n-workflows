@@ -1,0 +1,318 @@
+{
+  "name": "Daily Sales Report Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        -16
+      ],
+      "id": "9c1a0c88-b29b-4640-aaef-ae1834fe4138",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU",
+          "mode": "list",
+          "cachedResultName": "Sales sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "282642f2-c4df-4ded-90d6-3a6058b5a248",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JOQeHNNtwCPde1xr",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\nconst rows = items.map(item => item.json);\n\nlet totalSales = 0;\nlet totalQuantity = 0;\n\nrows.forEach(row => {\n  totalSales += Number(row.Total) || 0;\n  totalQuantity += Number(row.Quantity) || 0;\n});\n\nconst averageSale = totalSales / rows.length || 0;\n\nreturn [{\n  json: {\n    totalSales,\n    totalQuantity,\n    averageSale,\n    reportDate: new Date().toLocaleDateString()\n  }\n}];\n\nreturn $input.all();\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "0b914b3f-b042-4ae9-a323-dc7f7da3c926",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=Daily Sales Report for {{$json.reportDate}}",
+        "message": "=Daily Sales Summary for {{$json.reportDate}}:\n\n- Total Sales: ₦{{$json.totalSales}}\n- Total Quantity Sold: {{$json.totalQuantity}}\n- Average Sale: ₦{{$json.averageSale}}\n\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "2010ada2-7d42-4f0e-8e69-08eb26295844",
+      "name": "Send a message",
+      "webhookId": "c1ccf170-3be3-4911-9b11-8fae13d54f7a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => !item.json.Status || item.json.Status.toLowerCase() !== \"done\");\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "e79ab68d-b8e7-46b4-8d3e-ab86afbc5f9f",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        848,
+        -16
+      ],
+      "id": "fc2b709b-99e2-4326-9c01-3b2d5f23d16f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU",
+          "mode": "list",
+          "cachedResultName": "Sales sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rb9cpfypwtyxLBBBpbMYC-1Skq0IJLbePmVGsRs8bBU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Done": "={{ $('Code').item.json.reportDate }}"
+          },
+          "matchingColumns": [
+            "Done"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product ",
+              "displayName": "Product ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Price",
+              "displayName": "Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total",
+              "displayName": "Total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Done",
+              "displayName": "Done",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1040,
+        -240
+      ],
+      "id": "3742dcd1-7da8-4ba2-97b7-51bafff264b3",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JOQeHNNtwCPde1xr",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c7b291f5-2560-4a98-8320-6c8b045075de",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "yYdhYlTJm4kWrqN8",
+  "tags": []
+}

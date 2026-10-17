@@ -1,0 +1,1683 @@
+{
+  "name": "Hiring Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\"Candidate: {{ $json['Full Name '] }}\nPosition: {{ $json['  Position You\\'re Applying For  '] }}\nExperience: {{ $json['  Years of Relevant Experience  '] }}\nWhy interested: {{ $json['Why are you interested in this position and our company?  '] }}\nSkills: {{ $json['  Technical Skills (select all that apply)  '] }}\nScenario response: {{ $json['SCENARIO: You\\'re assigned a critical project with a tight deadline, but the requirements are unclear and the stakeholder is unavailable for clarification. Walk us through your step-by-step approach to handle this situation.  '] }}\nCommunication Skills: {{ $json['  Rate your proficiency in the following areas   [Communication Skills]'] }}\nProblem Solving: {{ $json['  Rate your proficiency in the following areas   [Problem Solving]'] }}\nTeam Collaboration: {{ $json['  Rate your proficiency in the following areas   [Team Collaboration]'] }}\nTechnical Skills (relevant to position): {{ $json['  Rate your proficiency in the following areas   [Technical Skills (relevant to position)]'] }}\nProject Management: {{ $json['  Rate your proficiency in the following areas   [Project Management]'] }}\nAdaptability: {{ $json['  Rate your proficiency in the following areas   [Adaptability]'] }}\nDescribe a challenging problem you solved in your previous role: {{ $json['Describe a challenging problem you solved in your previous role  '] }}\nCurrent Employment: {{ $json['Current Employment Status  '] }}\nNotice Period Request: {{ $json['  Notice Period Required  '] }}\nSalary Expectations: {{ $json['  Salary Expectations (Annual)  '] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "\"You are an expert HR AI evaluating trial applications. Score 1-100 based on:\n- Experience relevance (30%)\n- Skills alignment (25%) \n- Communication quality (25%)\n- Motivation/fit (20%)\n\nReturn ONLY valid JSON: {\\\"score\\\": number,\n\\\"grade\"\\: \\\"A\"\\ or \\\"B\"\\ or \\\"C\"\\ or \\\"D\"\\ or \\\"F\"\\, \\\"decision\\\": \\\"PASS\\\" or \\\"FAIL\\\", \\\"feedback\\\": \\\"detailed explanation\\\", \\\"strengths\\\": [\\\"strength1\\\", \\\"strength2\\\"], \\\"concerns\\\": [\\\"concern1\\\", \\\"concern2\\\"]}\n\n\nA = 80-100  Pass\nB = 60-79   Pass\nC = 50-59   Pass\nD = 45-50   Fail\nF = 0-44    Fail"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        112
+      ],
+      "id": "b512e10d-7cad-44c1-9096-bc106e30cf05",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        336
+      ],
+      "id": "c3ca4a29-7cbe-4143-bf56-835c03dcf8a1",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"score\": 85,\n  \"grade\": \"B\",\n  \"decision\": \"PASS\",\n  \"feedback\": \"The candidate demonstrated strong problem-solving skills but needs to improve communication.\",\n  \"strengths\": [\"Problem-solving\", \"Technical knowledge\"],\n  \"concerns\": [\"Communication\", \"Time management\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        336
+      ],
+      "id": "2f204859-1e22-4748-8dde-3c90c74d62bf",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "19d896a8-ef1b-49e4-9005-53453a25c3ed",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "=PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        224
+      ],
+      "id": "baadd233-7702-4e4e-be16-bc1b79b258ae",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y",
+          "mode": "list",
+          "cachedResultName": "Interview 1 Preparation Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 304214548,
+          "mode": "list",
+          "cachedResultName": "Interview 1 sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit#gid=304214548"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json['Full Name'] }}",
+            "Email": "={{ $json.Email }}",
+            "Trial Score": "={{ $json['Trial Score'] }}",
+            "Interview 1 Date": "To be scheduled",
+            "Interview 1 Score": "Pending",
+            "Status": "Active",
+            "Interviewer Notes": "Pending interview",
+            "AI Assessment": "Pending AI assessment"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Trial Score",
+              "displayName": "Trial Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview 1 Date",
+              "displayName": "Interview 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview 1 Score",
+              "displayName": "Interview 1 Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interviewer Notes",
+              "displayName": "Interviewer Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Assessment",
+              "displayName": "AI Assessment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        912,
+        128
+      ],
+      "id": "e29f060b-e430-4b8c-98ef-e8e5c062e5e7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Congratulations! You have progressed to the next stage",
+        "message": "=<html>\n  <body style=\"font-family: Arial, sans-serif; line-height: 1.6;\">\n    <p>Dear {{ $('Trial sheet Append').item.json['Full Name'] }},</p>\n\n    <p>Congratulations on passing our trial phase!</p>\n\n    <p><strong>Your score:</strong> {{ $('Trial sheet Append').item.json['Trial Score'] }}/100</p>\n\n    <p>\n      Please complete your Interview 1 preparation form:<br>\n      <a href=\"https://forms.gle/1CWkJz1Kv9HdiPbT7\" target=\"_blank\">Click here to open the form</a>\n    </p>\n\n    <p>We'll contact you within 2 business days to schedule.</p>\n\n    <p>Best regards,<br>\n    Hiring Team</p>\n  </body>\n</html>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        128
+      ],
+      "id": "97d5370d-529b-42ad-a3fe-bb845d175873",
+      "name": "Send a message",
+      "webhookId": "c12cae95-d24f-49cb-a398-f98b7b1f0d26",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0",
+          "mode": "list",
+          "cachedResultName": "Trial Stage Application (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1063102122,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit#gid=1063102122"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        224
+      ],
+      "id": "96eae849-5326-4000-acd1-0b9f2f6f8938",
+      "name": "trial sheet",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name: {{ $json['Full Name'] }}\nInterview date: {{ $json['  Preferred Interview Date & Time  '] }}\nPortfolio projects: {{ $json['Describe 2-3 key projects you\\'ve worked on in detail  '] }}\nProblem-solving approach: {{ $json['Technical Problem-Solving Exercise  '] }}\nCode Quality & Best Practice: {{ $json['Code Quality & Best Practices  '] }}\nTeam Conflict Resolution Scenario: {{ $json['Team Conflict Resolution  '] }}\nCareer goals: {{ $json['Career Goals & Professional Development  '] }}\nLearning & Skill Development: {{ $json['Learning & Skill Development  '] }}\nRate your knowledge of current industry trends: 1.   {{ $json['Rate your knowledge of current industry trends   [Emerging Technologies]'] }} 2. {{ $json['Rate your knowledge of current industry trends   [Market Dynamics]'] }} 3. {{ $json['Rate your knowledge of current industry trends   [Industry Best Practices]'] }} 4. {{ $json['Rate your knowledge of current industry trends   [Competitive Landscape]'] }} 5. {{ $json['Rate your knowledge of current industry trends   [Regulatory Changes]'] }}\n\n\nQuestion for Our team (if any): {{ $json['Questions for Our Team  '] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert HR AI evaluating the first interview applications. Score 1-100 based on\n\n\"Evaluate Interview 1 responses (1-100):\n- Problem-solving approach (35%)\n- Technical competency (30%)\n- Communication skills (20%)\n- Cultural fit (15%)\n\nPASS threshold: 75+"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        656
+      ],
+      "id": "120292e9-5bc0-418a-ab64-71a3015df88a",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        880
+      ],
+      "id": "ea7602d0-d466-4450-88ec-b55cd1d94cba",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"score\": 0,\n  \"decision\": \"PASS\",\n  \"feedback\": \"detailed explanation of the result\",\n  \"recommendations\": [\"recommendation1\", \"recommendation2\"],\n  \"preferredInterviewDateTime\": \"YYYY-MM-DD HH:MM\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        880
+      ],
+      "id": "ecad2fd2-3f3f-4b14-a90d-2f6f7b674d9f",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0",
+          "mode": "list",
+          "cachedResultName": "Trial Stage Application (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1146390427,
+          "mode": "list",
+          "cachedResultName": "Trial Candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit#gid=1146390427"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('trial sheet').item.json['Full Name '] }}",
+            "Email": "={{ $('trial sheet').item.json['Email Address  '] }}",
+            "Phone": "={{ $('trial sheet').item.json['Phone Number  '] }}",
+            "Position Applied": "={{ $('trial sheet').item.json['  Position You\\'re Applying For  '] }}",
+            "Date Applied": "={{ $('trial sheet').item.json.Timestamp }}",
+            "Trial Score": "={{ $json.output.score }}",
+            "AI Feedback": "={{ $json.output.feedback }}",
+            "Status": "={{ $json.output.decision }}",
+            "Resume Link": "={{ $('trial sheet').item.json['  Upload Your Resume   '] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Position Applied",
+              "displayName": "Position Applied",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Applied",
+              "displayName": "Date Applied",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Trial Score",
+              "displayName": "Trial Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Feedback",
+              "displayName": "AI Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume Link",
+              "displayName": "Resume Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        464,
+        224
+      ],
+      "id": "5f132347-3708-4b97-9a98-cd7bf6ceeae0",
+      "name": "Trial sheet Append",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y",
+          "mode": "list",
+          "cachedResultName": "Interview 1 Preparation Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1207595966,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit#gid=1207595966"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        656
+      ],
+      "id": "400919e2-9626-494d-af17-7b1482d07b91",
+      "name": "Interview collection",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y",
+          "mode": "list",
+          "cachedResultName": "Interview 1 Preparation Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 304214548,
+          "mode": "list",
+          "cachedResultName": "Interview 1 sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit#gid=304214548"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('Interview collection').item.json['Full Name'] }}",
+            "Interview 1 Score": "={{ $json.output.score }}",
+            "Interview 1 Date": "={{ $json.output.preferredInterviewDateTime }}",
+            "Status": "={{ $json.output.decision }}",
+            "Interviewer Notes": "={{ $json.output.recommendations }}",
+            "AI Assessment": "={{ $json.output.feedback }}"
+          },
+          "matchingColumns": [
+            "Full Name"
+          ],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Trial Score",
+              "displayName": "Trial Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interview 1 Date",
+              "displayName": "Interview 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interview 1 Score",
+              "displayName": "Interview 1 Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interviewer Notes",
+              "displayName": "Interviewer Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Assessment",
+              "displayName": "AI Assessment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        464,
+        656
+      ],
+      "id": "f33d7649-2f50-4191-b256-799635986692",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "137c354a-42d3-482a-8b2a-505fe6f277e5",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        656
+      ],
+      "id": "430a5088-4f24-4606-bce9-dfbbc1b5f6ec",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q",
+          "mode": "list",
+          "cachedResultName": "Advanced Assessment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 604081657,
+          "mode": "list",
+          "cachedResultName": "Advanced Accessment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit#gid=604081657"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json['Full Name'] }}",
+            "Email": "={{ $('Interview collection').item.json['Confirm Your Email Address  '] }}",
+            "Interview 1 Score": "={{ $json['Interview 1 Score'] }}",
+            "Second Pass Score": "Pending",
+            "Status": "Active",
+            "AI Evaluation": "Pending",
+            "Date Completed": "={{ $now.format('YYYY-MM-DD') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interview 1 Score",
+              "displayName": "Interview 1 Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Second Pass Score",
+              "displayName": "Second Pass Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Evaluation",
+              "displayName": "AI Evaluation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Completed",
+              "displayName": "Date Completed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        912,
+        560
+      ],
+      "id": "d71d24c0-9e23-40ae-aa19-054246c646fc",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Second Pass Assessment - Advanced Evaluation",
+        "message": "=<html>\n  <body>\n    <p>Hi,</p>\n    <p>Congratulations! 🎉 You’ve successfully passed the first stage of our assessment process.</p>\n    <p>Your score for this stage is: <b>{{ $json['Interview 1 Score'] }}</b>/100.</p>\n    <p>You are now invited to the <b>Second Pass Assessment - Advanced Evaluation</b>.</p>\n    <p>Please complete the assessment form using the link below:</p>\n    <p>\n      <a href=\"https://forms.gle/CSZLALTUaUQM1Ht3A\" target=\"_blank\">Click here to open the form</a>\n    </p>\n    \n    <p>Best regards,<br>The Hiring Team</p>\n  </body>\n</html>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        560
+      ],
+      "id": "1b017e70-850f-4378-aaa4-7b68fb07fdf6",
+      "name": "Send a message1",
+      "webhookId": "e65a81ea-9d7d-4b27-ab77-39b288252469",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q",
+          "mode": "list",
+          "cachedResultName": "Advanced Assessment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1208708704,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit#gid=1208708704"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1232
+      ],
+      "id": "3ed178e0-c20a-4718-962b-b0e8d99c3fa1",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\"Candidate advanced assessment:\nFull Name: {{ $json['Full Name'] }}\nEmail: {{ $json[' Email Confirmation  '] }}\nIndustry challenge analysis: {{ $json['Industry Challenge Analysis  '] }}\nLeadership experience: {{ $json['Leadership Experience Deep Dive'] }}\nInnovation case study: {{ $json['Innovation & Future-Proofing  '] }}\nCompetitive Analysis & Market Position: {{ $json['Competitive Analysis & Market Position  '] }}\nTeam building and culture: {{ $json['Team Building & Culture  '] }}\n90 day strategic plan: {{ $json['90-Day Strategic Plan  '] }}\nCrisis Leadership: {{ $json['Crisis Leadership  '] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert HR AI evaluating the Advanced Assessment. Score 1-100 based on\n\n\"Advanced assessment evaluation (1-100):\n- Strategic thinking (40%)\n- Leadership potential (30%) \n- Innovation capability (20%)\n- Values alignment (10%)\n\nPASS threshold: 80+"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        1232
+      ],
+      "id": "99e42579-f7be-4dff-8dc5-5d9293c7b655",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        1456
+      ],
+      "id": "9722fcff-80bc-49c1-915f-da1dd10205ee",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"score\": 0,\n  \"decision\": \"PASS\",\n  \"leadership_rating\": \"Medium\",\n  \"strategic_score\": 0,\n  \"feedback\": \"comprehensive analysis\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        1456
+      ],
+      "id": "90d719e0-2b13-40a8-9639-cc540842b0f9",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q",
+          "mode": "list",
+          "cachedResultName": "Advanced Assessment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 604081657,
+          "mode": "list",
+          "cachedResultName": "Advanced Accessment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit#gid=604081657"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('Google Sheets Trigger').item.json['Full Name'] }}",
+            "Status": "={{ $json.output.decision }}",
+            "Second Pass Score": "={{ $json.output.score }}",
+            "AI Evaluation": "=Leadership Rating: {{ $json.output.strategic_score }}, \nStragegic Score: {{ $json.output.strategic_score }}\nFeedback: {{ $json.output.feedback }}"
+          },
+          "matchingColumns": [
+            "Full Name"
+          ],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Interview 1 Score",
+              "displayName": "Interview 1 Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Second Pass Score",
+              "displayName": "Second Pass Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Evaluation",
+              "displayName": "AI Evaluation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Completed",
+              "displayName": "Date Completed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        464,
+        1232
+      ],
+      "id": "1579789c-a187-444e-b125-b631a8d2c36b",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "204cbd87-26e3-4f18-ad10-988e52f47c29",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        1232
+      ],
+      "id": "98480bc0-550c-403e-a916-0fe98f7ca97f",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Check the tools connected to you and retrieve the following:\n\nThe candidate’s full name and email address (this will be provided via drag-and-drop).\n{{ $json['Full Name'] }}\n{{ $('Google Sheets Trigger').item.json[' Email Confirmation  '] }}\n(check this first and then check the values that match the name and email)\nThe position applied for (from the sheet under the “Trial Section”).\n\nThe candidate’s scores from all three assessment stages (Stage 1, Stage 2, and Stage 3).\n\nNext, calculate the average score across all three stages.\n\nIf the average score is ≥ 70, the candidate’s decision should be marked as ACCEPTED.\n\nIf the average score is < 70, the decision should be REJECTED.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an HR AI evaluating candidates in a 3-stage hiring pipeline. \n\nIMPORTANT: ALWAYS check the TOOLS section first to retrieve candidate data from Google Sheets before evaluating.\n\nSTAGES & THRESHOLDS:\n- Trial: 50+ to pass\n- Interview 1: 75+ to pass  \n- Second Pass: 80+ to pass\n- Combined average: 85+ to accept\n\nTASKS:\n1. Use TOOLS to check Google Sheets for existing candidate data\n2. Score candidate 1-100 based on stage criteria\n3. Decide Accepted or Rejected\n4. Generate complete HTML Gmail message\n5. Use TOOLS to update Google Sheets with results\n\nRETURN JSON:\n{\n  \"score\": number,\n  \"decision\": \"PASS/FAIL/ACCEPT/REJECT\", \n  \"html_email\": \"complete HTML email content\",\n  \"subject\": \"email subject\",\n  \"sheet_update\": {\"score\": number, \"status\": \"status\", \"feedback\": \"feedback\"},\n  \"next_stage\": \"next stage name or null\"\n}\n\nBe professional, fair, and thorough in evaluation."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1072,
+        976
+      ],
+      "id": "60a1d8ce-3ec6-4cf6-b03e-af2c9c7efb7b",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        912,
+        1200
+      ],
+      "id": "bc2f1f69-3ebd-4e52-9c50-c9a37bc37871",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0",
+          "mode": "list",
+          "cachedResultName": "Trial Stage Application (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1146390427,
+          "mode": "list",
+          "cachedResultName": "Trial Candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j1dfJ_3yXAhXwMdvmwYnsAE6TXDS064aHQGIjvcOKG0/edit#gid=1146390427"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        1040,
+        1200
+      ],
+      "id": "efaad732-9eb8-4b0c-bed9-a5fdc1ec5be0",
+      "name": "Trial score summary",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q",
+          "mode": "list",
+          "cachedResultName": "Advanced Assessment (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 604081657,
+          "mode": "list",
+          "cachedResultName": "Advanced Accessment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UK9oI9m5YUzPUlBraXURUjANcFxwQbzB7OLe6suVo4Q/edit#gid=604081657"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        1168,
+        1200
+      ],
+      "id": "b4d417a6-3812-42ed-ad5f-ab7ad718282c",
+      "name": "Advanced Accessment",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y",
+          "mode": "list",
+          "cachedResultName": "Interview 1 Preparation Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 304214548,
+          "mode": "list",
+          "cachedResultName": "Interview 1 sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WvhPDrWG_tLPOh-EDeST48zGXcrn1FpNwAzMDIO4E4Y/edit#gid=304214548"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        1296,
+        1200
+      ],
+      "id": "cdad660c-f018-4bb3-be3b-9aafefde5482",
+      "name": "First interview",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"score\": \"0\",\n  \"decision\": \"ACCEPTED/REJECTED\", \n  \"html_email\": \"complete HTML email content\",\n  \"subject\": \"email subject\",\n  \n  \"next_stage\": \"next stage name or null\"\n}\n\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        1200
+      ],
+      "id": "374fb981-843b-4413-b77f-095eb25d110e",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b029bdc3-1a05-4bfb-9e94-1b700d86debd",
+              "leftValue": "={{ $json.output.decision }}",
+              "rightValue": "Accepted",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        1088
+      ],
+      "id": "8f24f01f-2550-43bf-b53b-175c78184a67",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Trigger').item.json[' Email Confirmation  '] }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.html_email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1856,
+        1088
+      ],
+      "id": "58911f16-3798-4a10-8fb1-6b4f2b952deb",
+      "name": "Send a message2",
+      "webhookId": "2716a746-ddbc-4aaa-b335-da4fd4b8ff80",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Subject: Outcome of Your Trial Stage Application",
+        "message": "=<html>   <body>     <p>Hi [Candidate Name],</p>      <p>Thank you for completing the <b>Trial Stage</b> of our assessment process.</p>          <p>After reviewing your performance, we regret to inform you that you have not been selected to proceed to the next stage. Please know this does not diminish your skills and potential, and we encourage you to continue developing your expertise.</p>          <p>We truly appreciate the time and effort you invested in the process and wish you the very best in your future endeavors.</p>          <p>Best regards,<br>The Hiring Team</p>   </body> </html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        320
+      ],
+      "id": "5fe54297-7189-4b81-81a0-0f6e18f043ee",
+      "name": "Send a message3",
+      "webhookId": "c52093ea-80d5-4153-8466-88d620fa194a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Interview collection').item.json['Confirm Your Email Address  '] }}",
+        "subject": "Subject: Outcome of Your First Interview",
+        "message": "<html>   <body>     <p>Hi [Candidate Name],</p>      <p>We appreciate the time you spent attending the <b>First Interview</b> with us.</p>          <p>After careful consideration, we regret to inform you that you have not been selected to move forward in the recruitment process. Your insights and background were valuable, and it was a pleasure learning more about you.</p>          <p>We encourage you to stay connected for future opportunities that may align with your skills and interests.</p>          <p>Wishing you success in your career journey.</p>          <p>Best regards,<br>The Hiring Team</p>   </body> </html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        752
+      ],
+      "id": "8d7e1c51-03bd-4b22-bd63-f277a9c3668d",
+      "name": "Send a message4",
+      "webhookId": "7d81fafc-2e5c-4bd9-b005-b4f63d7afbef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Trigger').item.json[' Email Confirmation  '] }}",
+        "subject": "Subject: Outcome of Your Final Assessment",
+        "message": "<html>   <body>     <p>Hi [Candidate Name],</p>      <p>Thank you for completing the <b>Final Assessment</b> in our hiring process.</p>          <p>After thorough evaluation, we regret to inform you that you were not selected for the role. This was a competitive process with many strong candidates, and although you were not chosen, we recognize the effort and skill you demonstrated throughout the assessments.</p>          <p>We sincerely appreciate your time and interest in joining our team and encourage you to apply again for future opportunities with us.</p>          <p>Best regards,<br>The Hiring Team</p>   </body> </html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1168,
+        1376
+      ],
+      "id": "1210c41f-1b4e-4350-a484-7b04f83b17bd",
+      "name": "Send a message5",
+      "webhookId": "c1fc428d-b87d-4a8b-8912-812d2f67c633",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ENKdoS6UvW1FrYQj",
+          "name": "main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Trial sheet Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "trial sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trial sheet Append": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interview collection": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trial score summary": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advanced Accessment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First interview": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "deee33e0-3d60-4092-9ec3-b1f999549c7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "ZcPqof1wBqkP2ERr",
+  "tags": []
+}

@@ -1,0 +1,483 @@
+{
+  "name": "AI Social Media Content Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1BEWXdV-2kgW-gKhR-CBBrhzCXzuQ65FwkO0bL5aW_kQ",
+          "mode": "list",
+          "cachedResultName": "AI Social Media Content Generator (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BEWXdV-2kgW-gKhR-CBBrhzCXzuQ65FwkO0bL5aW_kQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 987521970,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BEWXdV-2kgW-gKhR-CBBrhzCXzuQ65FwkO0bL5aW_kQ/edit#gid=987521970"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f4d8bde5-03b5-489b-96e9-0ef13868923b",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pq6Jm2Am2wSPJvpk",
+          "name": "Google Sheets Trigger account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ba4f87b-9e9a-411d-a729-140baa663642",
+              "name": "user_name",
+              "value": "={{ $json.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "a735f58e-5d7a-4e89-af15-c2924cab3559",
+              "name": "user_email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "d294317d-177f-4fef-8f12-35fdd5ea777e",
+              "name": "content_topic",
+              "value": "={{ $json['Topic or Theme'] }}",
+              "type": "string"
+            },
+            {
+              "id": "fefd74f5-97a7-4284-919e-b1ca78695f01",
+              "name": "key_points",
+              "value": "={{ $json['Key Points to Include  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "3bf304da-e4a1-46b0-ad3d-b353a8342bfa",
+              "name": "tone_preference",
+              "value": "={{ $json['Primary Tone'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "433c9504-9488-4fbd-8a58-e7dab7524671",
+      "name": "Extract & Clean Form Data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d3e0d295-3ff3-4267-b130-3c1fa1cb414a",
+              "name": "system_prompt_captions",
+              "value": "You are an expert LinkedIn content creator specializing in crafting engaging, professional posts that drive engagement and establish thought leadership.  Your job is to generate 3 distinct caption variations for a LinkedIn post based on the user's topic.  CAPTION REQUIREMENTS: - Each caption should be 100-200 words - Include relevant emojis strategically (not excessively) - Start with a hook that stops the scroll - Include a call-to-action or question at the end - Use line breaks for readability - Make them platform-optimized for LinkedIn  THE 3 VARIATIONS:  1. PROFESSIONAL & AUTHORITATIVE    - Establish credibility and expertise    - Use industry insights and data points    - Formal but approachable tone    - Position the author as a thought leader  2. CONVERSATIONAL & FRIENDLY    - Personal storytelling approach    - Relatable experiences and examples    - Warm, human tone    - Encourage dialogue and comments  3. INSPIRATIONAL & MOTIVATIONAL    - Start with a powerful statement or question    - Include actionable insights    - Uplifting and empowering tone    - End with encouragement to take action  OUTPUT FORMAT (STRICT): Return ONLY valid JSON with this exact structure:  {   \"professional\": \"Caption text here with line breaks as \\n\",   \"conversational\": \"Caption text here with line breaks as \\n\",   \"inspirational\": \"Caption text here with line breaks as \\n\" }  DO NOT include any text outside the JSON structure. DO NOT use markdown formatting.",
+              "type": "string"
+            },
+            {
+              "id": "cad77ac1-bf53-4c20-bb45-65e2a4601681",
+              "name": "user_prompt_captions",
+              "value": "=TOPIC: {{ $json.content_topic }}  KEY POINTS TO INCLUDE: {{ $json.key_points }}  PREFERRED TONE: {{ $json.tone_preference }}  Generate 3 LinkedIn caption variations (professional, conversational, inspirational) following the exact JSON format specified in your system instructions.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ee378cf3-d40f-4da9-8fd5-8578161192b0",
+      "name": "Prepare Caption Generation Prompts"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        608,
+        144
+      ],
+      "id": "3d91033e-4a44-4b26-9a14-eacf30a8c731",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_prompt_captions }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant {{ $json.system_prompt_captions }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "0dd7f04f-2afe-4eef-b5c3-b427b2330340",
+      "name": "Gemini AI - Generate Captions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the AI response\nconst aiResponse = $input.first().json.output;\n\n// Parse the JSON\nlet captions;\ntry {\n  // Remove any markdown formatting if present\n  const cleanResponse = aiResponse.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  captions = JSON.parse(cleanResponse);\n} catch (error) {\n  throw new Error(\"Gemini did not return valid JSON: \" + aiResponse);\n}\n\n// Return structured data\nreturn [{\n  json: {\n    user_name: $('Extract & Clean Form Data').first().json.user_name,\n    user_email: $('Extract & Clean Form Data').first().json.user_email,\n    content_topic: $('Extract & Clean Form Data').first().json.content_topic,\n    caption_professional: captions.professional,\n    caption_conversational: captions.conversational,\n    caption_inspirational: captions.inspirational\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        0
+      ],
+      "id": "581d1139-7e99-49a9-a081-e153b9c00640",
+      "name": "Parse Caption Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "53718bd9-fe1e-4e02-9e1e-60ec5e7975aa",
+              "name": "image_prompt",
+              "value": "=Create a professional, modern LinkedIn post image for the following topic: {{ $json.content_topic }}  Style requirements: - Clean, minimalist design - Professional color palette (blues, grays, whites, accent colors) - High-quality, business-appropriate aesthetic - Could include: abstract shapes, technology elements, workspace imagery, or conceptual illustrations - Suitable for LinkedIn feed (16:9 or 1:1 aspect ratio) - No text overlays needed - Photo-realistic or modern illustration style  The image should visually represent the topic in a sophisticated, engaging way that would stop someone scrolling through LinkedIn.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "1e850d8a-b1df-42ea-a839-1390bd2b9be6",
+      "name": "Prepare Image Generation Prompt"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.regular }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "={{ $('Extract & Clean Form Data').first().json.content_topic.replace(/[^a-z0-9]/gi, '_') }}_{{ $now.format('YYYYMMDD_HHmmss') }}.jpg"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1552,
+        0
+      ],
+      "id": "5f33eb34-f395-491d-97c1-ff494dd6b733",
+      "name": "Download Image"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.unsplash.com/photos/random?query={{ $json.image_prompt }}&client_id=EcmQdmZlJ1IYull5nySTnJi4CRygrLcffhPmIcrxk9s",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "4ac324c5-c768-470d-9216-0b588cb4c5b8",
+      "name": "Generate Image - Unsplash"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "The_impact_of_AI_automation_on_small_business_productivity_YYYY02Feb 5, 2026_040504.jpg",
+        "name": "={{ $('Extract & Clean Form Data').first().json.content_topic.replace(/[^a-z0-9]/gi, '_') }}_{{ $now.format('YYYYMMDD_HHmmss') }}.jpg",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Uua3f7ENUwYu1Q6Ywc__Zzdy16ko44tz",
+          "mode": "list",
+          "cachedResultName": "Generated Images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Uua3f7ENUwYu1Q6Ywc__Zzdy16ko44tz"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "151026a7-0d33-47b6-b4e3-e4ef53960b2b",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1968,
+        0
+      ],
+      "id": "1a37be18-9f68-4cf2-98ae-77c16a9ed3fc",
+      "name": "Share file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from different nodes\nconst formData = $('Extract & Clean Form Data').first().json;\nconst captionData = $('Parse Caption Response').first().json;\nconst driveData = $('Upload file').first().json; // Get Google Drive upload data\nconst unsplashData = $('Generate Image - Unsplash').first().json;\n\n// Get photographer info from Unsplash response\nconst photographerName = $('Generate Image - Unsplash').first().json.user.name;\nconst photographerUrl = $('Generate Image - Unsplash').first().json.user.links.html;\n\n// Get Google Drive link\nconst driveLink = driveData.webViewLink;\n\nconst emailHTML = `\n<div style=\"font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px;\">\n  \n  <h1 style=\"color: #0a66c2; border-bottom: 3px solid #0a66c2; padding-bottom: 10px;\">\n    🎯 Your AI-Generated LinkedIn Content is Ready!\n  </h1>\n  \n  <p style=\"font-size: 16px; color: #333;\">Hi ${formData.user_name},</p>\n  \n  <p style=\"font-size: 14px; color: #666;\">Your content for \"<strong>${formData.content_topic}</strong>\" has been generated. Choose your favorite caption style below:</p>\n  \n  <hr style=\"border: 1px solid #e0e0e0; margin: 30px 0;\">\n  \n  <div style=\"margin-bottom: 30px;\">\n    <h2 style=\"color: #0a66c2; font-size: 18px;\">📊 Professional & Authoritative</h2>\n    <div style=\"background-color: #f3f6f9; padding: 15px; border-radius: 8px; border-left: 4px solid #0a66c2;\">\n      <p style=\"white-space: pre-wrap; line-height: 1.6; color: #333;\">${captionData.caption_professional}</p>\n    </div>\n  </div>\n  \n  <div style=\"margin-bottom: 30px;\">\n    <h2 style=\"color: #28a745; font-size: 18px;\">💬 Conversational & Friendly</h2>\n    <div style=\"background-color: #f0f9f4; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;\">\n      <p style=\"white-space: pre-wrap; line-height: 1.6; color: #333;\">${captionData.caption_conversational}</p>\n    </div>\n  </div>\n  \n  <div style=\"margin-bottom: 30px;\">\n    <h2 style=\"color: #ff6b35; font-size: 18px;\">✨ Inspirational & Motivational</h2>\n    <div style=\"background-color: #fff5f0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff6b35;\">\n      <p style=\"white-space: pre-wrap; line-height: 1.6; color: #333;\">${captionData.caption_inspirational}</p>\n    </div>\n  </div>\n  \n  <hr style=\"border: 1px solid #e0e0e0; margin: 30px 0;\">\n  \n  <div style=\"margin-bottom: 30px;\">\n    <h2 style=\"color: #0a66c2; font-size: 18px;\">🖼️ Your Image</h2>\n    <p style=\"font-size: 14px; color: #666;\">Download from Google Drive:</p>\n    <a href=\"${driveLink}\" style=\"display: inline-block; background-color: #0a66c2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;\">📥 Download Image</a>\n    \n    <div style=\"margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 4px; font-size: 12px; color: #666;\">\n      📸 Photo by <a href=\"${photographerUrl}?utm_source=AI_Content_Generator&utm_medium=referral\" style=\"color: #0a66c2; text-decoration: none;\">${photographerName}</a> on <a href=\"https://unsplash.com?utm_source=AI_Content_Generator&utm_medium=referral\" style=\"color: #0a66c2; text-decoration: none;\">Unsplash</a>\n    </div>\n  </div>\n  \n  <hr style=\"border: 1px solid #e0e0e0; margin: 30px 0;\">\n  \n  <div style=\"background-color: #fff9e6; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;\">\n    <h3 style=\"color: #f57c00; margin-top: 0;\">💡 Pro Tips:</h3>\n    <ul style=\"color: #666; line-height: 1.8;\">\n      <li>Test different captions to see what resonates with your audience</li>\n      <li>Post at optimal times (Tue-Thu, 8-10am or 12-1pm)</li>\n      <li>Engage with comments within the first hour for better reach</li>\n      <li>Add relevant hashtags (3-5 max)</li>\n      <li><strong>Credit the photographer when you post!</strong></li>\n    </ul>\n  </div>\n  \n  <p style=\"color: #999; font-size: 12px; margin-top: 40px; text-align: center;\">\n    Generated by AI Social Media Content Generator\n  </p>\n  \n</div>\n`;\n\nreturn [{\n  json: {\n    user_email: formData.user_email,\n    user_name: formData.user_name,\n    content_topic: formData.content_topic,\n    email_html: emailHTML,\n    email_subject: `✅ Your LinkedIn Content: \"${formData.content_topic}\"`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        0
+      ],
+      "id": "52cb3867-851f-433d-b152-d5fcc63bc599",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse Caption Response').item.json.user_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        0
+      ],
+      "id": "27c17129-2030-46d6-9cfb-8d76278f78b1",
+      "name": "Send a message",
+      "webhookId": "c30befaa-b8f1-4519-9756-aada6479d3eb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract & Clean Form Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Clean Form Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Caption Generation Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Caption Generation Prompts": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI - Generate Captions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini AI - Generate Captions",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI - Generate Captions": {
+      "main": [
+        [
+          {
+            "node": "Parse Caption Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Caption Response": {
+      "main": [
+        [
+          {
+            "node": "Prepare Image Generation Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image Generation Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Image - Unsplash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image - Unsplash": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Share file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "97a2f982-8b25-4e68-a215-64ca8da7b994",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "h6G58H9_ygC72UTeBfJwx",
+  "tags": []
+}

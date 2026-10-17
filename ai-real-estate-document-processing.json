@@ -1,0 +1,2124 @@
+{
+  "name": "Real Estate Offer & Lease Processing Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "q": "subject:(offer OR \"purchase offer\" OR \"lease application\" OR \"rental application\" OR property)"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2dd573dc-58ce-487e-9369-f5ebc0b8316e",
+      "name": "Monitor Real Estate Documents",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b195a34f-008d-41da-98f4-9988fcaaa19f",
+              "leftValue": "attachment_0",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "826be32a-6aa7-416b-b84a-8b77aea6c5a3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const binary = item.binary || {};\n  const attachmentKey = Object.keys(binary)[0] || 'attachment_0';\n  const attachment = binary[attachmentKey] || {};\n\n  return {\n    json: {\n      emailSubject: item.json.subject || '',\n      senderEmail: item.json.from?.value?.[0]?.address || '',\n      senderName: item.json.from?.value?.[0]?.name || '',\n      receivedDate: new Date().toISOString().replace('T', ' ').substring(0, 19),\n      emailBody: item.json.text || '',\n      attachmentName: attachment.fileName || '',\n      attachmentData: JSON.stringify(attachment) || '',\n      attachmentMimeType: attachment.mimeType || '',\n      documentId: `RE-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 15)}`\n    },\n    binary // ✅ preserve the original attachment binary for upload later\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -16
+      ],
+      "id": "8e1bfc66-ebcd-48ec-bdf4-2e27f73f755e",
+      "name": "Extract Email Info"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Purchase Offer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "16b719a0-e315-4f63-a7b0-a3fe928f5bfb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Purchase Offer"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "49c48146-ce74-43a9-96d1-f129ecfd33e5",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Lease Application",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Lease Application"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "019857c1-df4d-4925-9416-de1a3324352a",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Contract",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Contract"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "30f8ef45-972d-408d-8ace-289319237f20",
+                    "leftValue": "={{ $json.documentType }}",
+                    "rightValue": "Property Document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Property Document"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "99c6447c-c196-46fd-aee4-90b85232ec32",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1or6ZXjjbb22trKlu4qgpJIlDtF8v6gNm",
+          "mode": "list",
+          "cachedResultName": "Purchase Offers",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1or6ZXjjbb22trKlu4qgpJIlDtF8v6gNm"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        -224
+      ],
+      "id": "6dc42774-e827-47d5-954f-737874263081",
+      "name": "Upload to Purchase Offers",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item;\n\nconst subject = item.json.emailSubject?.toLowerCase() || '';\nconst body = item.json.emailBody?.toLowerCase() || '';\nconst filename = item.json.attachmentName?.toLowerCase() || '';\n\nlet documentType = 'Unknown';\nlet storageFolder = 'Property Documents';\n\n// Identify document type\nif (\n  subject.includes('offer') ||\n  subject.includes('purchase offer') ||\n  body.includes('offer to purchase') ||\n  filename.includes('offer')\n) {\n  documentType = 'Purchase Offer';\n  storageFolder = 'Purchase Offers';\n} else if (\n  subject.includes('lease application') ||\n  subject.includes('rental application') ||\n  body.includes('application') ||\n  filename.includes('application')\n) {\n  documentType = 'Lease Application';\n  storageFolder = 'Lease Applications';\n} else if (\n  subject.includes('contract') ||\n  filename.includes('contract')\n) {\n  documentType = 'Contract';\n  storageFolder = 'Contracts';\n} else {\n  documentType = 'Property Document';\n  storageFolder = 'Property Documents';\n}\n\nreturn {\n  json: {\n    documentType,\n    storageFolder\n  },\n  binary: item.binary // ✅ Keep Gmail attachment for upload\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -16
+      ],
+      "id": "50d6d81b-2907-4d8e-906b-5d566a236996",
+      "name": "Identify Document Type"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "17dLOBzSrE4F9dOrB4JcCkDMUTD7IUe8_",
+          "mode": "list",
+          "cachedResultName": "Contractss",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/17dLOBzSrE4F9dOrB4JcCkDMUTD7IUe8_"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1216,
+        80
+      ],
+      "id": "8e916f71-a72e-4c1c-8f11-f58c3a488551",
+      "name": "Upload to Contracts",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Tc-vFStAgyupJdTy9oqHnWjOpr2sbGaP",
+          "mode": "list",
+          "cachedResultName": "Lease Applications",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Tc-vFStAgyupJdTy9oqHnWjOpr2sbGaP"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1216,
+        -80
+      ],
+      "id": "cf13be48-5edd-4496-a069-847065d4caa6",
+      "name": "Upload to Lease Applications",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $('Extract Email Info').item.json.documentId }}-{{ $('Extract Email Info').item.json.attachmentName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "17r11E6BVZ7NBNvVjUgpq6w0BT7tpMc1m",
+          "mode": "list",
+          "cachedResultName": "Property Documents",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/17r11E6BVZ7NBNvVjUgpq6w0BT7tpMc1m"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "62f5841f-6fa9-4d9a-9d0b-65a190e696da",
+      "name": "Upload to Property Documents",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        0
+      ],
+      "id": "15f472b9-ce09-4856-9f17-2d3aa887c635",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        0
+      ],
+      "id": "6f61f061-bc52-4f11-a85f-779e323627f0",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this real estate document and extract key information.\n\nDocument Type: {{ $('Identify Document Type').item.json.documentType }}\nSender: {{ $('Extract Email Info').item.json.senderName }} ({{ $('Extract Email Info').item.json.senderEmail }})\nReceived: {{ $('Extract Email Info').item.json.receivedDate }}\nDocument Text: {{ $json.text }}\n\n\n\nPlease extract and return the following in JSON format:\n\n{\n  \"documentType\": \"Purchase Offer, Lease Application, or Contract\",\n  \"propertyAddress\": \"Full property address\",\n  \"propertyCity\": \"City\",\n  \"propertyState\": \"State\",\n  \"propertyZipCode\": \"Zip code\",\n\n  \"offerAmount\": \"Numerical value only (e.g., 425000)\",\n  \"buyerName\": \"Full name of buyer(s)\",\n  \"buyerEmail\": \"Email address\",\n  \"buyerPhone\": \"Phone number\",\n  \"financingType\": \"Cash, Conventional, FHA, VA, etc.\",\n  \"preApproved\": \"Yes or No\",\n  \"preApprovalAmount\": \"Amount pre-approved for\",\n  \"earnestMoney\": \"Earnest money deposit amount\",\n  \"contingencies\": [\"List of contingencies\"],\n  \"inspectionPeriod\": \"Number of days for inspection\",\n  \"closingDate\": \"Proposed closing date (YYYY-MM-DD)\",\n  \"offerExpiration\": \"Offer expiration date (YYYY-MM-DD)\",\n  \"additionalTerms\": \"Any special terms or conditions\",\n\n  \"applicantName\": \"Full name of applicant(s)\",\n  \"applicantEmail\": \"Email address\",\n  \"applicantPhone\": \"Phone number\",\n  \"currentAddress\": \"Current residential address\",\n  \"employmentStatus\": \"Employed, Self-employed, Retired, Student, etc.\",\n  \"employerName\": \"Current employer\",\n  \"monthlyIncome\": \"Numerical monthly income\",\n  \"annualIncome\": \"Numerical annual income\",\n  \"creditScore\": \"Credit score if mentioned\",\n  \"pets\": \"Yes or No, and pet details if provided\",\n  \"numberOfOccupants\": \"Number of occupants\",\n  \"desiredMoveInDate\": \"YYYY-MM-DD format\",\n  \"previousLandlordInfo\": \"Previous landlord name and contact\",\n  \"evictionHistory\": \"Any mention of evictions\",\n  \"bankruptcyHistory\": \"Any mention of bankruptcy\",\n  \"criminalHistory\": \"Any mention of criminal background\",\n\n  \"urgencyLevel\": \"High, Medium, or Low\",\n  \"redFlags\": [\"List any concerning items\"],\n  \"strengths\": [\"Positive aspects\"],\n  \"summary\": \"2–3 sentence summary of the document\",\n  \"keyHighlights\": \"Most important details for the agent\"\n}\n\nAttachment Details:\nMime Type: {{ $('Extract Email Info').item.json.attachmentMimeType }}\nData (Base64): {{ $('Extract Email Info').item.json.attachmentData }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a real estate document processing AI assistant. Your role is to analyze documents (purchase offers, lease applications, or contracts) and extract all key structured information.\n\nYou must:\n- Return output strictly in valid JSON.\n- Use `null` for any missing or unavailable fields.\n- Be thorough when identifying financial figures, contact information, and dates.\n- Follow the provided extraction schema and scoring rules carefully.\n\nIMPORTANT SCORING CRITERIA:\n\nFor Purchase Offers:\n- Cash offers = High urgency\n- Pre-approved buyers = Positive\n- Offer at or above asking = High priority\n- Multiple contingencies = Lower priority\n- Short inspection period = Positive\n- Quick closing = Positive\n\nFor Lease Applications:\n- Monthly income should be 3× monthly rent (calculate and note)\n- Credit score >700 = Excellent, 650–700 = Good, <650 = Fair/Poor\n- Stable employment = Positive\n- Good landlord references = Positive\n- Pets with deposit = Neutral\n- Eviction/bankruptcy history = Red flag\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        448
+      ],
+      "id": "de43efd8-a2f6-451d-affe-b6433ca763b9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"documentType\": \"Purchase Offer, Lease Application, or Contract\",\n  \"propertyAddress\": \"Full property address\",\n  \"propertyCity\": \"City\",\n  \"propertyState\": \"State\",\n  \"propertyZipCode\": \"Zip code\",\n\n  \"offerAmount\": \"Numerical value only (e.g., 425000)\",\n  \"buyerName\": \"Full name of buyer(s)\",\n  \"buyerEmail\": \"Email address\",\n  \"buyerPhone\": \"Phone number\",\n  \"financingType\": \"Cash, Conventional, FHA, VA, etc.\",\n  \"preApproved\": \"Yes or No\",\n  \"preApprovalAmount\": \"Amount pre-approved for\",\n  \"earnestMoney\": \"Earnest money deposit amount\",\n  \"contingencies\": [\"List of contingencies\"],\n  \"inspectionPeriod\": \"Number of days for inspection\",\n  \"closingDate\": \"Proposed closing date (YYYY-MM-DD)\",\n  \"offerExpiration\": \"Offer expiration date (YYYY-MM-DD)\",\n  \"additionalTerms\": \"Any special terms or conditions\",\n\n  \"applicantName\": \"Full name of applicant(s)\",\n  \"applicantEmail\": \"Email address\",\n  \"applicantPhone\": \"Phone number\",\n  \"currentAddress\": \"Current residential address\",\n  \"employmentStatus\": \"Employed, Self-employed, Retired, Student, etc.\",\n  \"employerName\": \"Current employer\",\n  \"monthlyIncome\": \"Numerical monthly income\",\n  \"annualIncome\": \"Numerical annual income\",\n  \"creditScore\": \"Credit score if mentioned\",\n  \"pets\": \"Yes or No, and pet details if provided\",\n  \"numberOfOccupants\": \"Number of occupants\",\n  \"desiredMoveInDate\": \"YYYY-MM-DD format\",\n  \"previousLandlordInfo\": \"Previous landlord name and contact\",\n  \"evictionHistory\": \"Any mention of evictions\",\n  \"bankruptcyHistory\": \"Any mention of bankruptcy\",\n  \"criminalHistory\": \"Any mention of criminal background\",\n\n  \"urgencyLevel\": \"High, Medium, or Low\",\n  \"redFlags\": [\"List any concerning items\"],\n  \"strengths\": [\"Positive aspects\"],\n  \"summary\": \"2–3 sentence summary of the document\",\n  \"keyHighlights\": \"Most important details for the agent\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        320
+      ],
+      "id": "3b43a471-d241-4c34-bcb8-35ae922e1ee0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        32,
+        304
+      ],
+      "id": "1d1de139-c783-483b-ab7d-d2e1baa360c2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19fdfc3c-1a5c-4965-854d-0f98d9fb2b91",
+              "name": "documentType",
+              "value": "={{ $json.output.documentType }}",
+              "type": "string"
+            },
+            {
+              "id": "d3055e91-3aaf-43ea-b729-3f7dfdd6a056",
+              "name": "propertyAddress",
+              "value": "={{ $json.output.propertyAddress }}",
+              "type": "string"
+            },
+            {
+              "id": "7625f4d4-3758-440b-b9e3-164b94226f80",
+              "name": "propertyCity",
+              "value": "={{ $json.output.propertyCity }}",
+              "type": "string"
+            },
+            {
+              "id": "a2c7a950-1e20-440e-b173-bd04de861cee",
+              "name": "propertyState",
+              "value": "={{ $json.output.propertyState }}",
+              "type": "string"
+            },
+            {
+              "id": "af244496-f2bd-4fc7-a77d-2a0d53ba40bf",
+              "name": "propertyZipCode",
+              "value": "={{ $json.output.propertyZipCode }}",
+              "type": "string"
+            },
+            {
+              "id": "8766297f-1e84-4210-ba37-bb594715d748",
+              "name": "offerAmount",
+              "value": "={{ $json.output.offerAmount }}",
+              "type": "string"
+            },
+            {
+              "id": "5cb0e31f-5a3e-43e3-899c-f8eaf60b1b41",
+              "name": "buyerName",
+              "value": "={{ $json.output.buyerName }}",
+              "type": "string"
+            },
+            {
+              "id": "ac02c6c0-d1e9-4441-b75c-4f478660f4f2",
+              "name": "buyerEmail",
+              "value": "={{ $json.output.buyerEmail }}",
+              "type": "string"
+            },
+            {
+              "id": "8e870ac0-bb21-4084-bc59-39dde35dcb45",
+              "name": "buyerPhone",
+              "value": "={{ $json.output.buyerPhone }}",
+              "type": "string"
+            },
+            {
+              "id": "45094643-11af-4aef-aab4-3017f7152e04",
+              "name": "financingType",
+              "value": "={{ $json.output.financingType }}",
+              "type": "string"
+            },
+            {
+              "id": "73eeae22-faf1-44cb-baed-9b4105c28b26",
+              "name": "preApproved",
+              "value": "={{ $json.output.preApproved }}",
+              "type": "string"
+            },
+            {
+              "id": "9923b94d-1c13-45fb-8fe0-a2497a68d069",
+              "name": "preApproved",
+              "value": "={{ $json.output.preApproved }}",
+              "type": "string"
+            },
+            {
+              "id": "b457e795-b323-4d59-9443-187dce974109",
+              "name": "preApprovalAmount",
+              "value": "={{ $json.output.preApprovalAmount }}",
+              "type": "string"
+            },
+            {
+              "id": "1cb6be17-9dee-4692-a9dd-214d06ba7fee",
+              "name": "earnestMoney",
+              "value": "={{ $json.output.earnestMoney }}",
+              "type": "string"
+            },
+            {
+              "id": "799bcc88-6e03-4bd0-af2f-262b31d5e42d",
+              "name": "contingencies",
+              "value": "={{ $json.output.contingencies.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "8d745540-44af-4d62-a592-54c092e21ce1",
+              "name": "inspectionPeriod",
+              "value": "={{ $json.output.inspectionPeriod }}",
+              "type": "string"
+            },
+            {
+              "id": "0f6598ce-7581-48f4-9ae0-44911c83496f",
+              "name": "closingDate",
+              "value": "={{ $json.output.closingDate }}",
+              "type": "string"
+            },
+            {
+              "id": "870eb495-9a5f-410e-b013-8edcdb85aaca",
+              "name": "offerExpiration",
+              "value": "={{ $json.output.offerExpiration }}",
+              "type": "string"
+            },
+            {
+              "id": "6e4d1fb5-d10b-4502-ab52-b48593f74214",
+              "name": "additionalTerms",
+              "value": "={{ $json.output.additionalTerms }}",
+              "type": "string"
+            },
+            {
+              "id": "489bea37-d814-4db0-ada9-4d6069056fc6",
+              "name": "urgencyLevel",
+              "value": "={{ $json.output.urgencyLevel }}",
+              "type": "string"
+            },
+            {
+              "id": "70d84c0b-1886-476d-a833-13e580df43dc",
+              "name": "redFlags",
+              "value": "={{ $json.output.redFlags.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "784baab2-d677-488b-85f3-bdc3b0f9bfe7",
+              "name": "strengths",
+              "value": "={{ $json.output.strengths.join(', ') }}",
+              "type": "array"
+            },
+            {
+              "id": "72b013dd-b316-42e7-aba3-c723f2d352b9",
+              "name": "summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "e6f97830-22f5-4dde-b143-2cac9d81ab9c",
+              "name": "keyHighlights",
+              "value": "={{ $json.output.keyHighlights }}",
+              "type": "string"
+            },
+            {
+              "id": "e2a20a7a-57c1-41d5-91cb-e039e1e9f7ca",
+              "name": "applicantName",
+              "value": "={{ $json.output.applicantName }}",
+              "type": "string"
+            },
+            {
+              "id": "b4e87c36-1704-4780-8ed3-7a2f43c7bf73",
+              "name": "applicantEmail",
+              "value": "={{ $json.output.applicantEmail }}",
+              "type": "string"
+            },
+            {
+              "id": "0dfda018-df21-47e6-9662-2b3b528491ec",
+              "name": "applicantPhone",
+              "value": "={{ $json.output.applicantPhone }}",
+              "type": "string"
+            },
+            {
+              "id": "58d96678-fc1b-497d-83d7-722c323ed3b0",
+              "name": "currentAddress",
+              "value": "={{ $json.output.currentAddress }}",
+              "type": "string"
+            },
+            {
+              "id": "2ec88d67-7931-4b4e-8a0a-421e3d926c1d",
+              "name": "employmentStatus",
+              "value": "={{ $json.output.employmentStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "701db9b1-e710-4a09-bcbc-61fbbbeeb0b3",
+              "name": "employerName",
+              "value": "={{ $json.output.employerName }}",
+              "type": "string"
+            },
+            {
+              "id": "800652b8-24e8-4aa1-b8d8-d67e1fe74047",
+              "name": "monthlyIncome",
+              "value": "={{ $json.output.monthlyIncome }}",
+              "type": "string"
+            },
+            {
+              "id": "8707c089-a3bb-4737-beda-fc3605ba9e14",
+              "name": "annualIncome",
+              "value": "={{ $json.output.annualIncome }}",
+              "type": "string"
+            },
+            {
+              "id": "f57017dd-d807-425e-a284-597d8bc10d7e",
+              "name": "creditScore",
+              "value": "={{ $json.output.creditScore }}",
+              "type": "string"
+            },
+            {
+              "id": "b4290487-7b79-483e-bf49-0e50443a2031",
+              "name": "pets",
+              "value": "={{ $json.output.pets }}",
+              "type": "string"
+            },
+            {
+              "id": "23553ea9-27bf-4e0c-84ba-42d22ea62e23",
+              "name": "numberOfOccupants",
+              "value": "={{ $json.output.numberOfOccupants }}",
+              "type": "string"
+            },
+            {
+              "id": "1128f098-f789-48ab-886a-ea97d44dc930",
+              "name": "desiredMoveInDate",
+              "value": "={{ $json.output.desiredMoveInDate }}",
+              "type": "string"
+            },
+            {
+              "id": "614f630d-6f21-445c-a944-8cc9fd821b46",
+              "name": ".previousLandlordInfo",
+              "value": "={{ $json.output.previousLandlordInfo }}",
+              "type": "string"
+            },
+            {
+              "id": "162ebbc3-5648-41b0-81b3-598b3d8e4147",
+              "name": "evictionHistory",
+              "value": "={{ $json.output.evictionHistory }}",
+              "type": "string"
+            },
+            {
+              "id": "79240f2e-aa5c-49cc-bc25-e9b99dc5bd9c",
+              "name": "bankruptcyHistory",
+              "value": "={{ $json.output.bankruptcyHistory }}",
+              "type": "string"
+            },
+            {
+              "id": "8ab0053e-d0f5-401f-a549-a3ed34ade20f",
+              "name": "criminalHistory",
+              "value": "={{ $json.output.criminalHistory }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        448
+      ],
+      "id": "0dd6caf3-6fd1-4698-961f-5b94f6897c06",
+      "name": "Parse Extracted Data"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI",
+          "mode": "list",
+          "cachedResultName": "Real Estate Management System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Properties",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Property Address",
+              "lookupValue": "={{ $json.propertyAddress }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        592,
+        448
+      ],
+      "id": "337f9522-462b-4694-8728-0a41ffde8e99",
+      "name": "Find Property in Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parse Extracted Data').item.json.documentType }}",
+                    "rightValue": "Purchase Offer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1257568e-7325-4e3c-a8db-e65c45fdaf5e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9befe090-c18c-4014-89c9-3c79c9c1f1d7",
+                    "leftValue": "={{ $('Parse Extracted Data').item.json.documentType }}",
+                    "rightValue": "Lease Application",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        448
+      ],
+      "id": "2b302688-1024-435d-b7a6-7057d26f1d1f",
+      "name": "Route by Document Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "const offerAmount = parseFloat($('Parse Extracted Data').first().json.offerAmount)  || 0;\nconst askingPrice = parseFloat($('Find Property in Database').first().json['Asking Price']) || 0;\n\n// Calculate difference\nconst differenceAmount = offerAmount - askingPrice;\nconst differencePercent = askingPrice > 0 ? ((differenceAmount / askingPrice) * 100).toFixed(2) : 0;\n\n// Determine offer strength\nlet offerStrength = 'Below Market';\nif (differencePercent >= 0) {\n  offerStrength = 'At or Above Asking';\n} else if (differencePercent >= -5) {\n  offerStrength = 'Competitive';\n} else if (differencePercent >= -10) {\n  offerStrength = 'Below Asking';\n} else {\n  offerStrength = 'Significantly Below';\n}\n\n// Calculate priority score (0-100)\nlet priorityScore = 50; // Base score\n\n// Offer amount scoring\nif (differencePercent >= 5) priorityScore += 25;\nelse if (differencePercent >= 0) priorityScore += 20;\nelse if (differencePercent >= -5) priorityScore += 10;\nelse if (differencePercent >= -10) priorityScore += 5;\nelse priorityScore -= 10;\n\n// Financing scoring\nconst financingType = ($('Parse Extracted Data').first().json.financingType || '').toLowerCase();\nif (financingType.includes('cash')) priorityScore += 20;\nelse if ($('Parse Extracted Data').first().json.preApproved === 'Yes') priorityScore += 15;\nelse priorityScore += 5;\n\n// Contingencies scoring\nconst contingencies = $('Parse Extracted Data').first().json.contingencies || [];\nif (contingencies.length === 0) priorityScore += 10;\nelse if (contingencies.length <= 2) priorityScore += 5;\nelse priorityScore -= 5;\n\n// Inspection period scoring\nconst inspectionPeriod = parseInt($('Parse Extracted Data').first().json.inspectionPeriod) || 10;\nif (inspectionPeriod <= 5) priorityScore += 5;\nelse if (inspectionPeriod <= 10) priorityScore += 2;\n\n// Red flags\nconst redFlags = $('Parse Extracted Data').first().json.redFlags || '';\nif (redFlags.length > 0) priorityScore -= 15;\n\n// Cap score between 0-100\npriorityScore = Math.max(0, Math.min(100, priorityScore));\n\n// Determine priority level\nlet priorityLevel = 'Low';\nif (priorityScore >= 80) priorityLevel = 'Critical - Act Now';\nelse if (priorityScore >= 65) priorityLevel = 'High Priority';\nelse if (priorityScore >= 50) priorityLevel = 'Medium Priority';\n\nreturn {\n  json: {\n    offerAmount: offerAmount,\n    askingPrice: askingPrice,\n    differenceAmount: differenceAmount,\n    differencePercent: differencePercent,\n    offerStrength: offerStrength,\n    priorityScore: priorityScore,\n    priorityLevel: priorityLevel\n  }\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        384
+      ],
+      "id": "43b2538c-f0e4-45ea-a5dc-f3fcb0db371b",
+      "name": "Calculate Offer Metrics"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI",
+          "mode": "list",
+          "cachedResultName": "Real Estate Management System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1378701209,
+          "mode": "list",
+          "cachedResultName": "Purchase Offers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit#gid=1378701209"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Offer ID": "={{ $('Extract Email Info').item.json.documentId }}",
+            "Timestamp": "={{ $('Extract Email Info').item.json.receivedDate }}",
+            "Property ID": "={{ $('Find Property in Database').item.json['Property ID'] }}",
+            "Property Address": "={{ $('Parse Extracted Data').item.json.propertyAddress }}",
+            "Asking Price": "={{ $json.askingPrice }}",
+            "Offer Amount": "={{ $json.offerAmount }}",
+            "Difference ($)": "={{ $json.differenceAmount }}",
+            "Difference (%)": "={{ $json.differencePercent }}",
+            "Priority Score": "={{ $json.priorityScore }}",
+            "Agent Notes": "={{ $('Calculate Offer Metrics').item.json.offerStrength }} - {{ $('Calculate Offer Metrics').item.json.priorityLevel }}",
+            "Buyer Name": "={{ $('Parse Extracted Data').item.json.buyerName }}",
+            "Buyer Email": "={{ $('Parse Extracted Data').item.json.buyerEmail }}",
+            "Buyer Phone": "={{ $('Parse Extracted Data').item.json.buyerPhone }}",
+            "Financing Type": "={{ $('Parse Extracted Data').item.json.financingType }}",
+            "Pre-Approved": "={{ $('Parse Extracted Data').item.json.preApproved }}",
+            "Earnest Money": "={{ $('Parse Extracted Data').item.json.earnestMoney }}",
+            "Contingencies": "={{ $('Parse Extracted Data').item.json.contingencies }}",
+            "Inspection Period": "={{ $('Parse Extracted Data').item.json.inspectionPeriod }}",
+            "Closing Date": "={{ $('Parse Extracted Data').item.json.closingDate }}",
+            "Expiration Date": "={{ $('Parse Extracted Data').item.json.offerExpiration }}",
+            "Offer Status": "Pending Review"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Offer ID",
+              "displayName": "Offer ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Address",
+              "displayName": "Property Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Asking Price",
+              "displayName": "Asking Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Offer Amount",
+              "displayName": "Offer Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Difference ($)",
+              "displayName": "Difference ($)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Difference (%)",
+              "displayName": "Difference (%)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buyer Name",
+              "displayName": "Buyer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buyer Email",
+              "displayName": "Buyer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buyer Phone",
+              "displayName": "Buyer Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Financing Type",
+              "displayName": "Financing Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pre-Approved",
+              "displayName": "Pre-Approved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Earnest Money",
+              "displayName": "Earnest Money",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contingencies",
+              "displayName": "Contingencies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Inspection Period",
+              "displayName": "Inspection Period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Closing Date",
+              "displayName": "Closing Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expiration Date",
+              "displayName": "Expiration Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Offer Status",
+              "displayName": "Offer Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority Score",
+              "displayName": "Priority Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Agent Notes",
+              "displayName": "Agent Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1200,
+        384
+      ],
+      "id": "909fae2e-0209-4012-ac50-d4fa97bbc626",
+      "name": "Log Purchase Offer",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI",
+          "mode": "list",
+          "cachedResultName": "Real Estate Management System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 508677290,
+          "mode": "list",
+          "cachedResultName": "Lease Applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit#gid=508677290"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Application ID": "={{ $('Extract Email Info').item.json.documentId }}",
+            "Timestamp": "={{ $('Extract Email Info').item.json.receivedDate }}",
+            "Property ID": "={{ $('Find Property in Database').item.json['Property ID'] }}",
+            "Property Address": "={{ $('Parse Extracted Data').item.json.propertyAddress }}",
+            "Monthly Rent": "={{ $('Calculate Application Analysis').item.json.monthlyRent }}",
+            "Applicant Name": "={{ $('Parse Extracted Data').item.json.applicantName }}",
+            "Email": "={{ $('Parse Extracted Data').item.json.applicantEmail }}",
+            "Phone": "={{ $('Parse Extracted Data').item.json.applicantPhone }}",
+            "Current Address": "={{ $('Parse Extracted Data').item.json.currentAddress }}",
+            "Employment Status": "={{ $('Parse Extracted Data').item.json.employmentStatus }}",
+            "Employer Name": "={{ $('Parse Extracted Data').item.json.employerName }}",
+            "Monthly Income": "={{ $('Parse Extracted Data').item.json.monthlyIncome }}",
+            "Annual Income": "={{ $('Parse Extracted Data').item.json.annualIncome }}",
+            "Credit Score": "={{ $('Parse Extracted Data').item.json.creditScore }}",
+            "Income Verification": "={{ $('Calculate Application Analysis').item.json.meetsIncomeRequirement ? 'Meets 3x Rule' : 'Below 3x Rule' }}",
+            "Income to Rent Ratio": "={{ $('Calculate Application Analysis').item.json.incomeToRentRatio }}x",
+            "Pets": "={{ $('Parse Extracted Data').item.json.pets }}",
+            "Number of Occupants": "={{ $('Parse Extracted Data').item.json.numberOfOccupants }}",
+            "Desired Move-in Date": "={{ $('Parse Extracted Data').item.json.desiredMoveInDate }}",
+            "Application Status": "={{ $('Calculate Application Analysis').item.json.applicationStatus }}",
+            "Application Score": "={{ $('Calculate Application Analysis').item.json.applicationScore }}",
+            "Red Flags": "={{ $('Parse Extracted Data').item.json.redFlags || 'None' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Application ID",
+              "displayName": "Application ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Address",
+              "displayName": "Property Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Monthly Rent",
+              "displayName": "Monthly Rent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Applicant Name",
+              "displayName": "Applicant Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Current Address",
+              "displayName": "Current Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employment Status",
+              "displayName": "Employment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employer Name",
+              "displayName": "Employer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Monthly Income",
+              "displayName": "Monthly Income",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Annual Income",
+              "displayName": "Annual Income",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Credit Score",
+              "displayName": "Credit Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Income Verification",
+              "displayName": "Income Verification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Income to Rent Ratio",
+              "displayName": "Income to Rent Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pets",
+              "displayName": "Pets",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Number of Occupants",
+              "displayName": "Number of Occupants",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Desired Move-in Date",
+              "displayName": "Desired Move-in Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Red Flags",
+              "displayName": "Red Flags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Application Score",
+              "displayName": "Application Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Application Status",
+              "displayName": "Application Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1200,
+        544
+      ],
+      "id": "b1aa71b9-9b94-4546-9ae8-f636baa48baa",
+      "name": "Append row in sheet",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const monthlyIncome = parseFloat($('Parse Extracted Data').first().json.monthlyIncome) || 0;\nconst monthlyRent = parseFloat($('Find Property in Database').first().json['Monthly Rent']) || 0;\n\n// Calculate income to rent ratio\nconst incomeToRentRatio = monthlyRent > 0 ? (monthlyIncome / monthlyRent).toFixed(2) : 0;\n\n// Check if meets 3x rent rule\nconst meetsIncomeRequirement = incomeToRentRatio >= 3;\n\n// Extract credit score\nconst creditScore = parseInt($('Parse Extracted Data').first().json.creditScore) || 0;\n\n// Determine credit rating\nlet creditRating = 'Unknown';\nif (creditScore >= 740) creditRating = 'Excellent';\nelse if (creditScore >= 700) creditRating = 'Very Good';\nelse if (creditScore >= 650) creditRating = 'Good';\nelse if (creditScore >= 600) creditRating = 'Fair';\nelse if (creditScore > 0) creditRating = 'Poor';\n\n// Calculate priority score (0-100)\nlet applicationScore = 50; // Base score\n\n// Income scoring (most important)\nif (incomeToRentRatio >= 4) applicationScore += 25;\nelse if (incomeToRentRatio >= 3.5) applicationScore += 20;\nelse if (incomeToRentRatio >= 3) applicationScore += 15;\nelse if (incomeToRentRatio >= 2.5) applicationScore += 5;\nelse applicationScore -= 20;\n\n// Credit score scoring\nif (creditScore >= 740) applicationScore += 20;\nelse if (creditScore >= 700) applicationScore += 15;\nelse if (creditScore >= 650) applicationScore += 10;\nelse if (creditScore >= 600) applicationScore += 5;\nelse if (creditScore > 0) applicationScore -= 10;\n\n// Employment status\nconst employment = ($('Parse Extracted Data').first().json.employmentStatus || '').toLowerCase();\nif (employment.includes('employed')) applicationScore += 10;\nelse if (employment.includes('self-employed')) applicationScore += 5;\nelse if (employment.includes('retired')) applicationScore += 5;\n\n// Red flags - major deductions\nconst redFlags = $('Parse Extracted Data').first().json.redFlags || '';\nif (redFlags.toLowerCase().includes('eviction')) applicationScore -= 30;\nif (redFlags.toLowerCase().includes('bankruptcy')) applicationScore -= 20;\nif (redFlags.toLowerCase().includes('criminal')) applicationScore -= 15;\n\n// Cap score\napplicationScore = Math.max(0, Math.min(100, applicationScore));\n\n// Determine application status\nlet applicationStatus = 'Rejected';\nif (applicationScore >= 75) applicationStatus = 'Highly Qualified';\nelse if (applicationScore >= 60) applicationStatus = 'Qualified';\nelse if (applicationScore >= 45) applicationStatus = 'Conditional Approval';\nelse if (applicationScore >= 30) applicationStatus = 'Needs Review';\n\n// Priority level\nlet priorityLevel = 'Low';\nif (applicationScore >= 75) priorityLevel = 'High Priority';\nelse if (applicationScore >= 60) priorityLevel = 'Medium Priority';\n\nreturn {\n  json: {\n    monthlyIncome: monthlyIncome,\n    monthlyRent: monthlyRent,\n    incomeToRentRatio: incomeToRentRatio,\n    meetsIncomeRequirement: meetsIncomeRequirement,\n    creditScore: creditScore,\n    creditRating: creditRating,\n    applicationScore: applicationScore,\n    applicationStatus: applicationStatus,\n    priorityLevel: priorityLevel\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        544
+      ],
+      "id": "d31db666-0f6d-42e6-8587-70f232c4f235",
+      "name": "Calculate Application Analysis",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1440,
+        480
+      ],
+      "id": "61208c3c-2173-4aa7-ad37-da72fd0900d5",
+      "name": "Merge",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI",
+          "mode": "list",
+          "cachedResultName": "Real Estate Management System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1203515080,
+          "mode": "list",
+          "cachedResultName": "Documents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit#gid=1203515080"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Extract Email Info').item.json.receivedDate }}",
+            "Document ID": "={{ $('Extract Email Info').item.json.documentId }}",
+            "Document Type": "={{ $('Parse Extracted Data').item.json.documentType }}",
+            "Property ID": "={{ $('Find Property in Database').item.json['Property ID'] }}",
+            "Property Address": "={{ $('Parse Extracted Data').item.json.propertyAddress }}",
+            "Sender Name": "={{ $('Extract Email Info').item.json.senderName }}",
+            "Sender Email": "={{ $('Extract Email Info').item.json.senderEmail }}",
+            "Processing Status": "Processed",
+            "Document Link": "={{ $('Download file').item.json.webViewLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Document ID",
+              "displayName": "Document ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Type",
+              "displayName": "Document Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property ID",
+              "displayName": "Property ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Address",
+              "displayName": "Property Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender Name",
+              "displayName": "Sender Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender Email",
+              "displayName": "Sender Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Link",
+              "displayName": "Document Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Processing Status",
+              "displayName": "Processing Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1648,
+        480
+      ],
+      "id": "6ce85092-2fc5-4f8b-ab57-f5be2c69fbc0",
+      "name": "Log to Documents Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc2a24a0-06b4-44d0-a215-1addc6c5a84c",
+              "leftValue": "={{ $json.isHighPriority }}",
+              "rightValue": null,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2128,
+        480
+      ],
+      "id": "e1490ce4-9261-4310-833d-a5c9338949d3",
+      "name": "IF - High Priority?",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI",
+          "mode": "list",
+          "cachedResultName": "Real Estate Management System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 899598737,
+          "mode": "list",
+          "cachedResultName": "High Priority",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wK1jR6pBpr3zGBI5OdHQAWzdfZPhLJpucKmThKXX3LI/edit#gid=899598737"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Item ID": "={{ $('Extract Email Info').item.json.documentId }}",
+            "Item Type": "={{ $('Parse Extracted Data').item.json.documentType }}",
+            "Property Address": "={{ $('Parse Extracted Data').item.json.propertyAddress }}",
+            "Priority Reason": "={{ $('Parse Extracted Data').item.json.keyHighlights }}",
+            "Score": "={{ $('Calculate Offer Metrics')?.item?.json?.priorityScore || $('Calculate Application Analysis')?.item?.json?.applicationScore }}",
+            "Timestamp": "={{ $('Extract Email Info').item.json.receivedDate }}",
+            "Assigned Agent": "={{ $('Find Property in Database').item.json['Agent Name'] }}",
+            "Action Status": "Pending Review"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Item ID",
+              "displayName": "Item ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Item Type",
+              "displayName": "Item Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Address",
+              "displayName": "Property Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority Reason",
+              "displayName": "Priority Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned Agent",
+              "displayName": "Assigned Agent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action Status",
+              "displayName": "Action Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        64,
+        768
+      ],
+      "id": "5f62d34a-4b91-4f06-9a01-88d2201a21f0",
+      "name": "Log to High Priority Queue",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        512,
+        848
+      ],
+      "id": "a2b530fa-c8a6-4516-aeee-3f9b933a8fdc",
+      "name": "Merge1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=🔥 HIGH PRIORITY: {{ $('Parse Extracted Data').item.json.documentType }} - {{ $('Parse Extracted Data').item.json.propertyAddress }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; background-color: #fef2f2; border-left: 5px solid #dc2626; padding: 20px;\">\n    \n    <h2 style=\"color: #dc2626; margin-top: 0;\">🔥 HIGH PRIORITY {{ $('Parse Extracted Data').item.json.documentType }}</h2>\n    \n    <div style=\"background-color: #ffffff; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n        <h3 style=\"color: #1e3a8a; margin-top: 0;\">Property Information</h3>\n        <table style=\"width: 100%;\">\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Address:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse Extracted Data').item.json.propertyAddress }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Property ID:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Find Property in Database').item.json['Property ID'] }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Document Type:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $('Parse Extracted Data').item.json.documentType }}</td>\n            </tr>\n        </table>\n    </div>\n    \n   {{ $('Parse Extracted Data').item.json.documentType.includes('Purchase') ? `\n<div style=\"background-color: #dcfce7; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n    <h3 style=\"color: #166534; margin-top: 0;\">💰 Offer Details</h3>\n    <table style=\"width: 100%;\">\n        <tr><td><strong>Asking Price:</strong></td>\n            <td>$${$('Calculate Offer Metrics').item.json.askingPrice?.toLocaleString() || 'N/A'}</td></tr>\n        <tr><td><strong>Offer Amount:</strong></td>\n            <td><b>$${$('Calculate Offer Metrics').item.json.offerAmount?.toLocaleString() || 'N/A'}</b></td></tr>\n        <tr><td><strong>Difference:</strong></td>\n            <td><b style=\"color:${$('Calculate Offer Metrics').item.json.differenceAmount >= 0 ? '#166534' : '#dc2626'};\">\n                $${$('Calculate Offer Metrics').item.json.differenceAmount?.toLocaleString() || 0} \n                (${$('Calculate Offer Metrics').item.json.differencePercent || 0}%)\n            </b></td></tr>\n        <tr><td><strong>Offer Strength:</strong></td>\n            <td>${$('Calculate Offer Metrics').item.json.offerStrength || 'N/A'}</td></tr>\n        <tr><td><strong>Priority Score:</strong></td>\n            <td><b>${$('Calculate Offer Metrics').item.json.priorityScore || 0}/100</b></td></tr>\n    </table>\n\n    <h4 style=\"margin-top:20px;\">Buyer Information</h4>\n    <p><b>Name:</b> ${$('Parse Extracted Data').item.json.buyerName || 'Unknown'}</p>\n    <p><b>Email:</b> ${$('Parse Extracted Data').item.json.buyerEmail || 'Not provided'}</p>\n    <p><b>Phone:</b> ${$('Parse Extracted Data').item.json.buyerPhone || 'Not provided'}</p>\n    <p><b>Financing:</b> ${$('Parse Extracted Data').item.json.financingType || 'Not specified'}</p>\n    <p><b>Pre-Approved:</b> ${$('Parse Extracted Data').item.json.preApproved || 'Unknown'}</p>\n    <p><b>Earnest Money:</b> $${$('Parse Extracted Data').item.json.earnestMoney || '0'}</p>\n    <p><b>Closing Date:</b> ${$('Parse Extracted Data').item.json.closingDate || 'Not specified'}</p>\n    <p><b>Offer Expires:</b> ${$('Parse Extracted Data').item.json.offerExpiration || 'Not specified'}</p>\n\n    <h4 style=\"margin-top:20px;\">Contingencies</h4>\n    <p>${$('Parse Extracted Data').item.json.contingencies || 'None listed'}</p>\n</div>\n` : '' }}\n\n    \n    {{ $('Parse Extracted Data').item.json.documentType.includes('Lease') || $('Parse Extracted Data').item.json.documentType.includes('Application') ? `\n    <div style=\"background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n        <h3 style=\"color: #1e40af; margin-top: 0;\">👤 Applicant Details</h3>\n        <table style=\"width: 100%;\">\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Monthly Rent:</strong></td>\n                <td style=\"padding: 8px 0; color: #1e40af;\">$${$('Calculate Application Analysis').item.json.monthlyRent.toLocaleString()}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Monthly Income:</strong></td>\n                <td style=\"padding: 8px 0; font-size: 18px; font-weight: bold; color: #1e40af;\">$${$('Calculate Application Analysis').item.json.monthlyIncome.toLocaleString()}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Income to Rent Ratio:</strong></td>\n                <td style=\"padding: 8px 0; font-weight: bold; color: ${$('Calculate Application Analysis').item.json.meetsIncomeRequirement ? '#166534' : '#dc2626'};\">\n                    ${$('Calculate Application Analysis').item.json.incomeToRentRatio}x ${$('Calculate Application Analysis').item.json.meetsIncomeRequirement ? '✓ Meets 3x Rule' : '✗ Below 3x Rule'}\n                </td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Credit Score:</strong></td>\n                <td style=\"padding: 8px 0; font-weight: bold; color: #1e40af;\">${$('Calculate Application Analysis').item.json.creditScore} (${$('Calculate Application Analysis').item.json.creditRating})</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Application Score:</strong></td>\n                <td style=\"padding: 8px 0; font-size: 24px; font-weight: bold; color: #dc2626;\">${$('Calculate Application Analysis').item.json.applicationScore}/100</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #1e40af;\"><strong>Status:</strong></td>\n                <td style=\"padding: 8px 0; font-weight: bold; color: #1e40af;\">${$('Calculate Application Analysis').item.json.applicationStatus}</td>\n            </tr>\n        </table>\n        \n        <h4 style=\"color: #1e40af; margin-top: 20px;\">Applicant Information</h4>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Name:</strong> ${$('Parse Extracted Data').item.json.extractedData.applicantName}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Email:</strong> ${$('Parse Extracted Data').item.json.extractedData.applicantEmail}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Phone:</strong> ${$('Parse Extracted Data').item.json.extractedData.applicantPhone}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Employment:</strong> ${$('Parse Extracted Data').item.json.extractedData.employmentStatus} at ${$('Parse Extracted Data').item.json.extractedData.employerName}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Move-in Date:</strong> ${$('Parse Extracted Data').item.json.extractedData.desiredMoveInDate}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Occupants:</strong> ${$('Parse Extracted Data').item.json.extractedData.numberOfOccupants}</p>\n        <p style=\"margin: 5px 0; color: #1e40af;\"><strong>Pets:</strong> ${$('Parse Extracted Data').item.json.extractedData.pets}</p>\n    </div>\n    ` : '' }}\n    \n    <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #92400e;\">⭐ Key Highlights</h4>\n        <p style=\"margin: 0; color: #92400e;\">{{ $('Parse Extracted Data').item.json.keyHighlights }}</p>\n    </div>\n    \n    {{ $('Parse Extracted Data').item.json.strengths ? `\n    <div style=\"background-color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #065f46;\">✅ Strengths</h4>\n        <p style=\"margin: 0; color: #065f46;\">${$('Parse Extracted Data').item.json.strengths}</p>\n    </div>\n    ` : '' }}\n    \n    {{ $('Parse Extracted Data').item.json.redFlags ? `\n    <div style=\"background-color: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #991b1b;\">⚠️ Red Flags</h4>\n        <p style=\"margin: 0; color: #991b1b;\">${$('Parse Extracted Data').item.json.redFlags}</p>\n    </div>\n    ` : '' }}\n    \n    <div style=\"background-color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0;\">Summary</h4>\n        <p style=\"margin: 0; color: #4b5563;\">{{ $('Parse Extracted Data').item.json.summary }}</p>\n    </div>\n    \n    <div style=\"background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <p style=\"margin: 0; font-weight: bold; color: #92400e;\">⏰ URGENT ACTION REQUIRED</p>\n        <p style=\"margin: 5px 0 0 0; color: #92400e;\">This is a high-priority {{ $('Parse Extracted Data').item.json.documentType.toLowerCase() }}. Please review and respond within 2 hours.</p>\n    </div>\n    \n    <a href=\"{{ $('Download file').item.json.webViewLink }}\" \n       style=\"display: inline-block; background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px; font-weight: bold;\">\n        📄 View Full Document\n    </a>\n    \n    <hr style=\"border: none; border-top: 1px solid #ddd; margin: 30px 0;\">\n    \n    <p style=\"color: #666; font-size: 12px; margin: 0;\">\n        Document ID: {{ $('Extract Email Info').item.json.documentId }}<br>\n        Received: {{ $('Extract Email Info').item.json.receivedDate }}<br>\n        From: {{ $('Extract Email Info').item.json.senderName }} ({{ $('Extract Email Info').item.json.senderEmail }})\n    </p>\n    \n</div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        768
+      ],
+      "id": "a39aa53e-6905-41da-986c-47fa4d5c4c68",
+      "name": "Send HIGH PRIORITY Alert",
+      "webhookId": "d34da40d-9fa6-4001-bf75-a1d38a22cbeb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "example@email.com",
+        "subject": "=New {{ $('Parse Extracted Data').item.json.documentType }}: {{ $('Parse Extracted Data').item.json.propertyAddress }}",
+        "message": "=  <div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #1e3a8a;\">New {{ $('Parse Extracted Data').item.json.documentType }} Received</h2>          <div style=\"background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;\">         <h3 style=\"color: #1e3a8a; margin-top: 0;\">Property Information</h3>         <table style=\"width: 100%;\">             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Address:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $('Parse Extracted Data').item.json.propertyAddress }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Document Type:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $('Parse Extracted Data').item.json.documentType }}</td>             </tr>             {{ $('Parse Extracted Data').item.json.documentType.includes('Purchase') ? `             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Offer Amount:</strong></td>                 <td style=\"padding: 5px 0; font-weight: bold;\">$${$('Calculate Offer Metrics').item.json.offerAmount.toLocaleString()}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>vs. Asking:</strong></td>                 <td style=\"padding: 5px 0;\">${$('Calculate Offer Metrics').item.json.differencePercent}%</td>             </tr>             ` : '' }}             {{ $('Parse Extracted Data').item.json.documentType.includes('Lease') || $('Parse Extracted Data').item.json.documentType.includes('Application') ? `             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Applicant:</strong></td>                 <td style=\"padding: 5px 0;\">${$('Parse Extracted Data').item.json.applicantName}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Status:</strong></td>                 <td style=\"padding: 5px 0;\">${$('Calculate Application Analysis').item.json.applicationStatus}</td>             </tr>             ` : '' }}         </table>     </div>          <p><strong>Summary:</strong> {{ $('Parse Extracted Data').item.json.summary }}</p>          <a href=\"{{ $('Download file').item.json.webViewLink }}\"         style=\"display: inline-block; background-color: #1e3a8a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">         View Document     </a>          <p style=\"color: #666; font-size: 12px; margin-top: 20px;\">         Document ID: {{ $('Extract Email Info').item.json.documentId }}     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        944
+      ],
+      "id": "32a4945a-6fa8-4fd1-bc78-494db7f8e09e",
+      "name": "Send Standard Notification",
+      "webhookId": "e55e863b-4188-4e3c-980b-54d949563d87",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Extract Email Info').item.json.senderEmail }}",
+        "subject": "={{ $('Parse Extracted Data').item.json.documentType }} Received - {{ $('Parse Extracted Data').item.json.propertyAddress }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #059669;\">✓ Document Successfully Received</h2>          <p>Dear {{ $('Extract Email Info').item.json.senderName }},</p>          <p>Thank you for submitting your {{ $('Parse Extracted Data').item.json.documentType.toLowerCase() }}. It has been received and is being reviewed.</p>          <div style=\"background-color: #f0fdf4; padding: 15px; border-left: 4px solid #059669; margin: 20px 0;\">         <p style=\"margin: 0;\"><strong>✓ Document Type:</strong> {{ $('Parse Extracted Data').item.json.documentType }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Property:</strong> {{ $('Parse Extracted Data').item.json.propertyAddress }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Status:</strong> Under Review</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Reference ID:</strong> {{ $('Extract Email Info').item.json.documentId }}</p>     </div>          {{ $('Parse Extracted Data').item.json.documentType.includes('Purchase') ? `     <p>Your offer has been forwarded to the listing agent. You should expect a response within 24-48 hours. Please note that your offer expires on ${$('Parse Extracted Data').item.json.offerExpiration}.</p>     ` : '' }}          {{ $('Parse Extracted Data').item.json.documentType.includes('Lease') || $('Parse Extracted Data').item.json.documentType.includes('Application') ? `     <p>Your application is being processed. The property manager will contact you within 2-3 business days with next steps. Please ensure you're available at the contact information provided.</p>     ` : '' }}          <div style=\"background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">         <p style=\"margin: 0; font-size: 14px; color: #1e40af;\"><strong>What happens next?</strong></p>         <p style=\"margin: 5px 0 0 0; font-size: 14px; color: #1e40af;\">Our team will review your submission and contact you directly. Please keep your phone and email accessible.</p>     </div>          <p>If you have any questions, please contact:</p>     <p style=\"margin: 5px 0;\"><strong>Agent:</strong> {{ $('Find Property in Database').item.json['Agent Name'] }}<br>     <strong>Email:</strong> {{ $('Find Property in Database').item.json['Agent Email'] }}<br>     <strong>Office:</strong> (555) 123-4567</p>          <p>Best regards,<br>     <strong>{{ $('Find Property in Database').item.json['Agent Name'] }}</strong><br>     Real Estate Management Team</p>          <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;\">          <p style=\"color: #6b7280; font-size: 12px;\">         This is an automated confirmation. For urgent matters, please call our office directly.     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        848
+      ],
+      "id": "93b0527b-9c9d-4f0f-9db6-7d4b4ef33b4d",
+      "name": "Send Confirmation to Sender",
+      "webhookId": "96732194-9d5e-4757-89cd-9a3d97da286d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check which type of document this is\nconst documentType = $('Parse Extracted Data').item.json.documentType;\n\nlet priorityScore = 0;\nlet isHighPriority = false;\nlet priorityLevel = 'Standard';\n\n// Get the appropriate score based on document type\nif (documentType.includes('Purchase') || documentType.includes('Offer')) {\n  // This is a purchase offer - get offer analysis score\n  priorityScore = $('Calculate Offer Metrics').item.json.priorityScore || 0;\n  isHighPriority = priorityScore >= 80;\n  priorityLevel = priorityScore >= 80 ? 'High Priority' : 'Standard';\n} else if (documentType.includes('Lease') || documentType.includes('Application')) {\n  // This is a lease application - get application analysis score\n  priorityScore = $('Calculate Application Analysis').item.json.applicationScore || 0;\n  isHighPriority = priorityScore >= 75;\n  priorityLevel = priorityScore >= 75 ? 'High Priority' : 'Standard';\n} else {\n  // Unknown document type - treat as standard priority\n  isHighPriority = false;\n  priorityLevel = 'Standard';\n}\n\nreturn {\n  json: {\n    priorityScore: priorityScore,\n    isHighPriority: isHighPriority,\n    priorityLevel: priorityLevel,\n    documentType: documentType\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        480
+      ],
+      "id": "477c08f7-aaa6-4449-8db2-bdc445ae1df1",
+      "name": "Determine Priority Level"
+    }
+  ],
+  "connections": {
+    "Monitor Real Estate Documents": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Info": {
+      "main": [
+        [
+          {
+            "node": "Identify Document Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Upload to Purchase Offers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload to Lease Applications",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload to Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload to Property Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Document Type": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Purchase Offers": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Lease Applications": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Contracts": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Property Documents": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Extracted Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Extracted Data": {
+      "main": [
+        [
+          {
+            "node": "Find Property in Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Property in Database": {
+      "main": [
+        [
+          {
+            "node": "Route by Document Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Document Type": {
+      "main": [
+        [
+          {
+            "node": "Calculate Offer Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Calculate Application Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Offer Metrics": {
+      "main": [
+        [
+          {
+            "node": "Log Purchase Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Application Analysis": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Purchase Offer": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Log to Documents Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Documents Sheet": {
+      "main": [
+        [
+          {
+            "node": "Determine Priority Level",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - High Priority?": {
+      "main": [
+        [
+          {
+            "node": "Log to High Priority Queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Standard Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to High Priority Queue": {
+      "main": [
+        [
+          {
+            "node": "Send HIGH PRIORITY Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation to Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send HIGH PRIORITY Alert": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Standard Notification": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Determine Priority Level": {
+      "main": [
+        [
+          {
+            "node": "IF - High Priority?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1c642aa7-5edf-406a-a8b2-c3b9d2398839",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "3kQAzC7rGfuH7qQi",
+  "tags": []
+}

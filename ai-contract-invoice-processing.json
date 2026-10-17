@@ -1,0 +1,1399 @@
+{
+  "name": "Smart Contract & Document Processing Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "subject:(contract OR agreement OR invoice OR \"purchase order\")"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        -464
+      ],
+      "id": "989fa2e2-e7c5-40fd-9077-52f24bffccb7",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c472b967-6af1-42e0-b95a-e0746af5ebef",
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "b8569c98-4f9c-40fc-9622-d33cf03e0282",
+              "name": "senderEmail",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "3355bb1d-0691-47f4-92d2-23d476445eb7",
+              "name": "senderName",
+              "value": "={{ $json.from.value[0].name }}",
+              "type": "string"
+            },
+            {
+              "id": "d44c9e00-c43c-492d-9bf0-5245570e70ff",
+              "name": "recievedDate",
+              "value": "={{ $json.date }}",
+              "type": "string"
+            },
+            {
+              "id": "a3dee112-d6ca-4672-a94a-81d96844795c",
+              "name": "emailBody",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "c77899f4-6520-4091-bb51-826a28818382",
+              "name": "attachmentName",
+              "value": "={{ $binary[\"attachment_0\"] ? $binary[\"attachment_0\"].fileName : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a7f033a2-37ed-4a1e-a3b7-ba84d02e1afc",
+              "name": "attachmentData",
+              "value": "={{ JSON.stringify($binary[\"attachment_0\"]) }}\n",
+              "type": "string"
+            },
+            {
+              "id": "2515d8e9-bb14-4fc5-8eb3-f97bc6268b84",
+              "name": "attachmentMimeType",
+              "value": "={{ Object.keys($binary)[0] ? $binary[Object.keys($binary)[0]].mimeType : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f52930f9-7d41-412a-97b8-1e766eb88b51",
+              "name": "documentId",
+              "value": "=DOC-{{ $now.format('yyyyMMdd-HHmmss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -640
+      ],
+      "id": "5c0a831d-2bac-4715-99a7-8f14458a5163",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "=DOC-{{ $now.format('yyyyMMdd-HHmmss') }} - {{ $binary[\"attachment_0\"] ? $binary[\"attachment_0\"].fileName : '' }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1WBRjfyczGLR0DKjL89E8mEB4-hrdKOaI",
+          "mode": "list",
+          "cachedResultName": "contracts",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1WBRjfyczGLR0DKjL89E8mEB4-hrdKOaI"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        544,
+        -464
+      ],
+      "id": "840bf9fa-ef96-412f-9b4d-4f412c664bc0",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        912,
+        -496
+      ],
+      "id": "32367823-7f14-420f-be71-49a968c48217",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $(\"Upload file\").first().json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        -496
+      ],
+      "id": "75823d90-9319-4c11-a3b0-8c80aae6bc63",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "U7hYm4FL4nMnolte",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [items[1]];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -496
+      ],
+      "id": "b6c6f196-74e7-4f4f-8d4b-fa2171e033e2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        -496
+      ],
+      "id": "afa2649b-cfac-488c-8f23-150f07ccf698",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"documentType\": \"Service Agreement\",\n  \"contractTitle\": \"Website Development Service Agreement\",\n  \"party1\": \"Upside Digital Ltd.\",\n  \"party2\": \"TechNova Solutions\",\n  \"startDate\": \"2025-01-10\",\n  \"endDate\": \"2025-12-31\",\n  \"renewalDate\": null,\n  \"contractValue\": 15000,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"50% upfront, 50% upon completion within 30 days of invoice.\",\n  \"autoRenewal\": false,\n  \"keyTerms\": [\n    \"Deliverables must be approved by client\",\n    \"All code remains the property of the client upon payment\",\n    \"Termination with 30-day notice\"\n  ],\n  \"riskFlags\": [\n    \"No explicit dispute resolution clause\",\n    \"Late payment penalty unclear\"\n  ],\n  \"actionItems\": [\n    \"Signatures required from both parties\",\n    \"Initial deposit payment pending\"\n  ],\n  \"summary\": \"This contract defines a service agreement between Upside Digital Ltd. and TechNova Solutions for website development, outlining payment terms and project deliverables.\",\n  \"urgency\": \"Medium\",\n  \"confidenceScore\": 92\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "0d9bccb6-fb8d-4e71-8cb2-bf3222e3ccd5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "198f001d-b737-4ffa-b32c-8283b98af582",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i2YJ0xjCu8FLh6F6",
+          "name": "website"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following document and extract key information.\n\nEmail Subject: {{ $('Edit Fields1').first().json.emailSubject }}\nSender: {{ $('Edit Fields1').first().json.senderEmail }}\n\nDocument Name: {{ $('Download file').item.json.name }}\n\nDocument Text: {{ $json.text }}\n\n\n\nAttached file:\n- Mime Type: {{ $('Download file').item.json.mimeType }}\n  - File Data: {{ $('Edit Fields1').first().json.attachmentData }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a professional legal contract analysis AI.\nYour job is to extract structured data from uploaded documents such as contracts, invoices, NDAs, and service agreements.\n\nBe concise, consistent, and accurate. \nWhen information is missing or unclear, use `null` instead of guessing.\nAlways return your output in **valid JSON format** matching the specified schema.\n\n\nProvide your response strictly in JSON with the following structure:\n\n{\n  \"documentType\": \"(Contract, Invoice, Purchase Order, NDA, Service Agreement, Lease, etc.)\",\n  \"contractTitle\": \"Official title of the document\",\n  \"party1\": \"Our company name (the recipient)\",\n  \"party2\": \"The other party (vendor/client name)\",\n  \"startDate\": \"YYYY-MM-DD or null\",\n  \"endDate\": \"YYYY-MM-DD or null\",\n  \"renewalDate\": \"YYYY-MM-DD or null\",\n  \"contractValue\": \"Number or null\",\n  \"currency\": \"USD, EUR, etc.\",\n  \"paymentTerms\": \"Summary of payment terms\",\n  \"autoRenewal\": true or false,\n  \"keyTerms\": [\"Important clause 1\", \"Important clause 2\"],\n  \"riskFlags\": [\"Any concerning or unusual clauses\"],\n  \"actionItems\": [\"Follow-up actions like signature needed, payment due\"],\n  \"summary\": \"2–3 sentence summary of the document\",\n  \"urgency\": \"High, Medium, or Low\",\n  \"confidenceScore\": \"0–100\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        -176
+      ],
+      "id": "b7aab8f8-b70f-4256-a66d-b3c8dade74fd",
+      "name": "legal contract analysis AI"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get extracted data\nconst contractValue = parseFloat($input.first().json.output.contractValue) || 0;\nconst urgency = $input.first().json.output.urgency;\nconst riskFlags = $input.first().json.output.riskFlags;\nconst documentType = $input.first().json.output.documentType;\nconst renewalDate = $input.first().json.output.renewalDate;\n\n// Determine status\nlet status = 'Pending Review';\nlet alertPriority = 'Medium';\nlet routeToEmail = 'general@company.com';\n\n// High priority conditions\nif (contractValue > 50000) {\n  alertPriority = 'High';\n  status = 'Requires Executive Approval';\n  routeToEmail = 'ceo@company.com, legal@company.com';\n} else if (urgency === 'High') {\n  alertPriority = 'High';\n} else if (riskFlags && riskFlags.length > 0) {\n  alertPriority = 'High';\n  routeToEmail = 'legal@company.com';\n}\n\n// Route based on document type\nif (documentType && documentType.toLowerCase().includes('invoice')) {\n  routeToEmail = 'finance@company.com';\n  alertPriority = 'Low';\n} else if (documentType && documentType.toLowerCase().includes('nda')) {\n  routeToEmail = 'legal@company.com';\n} else if (documentType && documentType.toLowerCase().includes('vendor')) {\n  routeToEmail = 'procurement@company.com';\n}\n\n// Check renewal urgency\nif (renewalDate) {\n  const renewal = new Date(renewalDate);\n  const today = new Date();\n  const daysUntilRenewal = Math.floor((renewal - today) / (1000 * 60 * 60 * 24));\n  \n  if (daysUntilRenewal <= 30 && daysUntilRenewal >= 0) {\n    alertPriority = 'High';\n    status = 'Renewal Due Soon';\n  }\n}\n\nreturn {\n  json: {\n    status: status,\n    alertPriority: alertPriority,\n    routeToEmail: routeToEmail,\n    requiresApproval: contractValue > 50000 || riskFlags.length > 0\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -176
+      ],
+      "id": "460d5f4b-72c9-4ad1-ade4-280301bc70cf",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_ID@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Contracts"
+        },
+        "start": "={{ $json.start.dateTime }}",
+        "end": "={{ $json.end.dateTime }}",
+        "additionalFields": {
+          "attendees": [],
+          "description": "=Contract with {{ $('Insert contracts').item.json['Party 2 (Vendor/Client)'] }} requires renewal.  Contract Value: ${{ $('Insert contracts').item.json['Contract Value'] }} Auto Renewal: {{ $('Insert contracts').item.json['Auto Renewal'] }}  Action Items: {{ $('Insert contracts').item.json['Action Items'] }}  Document: {{ $('Insert contracts').item.json['File URL'] }}",
+          "summary": "={{ $json.summary }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        144
+      ],
+      "id": "ff19dc01-7745-4636-bd6e-9e2a7c4f8413",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kJvMzb1TpyvRsfqr",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get renewalDate from AI output\nconst renewalDate = $('legal contract analysis AI').item.json.output.renewalDate;\n\n// Helper function: format date safely\nfunction formatDate(dateString, hour = \"09:00:00\") {\n  try {\n    if (!dateString || dateString.toLowerCase() === \"null\") {\n      return null; // return null if invalid or missing\n    }\n    return `${dateString}T${hour}Z`;\n  } catch (e) {\n    return null;\n  }\n}\n\n// Build safe start and end times\nlet startDateTime = formatDate(renewalDate, \"09:00:00\");\nlet endDateTime = formatDate(renewalDate, \"10:00:00\");\n\n// Optional fallback: if renewalDate is missing, set tomorrow as fallback\nif (!startDateTime || !endDateTime) {\n  const tomorrow = new Date();\n  tomorrow.setDate(tomorrow.getDate() + 1);\n  const dateOnly = tomorrow.toISOString().split(\"T\")[0];\n  startDateTime = `${dateOnly}T09:00:00Z`;\n  endDateTime = `${dateOnly}T10:00:00Z`;\n}\n\n// Build event details\nreturn {\n  json: {\n    summary: \"Contract Renewal Reminder\",\n    description: \"Automatic reminder for upcoming contract renewal.\",\n    start: {\n      dateTime: startDateTime,\n      timeZone: \"UTC\"\n    },\n    end: {\n      dateTime: endDateTime,\n      timeZone: \"UTC\"\n    }\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        -176
+      ],
+      "id": "82c780d1-4188-479f-8b6e-b9eb402a93f2",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields1').first().json.senderEmail }}",
+        "subject": "=Re: {{ $('Edit Fields1').first().json.emailSubject }} - Document Received",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #1e3a8a;\">Document Successfully Received</h2>          <p>Hi {{ $('Edit Fields1').first().json.senderName }},</p>          <p>Thank you for sending the document. It has been received and processed automatically.</p>          <div style=\"background-color: #f0fdf4; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;\">         <p style=\"margin: 0;\"><strong>✓ Document Type:</strong> {{ $('Insert contracts').first().json['Document Type'] }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Status:</strong> {{ $('Insert contracts').first().json.Status }}</p>         <p style=\"margin: 5px 0 0 0;\"><strong>✓ Reference ID:</strong> {{ $('Insert contracts').first().json['Document ID'] }}</p>     </div>          <p>The relevant team has been notified and will review the document shortly.</p>          <p>Best regards,<br>     <strong>Automated Document Processing System</strong></p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        144
+      ],
+      "id": "e3326767-9b0b-4e33-b592-f0bd85f25361",
+      "name": "Send a message2",
+      "webhookId": "fa07e393-98c7-4431-9e1c-73d6f4d97626",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "47d7bf1d-2b69-4f82-ab3f-c824901cbe9f",
+              "leftValue": "={{ $json[\"Alert Status\"] }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        -176
+      ],
+      "id": "97ec0813-ecf1-4ed2-9db6-ecb62c2d6a1d",
+      "name": "If Alert is High"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0bcf0309-8883-4f98-9d7c-1811a8b66334",
+              "leftValue": "={{ $('legal contract analysis AI').item.json.output.renewalDate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1296,
+        -192
+      ],
+      "id": "40f40b87-6dd5-4bc3-a900-8ebd02467911",
+      "name": "If renewal date exist"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b326ff7a-c110-4d45-927c-c5fa378f0b9b",
+              "leftValue": "attachment_0",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        -464
+      ],
+      "id": "afb4d2ba-e636-4075-a8a2-c85537d4c23d",
+      "name": "Attachment exist"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        640
+      ],
+      "id": "8935bb8d-6bd4-4e33-8349-3fa54c6f0a67",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs",
+          "mode": "list",
+          "cachedResultName": "Smart Contracts Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Contracts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -304,
+        640
+      ],
+      "id": "e5e93e00-d689-4303-822d-abda4191b226",
+      "name": "get contracts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs",
+          "mode": "list",
+          "cachedResultName": "Smart Contracts Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Contracts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Document ID": "={{ $('Edit Fields1').first().json.documentId }}",
+            "Timestamp": "={{ $('Gmail Trigger').item.json.date }}",
+            "Document Type": "={{ $('legal contract analysis AI').item.json.output.documentType }}",
+            "Contract Title": "={{ $('legal contract analysis AI').item.json.output.contractTitle }}",
+            "Party 1 (Our Company)": "={{ $('legal contract analysis AI').item.json.output.party1 }}",
+            "Party 2 (Vendor/Client)": "={{ $('legal contract analysis AI').item.json.output.party2 }}",
+            "Start Date": "={{ $('legal contract analysis AI').item.json.output.startDate }}",
+            "End Date": "={{ $('legal contract analysis AI').item.json.output.endDate }}",
+            "Renewal Date": "={{ $('legal contract analysis AI').item.json.output.renewalDate }}",
+            "Contract Value": "={{ $('legal contract analysis AI').item.json.output.contractValue }}",
+            "Payment Terms": "={{ $('legal contract analysis AI').item.json.output.paymentTerms }}",
+            "Auto Renewal": "={{ $('legal contract analysis AI').item.json.output.autoRenewal }}",
+            "Status": "={{ $json.status }}",
+            "Alert Status": "={{ $json.alertPriority }}",
+            "File URL": "={{ $('Upload file').item.json.webViewLink }}",
+            "Key Terms Summary": "={{ $('legal contract analysis AI').item.json.output.summary }}",
+            "Risk Flags": "={{ $('legal contract analysis AI').item.json.output.riskFlags.join(', ') }}\n",
+            "Action Items": "={{ $('legal contract analysis AI').item.json.output.actionItems.join(', ') }}",
+            "Assigned To": "={{ $json.routeToEmail }}",
+            "Notes": "={{ $('legal contract analysis AI').item.json.output.confidenceScore }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Document ID",
+              "displayName": "Document ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Type",
+              "displayName": "Document Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contract Title",
+              "displayName": "Contract Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Party 1 (Our Company)",
+              "displayName": "Party 1 (Our Company)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Party 2 (Vendor/Client)",
+              "displayName": "Party 2 (Vendor/Client)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Start Date",
+              "displayName": "Start Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "End Date",
+              "displayName": "End Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Renewal Date",
+              "displayName": "Renewal Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contract Value",
+              "displayName": "Contract Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Terms",
+              "displayName": "Payment Terms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Auto Renewal",
+              "displayName": "Auto Renewal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alert Status",
+              "displayName": "Alert Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "File URL",
+              "displayName": "File URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Key Terms Summary",
+              "displayName": "Key Terms Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk Flags",
+              "displayName": "Risk Flags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action Items",
+              "displayName": "Action Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        512,
+        -176
+      ],
+      "id": "4102277a-fe09-425b-93c2-cd457bf907e1",
+      "name": "Insert contracts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uFsmt0j8avQG6nJZ",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const contracts = $items(\"get contracts\");  // Get all contract items\nconst today = new Date();\nconst upcomingRenewals = [];\n\nfor (const contract of contracts) {\n  const renewalDate = contract.json['Renewal Date'] || contract.json['renewalDate'];\n  \n  // Skip if no renewal date\n  if (!renewalDate) continue;\n\n  const renewal = new Date(renewalDate);\n  const daysUntil = Math.floor((renewal - today) / (1000 * 60 * 60 * 24));\n\n  // Only include if renewal is in 30, 14, 7, or 1 day\n  if ([30, 14, 7, 1].includes(daysUntil)) {\n    upcomingRenewals.push({\n      json: {\n        ...contract.json,\n        daysUntilRenewal: daysUntil,\n        urgencyLevel: daysUntil <= 7 ? 'Critical' : 'Important'\n      }\n    });\n  }\n}\n\nreturn upcomingRenewals;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        640
+      ],
+      "id": "f76bbf80-bd15-4d7d-bfcd-f9cb04863978",
+      "name": "Filter Upcoming Renewals"
+    },
+    {
+      "parameters": {
+        "sendTo": " legal@company.com",
+        "subject": "=⏰ Contract Renewal Alert - {{ $json['Contract Title'] }} ({{ $json.daysUntilRenewal }} days)`",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">\n    \n    <div style=\"background-color: {{ $json.urgencyLevel === 'Critical' ? '#fee2e2' : '#fef3c7' }}; padding: 20px; border-radius: 8px; border-left: 5px solid {{ $json.urgencyLevel === 'Critical' ? '#dc2626' : '#f59e0b' }};\">\n        <h2 style=\"color: {{ $json.urgencyLevel === 'Critical' ? '#dc2626' : '#f59e0b' }}; margin-top: 0;\">\n            {{ $json.urgencyLevel === 'Critical' ? '🚨 URGENT' : '⏰' }} Contract Renewal Alert\n        </h2>\n        <p style=\"font-size: 18px; font-weight: bold; margin: 10px 0;\">\n            {{ $json.daysUntilRenewal }} days until renewal\n        </p>\n    </div>\n    \n    <div style=\"background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n        <h3 style=\"color: #1e3a8a; margin-top: 0;\">Contract Information</h3>\n        <table style=\"width: 100%; border-collapse: collapse;\">\n            <tr>\n                <td style=\"padding: 8px 0; color: #666; width: 40%;\"><strong>Contract:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $json['Contract Title'] }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Party:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $json['Party 2 (Vendor/Client)'] }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Contract Value:</strong></td>\n                <td style=\"padding: 8px 0; font-size: 16px; font-weight: bold;\">${{ $json['Contract Value'] }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Renewal Date:</strong></td>\n                <td style=\"padding: 8px 0; font-weight: bold;\">{{ $json['Renewal Date'] }}</td>\n            </tr>\n            <tr>\n                <td style=\"padding: 8px 0; color: #666;\"><strong>Auto Renewal:</strong></td>\n                <td style=\"padding: 8px 0;\">{{ $json['Auto Renewal'] }}</td>\n            </tr>\n        </table>\n    </div>\n    \n    <div style=\"background-color: #e0e7ff; padding: 15px; border-radius: 8px; margin: 20px 0;\">\n        <h4 style=\"margin-top: 0; color: #3730a3;\">📋 Required Actions</h4>\n        <ul style=\"margin: 0; padding-left: 20px; color: #3730a3;\">\n            <li>Review current contract terms</li>\n            <li>Assess if renewal is needed</li>\n            <li>Contact {{ $json['Party 2 (Vendor/Client)'] }} to discuss renewal or termination</li>\n            <li>Update contract status in tracking system</li>\n        </ul>\n    </div>\n    \n    <div style=\"margin: 20px 0;\">\n        <p><strong>Key Terms:</strong></p>\n        <p style=\"color: #4b5563; line-height: 1.6;\">{{ $json['Key Terms Summary'] }}</p>\n    </div>\n    \n    <a href=\"{{ $json['File URL'] }}\" \n       style=\"display: inline-block; background-color: #1e3a8a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px;\">\n        📄 View Original Contract\n    </a>\n    \n    <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;\">\n    \n    <p style=\"color: #6b7280; font-size: 12px; margin: 0;\">\n        Document ID: {{ $json['Document ID'] }}<br>\n        This is an automated reminder. To stop receiving these alerts, update the contract status in the tracking sheet.\n    </p>\n    \n</div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        640
+      ],
+      "id": "14882032-fe4c-4567-b77c-f2f53e838014",
+      "name": "Send Renewal Alerts",
+      "webhookId": "f3add741-74ec-45e8-942d-146e80864ef2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code1').item.json.routeToEmail }}",
+        "subject": "=New Document: {{ $json['Document Type'] }} from {{ $json['Party 2 (Vendor/Client)'] }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px;\">          <h2 style=\"color: #1e3a8a;\">New Document Processed</h2>          <div style=\"background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;\">         <table style=\"width: 100%;\">             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Type:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Document Type'] }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Party:</strong></td>                 <td style=\"padding: 5px 0;\">{{ $json['Party 2 (Vendor/Client)'] }}</td>             </tr>             <tr>                 <td style=\"padding: 5px 0; color: #666;\"><strong>Value:</strong></td>                 <td style=\"padding: 5px 0;\">${{ $json['Contract Value'] }}</td>             </tr>         </table>     </div>          <p><strong>Summary:</strong> {{ $('legal contract analysis AI').item.json.output.summary }}</p>          <a href=\"{{ $json['File URL'] }}\"         style=\"display: inline-block; background-color: #1e3a8a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">         View Document     </a>          <p style=\"color: #666; font-size: 12px; margin-top: 20px;\">         Document ID: {{ $json['Document ID'] }}     </p>      </div> ",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        -80
+      ],
+      "id": "e9f9234d-10d1-4a0e-a836-64f06caeee8d",
+      "name": "Send Standard Notification",
+      "webhookId": "fe105a16-4fb4-454c-855d-4e0124cc6c58",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code1').item.json.routeToEmail }}",
+        "subject": "=🚨 HIGH PRIORITY: {{ $json['Document Type'] }} - {{ $json['Party 2 (Vendor/Client)'] }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; background-color: #fff3cd; border-left: 5px solid #dc3545; padding: 20px;\">          <h2 style=\"color: #dc3545; margin-top: 0;\">🚨 High-Priority Document Received</h2>          <div style=\"background-color: #ffffff; padding: 20px; border-radius: 8px; margin: 20px 0;\">         <h3 style=\"color: #1e3a8a; margin-top: 0;\">Document Details</h3>         <table style=\"width: 100%; border-collapse: collapse;\">             <tr>                 <td style=\"padding: 8px 0; color: #666;\"><strong>Type:</strong></td>                 <td style=\"padding: 8px 0;\">{{ $json['Document Type'] }}</td>             </tr>             <tr>                 <td style=\"padding: 8px 0; color: #666;\"><strong>Title:</strong></td>                 <td style=\"padding: 8px 0;\">{{ $json['Contract Title'] }}</td>             </tr>             <tr>                 <td style=\"padding: 8px 0; color: #666;\"><strong>Party:</strong></td>                 <td style=\"padding: 8px 0;\">{{ $json['Party 2 (Vendor/Client)'] }}</td>             </tr>             <tr>                 <td style=\"padding: 8px 0; color: #666;\"><strong>Value:</strong></td>                 <td style=\"padding: 8px 0; font-size: 18px; font-weight: bold; color: #dc3545;\">${{ $json['Contract Value'] }}</td>             </tr>             <tr>                 <td style=\"padding: 8px 0; color: #666;\"><strong>Status:</strong></td>                 <td style=\"padding: 8px 0;\">{{ $json.Status }}</td>             </tr>         </table>     </div>          <div style=\"background-color: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0;\">         <h4 style=\"margin-top: 0; color: #721c24;\">⚠️ Risk Flags</h4>         <p style=\"margin: 0; color: #721c24;\">{{ $json['Risk Flags'] }}</p>     </div>          <div style=\"background-color: #d1ecf1; padding: 15px; border-radius: 8px; margin: 20px 0;\">         <h4 style=\"margin-top: 0; color: #0c5460;\">📋 Action Items</h4>         <p style=\"margin: 0; color: #0c5460;\">{{ $json['Action Items'] }}</p>     </div>          <h4>Key Terms:</h4>     <p style=\"color: #333; line-height: 1.6;\">{{ $json['Key Terms Summary'] }}</p>          <h4>Summary:</h4>     <p style=\"color: #333; line-height: 1.6;\">{{ $('legal contract analysis AI').item.json.output.summary }}</p>          <div style=\"background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;\">         <p style=\"margin: 0; font-weight: bold;\">⏰ IMMEDIATE ACTION REQUIRED</p>         <p style=\"margin: 5px 0 0 0;\">Please review this document within 24 hours.</p>     </div>          <a href=\"{{ $json['File URL'] }}\"         style=\"display: inline-block; background-color: #1e3a8a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px;\">         📄 View Document     </a>          <hr style=\"border: none; border-top: 1px solid #ddd; margin: 30px 0;\">          <p style=\"color: #666; font-size: 12px;\">         Document ID: {{ $json['Document ID'] }}<br>         Received: {{ $json.Timestamp }}<br>         From: {{ $('Merge').first().json.senderName }} ({{ $('Merge').first().json.senderEmail }})     </p>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        -272
+      ],
+      "id": "facb6676-ea1d-474f-8b10-1a071f377b71",
+      "name": "Send High-Priority Alert",
+      "webhookId": "bd0d1b77-dbdf-499c-8f61-9835abf0d824",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs",
+          "mode": "list",
+          "cachedResultName": "Smart Contracts Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 680075644,
+          "mode": "list",
+          "cachedResultName": "Renewal Alerts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit#gid=680075644"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Document ID": "={{ $('Filter Upcoming Renewals').item.json['Document ID'] }}",
+            "Party 2": "={{ $('Filter Upcoming Renewals').item.json['Party 2 (Vendor/Client)'] }}",
+            "Contract Value": "={{ $('Filter Upcoming Renewals').item.json['Contract Value'] }}",
+            "Days Until Renewal": "={{ $('Filter Upcoming Renewals').item.json.daysUntilRenewal }}",
+            "Renewal Date": "={{ $('Filter Upcoming Renewals').item.json['Renewal Date'] }}",
+            "Action Needed": "={{ $('Filter Upcoming Renewals').item.json.urgencyLevel }}",
+            "Status": "={{ $('Filter Upcoming Renewals').item.json['Alert Status'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Document ID",
+              "displayName": "Document ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contract Value",
+              "displayName": "Contract Value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Party 2",
+              "displayName": "Party 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Renewal Date",
+              "displayName": "Renewal Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Days Until Renewal",
+              "displayName": "Days Until Renewal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action Needed",
+              "displayName": "Action Needed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        320,
+        640
+      ],
+      "id": "dcc03ef8-00ad-41f6-ae31-c1f8c3ee9e45",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# **Contract Renewal Monitor**\n\n## **This workflow automatically tracks contract renewal dates and sends alerts for upcoming renewals (30, 14, 7, or 1 day before).**\n\n## **Send Gmail to you legal@company Gmail**",
+        "height": 416,
+        "width": 1168,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "c7165119-111c-4d98-a0bd-d0612316b9e1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# **Smart Contract Processing Pipeline**\n# **This workflow automates the end-to-end processing of contract-related emails and documents.**\n# **It identifies and extracts key details (such as renewal dates, terms, and obligations), analyzes contract risks using AI, and stores structured outputs for easy tracking and review.**",
+        "height": 1120,
+        "width": 2368,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -864
+      ],
+      "typeVersion": 1,
+      "id": "13aba0fc-e08b-423b-82c5-b495c322e367",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        1216
+      ],
+      "id": "337395e4-1c45-4171-88ce-5db604c33b8b",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs",
+          "mode": "list",
+          "cachedResultName": "Smart Contracts Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Contracts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17G1VQRNLdxeMOTFDm0GxXabe4UTq9hM6ErUAsJYhlQs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -320,
+        1216
+      ],
+      "id": "b5261ce1-bf98-4443-95ef-58154b501d20",
+      "name": "Get All Contracts from Past Week",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KYx76lMfkKiV7KWt",
+          "name": "content"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const contracts = $input.all();\nconst oneWeekAgo = new Date();\noneWeekAgo.setDate(oneWeekAgo.getDate() - 7);\n\nconst thisWeeksContracts = contracts.filter(contract => {\n  const timestamp = new Date(contract.json['Timestamp']);\n  return timestamp >= oneWeekAgo;\n});\n\n// Calculate statistics\nconst totalValue = thisWeeksContracts.reduce((sum, contract) => {\n  return sum + (parseFloat(contract.json['Contract Value']) || 0);\n}, 0);\n\nconst highPriority = thisWeeksContracts.filter(c => \n  c.json['Alert Status'] === 'High'\n).length;\n\nconst byType = thisWeeksContracts.reduce((acc, contract) => {\n  const type = contract.json['Document Type'] || 'Unknown';\n  acc[type] = (acc[type] || 0) + 1;\n  return acc;\n}, {});\n\nconst pendingReview = thisWeeksContracts.filter(c => \n  c.json['Status'] === 'Pending Review'\n).length;\n\nreturn [{\n  json: {\n    contracts: thisWeeksContracts,\n    totalProcessed: thisWeeksContracts.length,\n    totalValue: totalValue,\n    highPriorityCount: highPriority,\n    documentTypes: byType,\n    pendingReviewCount: pendingReview\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        1216
+      ],
+      "id": "5d6b7ddf-c218-4afe-9542-516d494d1573",
+      "name": "Filter This Week's Contracts"
+    },
+    {
+      "parameters": {
+        "content": "# **🗓️ Weekly Summary Report**\n## **This workflow runs automatically every week to compile a summary of recent contract activities.**\n## **It retrieves all contracts from the past week in Google Sheets, filters relevant entries, and generates a structured summary report email for easy review and tracking.**\n\n##Send Gmail to your management@company.com, legal@company.com",
+        "height": 560,
+        "width": 912
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "dffc2a6b-a4fb-4a4d-ab06-7caa260abd51",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "sendTo": "management@company.com",
+        "subject": "=📊 Weekly Contract Summary - {{ $now.format('MMMM d, yyyy') }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;\">          <!-- Header -->     <div style=\"background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;\">         <h1 style=\"color: white; margin: 0; font-size: 28px;\">📊 Weekly Contract Summary</h1>         <p style=\"color: #dbeafe; margin: 10px 0 0 0;\">{{ $now.subtract(7, 'days').format('MMM D') }} - {{ $now.format('MMM D, YYYY') }}</p>     </div>          <!-- Key Metrics -->     <div style=\"background-color: #f9fafb; padding: 30px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;\">         <h2 style=\"color: #1e3a8a; margin-top: 0;\">Key Metrics</h2>                  <div style=\"display: flex; justify-content: space-between; flex-wrap: wrap;\">             <!-- Metric Cards -->             <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 10px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">                 <p style=\"color: #6b7280; margin: 0; font-size: 14px;\">Documents Processed</p>                 <p style=\"color: #1e3a8a; margin: 10px 0 0 0; font-size: 32px; font-weight: bold;\">{{ $json.totalProcessed }}</p>             </div>                          <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 10px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">                 <p style=\"color: #6b7280; margin: 0; font-size: 14px;\">Total Contract Value</p>                 <p style=\"color: #059669; margin: 10px 0 0 0; font-size: 32px; font-weight: bold;\">${{ Math.round($json.totalValue).toLocaleString() }}</p>             </div>                          <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 10px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">                 <p style=\"color: #6b7280; margin: 0; font-size: 14px;\">High Priority</p>                 <p style=\"color: #dc2626; margin: 10px 0 0 0; font-size: 32px; font-weight: bold;\">{{ $json.highPriorityCount }}</p>             </div>                          <div style=\"background-color: white; padding: 20px; border-radius: 8px; margin: 10px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">                 <p style=\"color: #6b7280; margin: 0; font-size: 14px;\">Pending Review</p>                 <p style=\"color: #f59e0b; margin: 10px 0 0 0; font-size: 32px; font-weight: bold;\">{{ $json.pendingReviewCount }}</p>             </div>         </div>     </div>          <!-- Document Types Breakdown -->     <div style=\"background-color: white; padding: 30px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;\">         <h3 style=\"color: #1e3a8a; margin-top: 0;\">Documents by Type</h3>         <table style=\"width: 100%; border-collapse: collapse;\">             <thead>                 <tr style=\"background-color: #f3f4f6;\">                     <th style=\"text-align: left; padding: 12px; border-bottom: 2px solid #e5e7eb;\">Document Type</th>                     <th style=\"text-align: center; padding: 12px; border-bottom: 2px solid #e5e7eb;\">Count</th>                 </tr>             </thead>             <tbody>                 {{ Object.entries($json.documentTypes).map(([type, count]) => `                 <tr>                     <td style=\"padding: 12px; border-bottom: 1px solid #e5e7eb;\">${type}</td>                     <td style=\"text-align: center; padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: bold;\">${count}</td>                 </tr>                 `).join('') }}             </tbody>         </table>     </div>          <!-- Recent High-Priority Contracts -->     <div style=\"background-color: #fef2f2; padding: 30px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;\">         <h3 style=\"color: #dc2626; margin-top: 0;\">🚨 High-Priority Contracts This Week</h3>         {{ $json.contracts.filter(c => c.json['Alert Status'] === 'High').slice(0, 5).map(contract => `         <div style=\"background-color: white; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #dc2626;\">             <p style=\"margin: 0; font-weight: bold; color: #1e3a8a;\">${contract.json['Contract Title'] || 'Untitled'}</p>             <p style=\"margin: 5px 0; color: #6b7280; font-size: 14px;\">Party: ${contract.json['Party 2 (Vendor/Client)']}</p>             <p style=\"margin: 5px 0; color: #6b7280; font-size: 14px;\">Value: $${contract.json['Contract Value']}</p>             <p style=\"margin: 5px 0; color: #6b7280; font-size: 14px;\">Status: ${contract.json['Status']}</p>         </div>         `).join('') }}         {{ $json.highPriorityCount === 0 ? '<p style=\"color: #6b7280;\">No high-priority contracts this week.</p>' : '' }}     </div>          <!-- Action Items -->     <div style=\"background-color: #eff6ff; padding: 30px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;\">         <h3 style=\"color: #1e3a8a; margin-top: 0;\">📋 Action Items</h3>         <ul style=\"color: #4b5563; line-height: 1.8;\">             {{ $json.pendingReviewCount > 0 ? `<li><strong>${$json.pendingReviewCount}</strong> contracts require review</li>` : '' }}             {{ $json.highPriorityCount > 0 ? `<li><strong>${$json.highPriorityCount}</strong> high-priority items need immediate attention</li>` : '' }}             <li>Check <a href=\"YOUR_GOOGLE_SHEET_URL\" style=\"color: #1e3a8a;\">Contract Tracker</a> for full details</li>             <li>Review upcoming renewal dates in the Renewals tab</li>         </ul>     </div>          <!-- Footer -->     <div style=\"text-align: center; padding: 20px; color: #6b7280; font-size: 12px;\">         <p style=\"margin: 0;\">This is an automated weekly summary from your Smart Contract Processing System</p>         <p style=\"margin: 5px 0 0 0;\">Generated on {{ $now.format('dddd, MMMM D, YYYY [at] h:mm A') }}</p>     </div>      </div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        1216
+      ],
+      "id": "ef1bded4-d16c-4248-b9c1-bb9999be2001",
+      "name": "Generate Summary Report Email",
+      "webhookId": "6295e91a-62b4-44a2-99ae-e099be0c8c4c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pwbrojGj0aRtBzLK",
+          "name": "second main"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Attachment exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "legal contract analysis AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "legal contract analysis AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "legal contract analysis AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "legal contract analysis AI": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Insert contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Alert is High": {
+      "main": [
+        [
+          {
+            "node": "Send High-Priority Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Standard Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If renewal date exist": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attachment exist": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "get contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert contracts": {
+      "main": [
+        [
+          {
+            "node": "If Alert is High",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get contracts": {
+      "main": [
+        [
+          {
+            "node": "Filter Upcoming Renewals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Upcoming Renewals": {
+      "main": [
+        [
+          {
+            "node": "Send Renewal Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Standard Notification": {
+      "main": [
+        [
+          {
+            "node": "If renewal date exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send High-Priority Alert": {
+      "main": [
+        [
+          {
+            "node": "If renewal date exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Renewal Alerts": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get All Contracts from Past Week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Contracts from Past Week": {
+      "main": [
+        [
+          {
+            "node": "Filter This Week's Contracts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter This Week's Contracts": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary Report Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "62cd318b-62d5-4fc2-973c-96d4a4baa7d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64da9526fde6bb3f90690ef6b939b0ac43bb69a86da72fc052a72243617aee08"
+  },
+  "id": "DCZGpDOJYqh3xGPb",
+  "tags": []
+}
